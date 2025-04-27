@@ -33,7 +33,7 @@ def update_sheet(attended_kishores, day: str, week, sabha_held: str, p2_guju: st
    user_email.send_keys("vrajptl0610@gmail.com")
    time.sleep(0.5)
    user_password.send_keys("12345678")
-   print("DO THE CAPTCHA (you have 30 sec)")
+   print("DO THE CAPTCHA (you have 30 sec) BUT DO NOT CLICK 'Sign In'")
    
    time.sleep(30)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
