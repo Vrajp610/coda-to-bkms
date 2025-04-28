@@ -2,9 +2,27 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 from selenium.webdriver.chrome.options import Options
-import datetime
+from datetime import datetime, timedelta
+from telegram import Bot
+import asyncio
 
-today = datetime.date.today()
+TOKEN = "8008353281:AAGKOYWJ9Hb5t8ilMQ4i2d3Z3g-0WGC5oLE" # Replace with your actual API token
+CHAT_ID = "-1001570996136"  # Replace with your actual chat ID
+MESSAGE = "Hello from Python!"
+
+async def send_telegram_message(message: str):
+    bot = Bot(token=TOKEN)
+    await bot.send_message(chat_id=CHAT_ID, text=message)
+
+def get_this_week_sunday():
+   today = datetime.today()
+   days_ahead = 6 - today.weekday()  # weekday() Monday=0, Sunday=6
+   if days_ahead < 0:  # If today is Sunday, we stay
+      days_ahead += 7
+   sunday = today + timedelta(days=days_ahead)
+   return sunday.strftime("%-m/%-d/%Y")  # e.g., 4/27/2025
+
+today = datetime.today()
 week_number = today.isocalendar().week
 
 options = Options()
@@ -26,10 +44,13 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str):
    user_email = driver.find_element(By.ID, "email") 
    user_password = driver.find_element(By.ID, "password") 
 
+   print("Entering your BKID\n")
    user_id.send_keys("3001")
    time.sleep(0.5)
+   print("Entering your email\n")
    user_email.send_keys("vrajptl0610@gmail.com")
    time.sleep(0.5)
+   print("Entering your password\n")
    user_password.send_keys("12345678")
    print("DO THE CAPTCHA (you have 30 sec) BUT DO NOT CLICK 'Sign In'\n")
    
@@ -205,9 +226,14 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str):
          no_found_kishores.append(kishore)
 
    print("⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
-   print(f'These kishores attended sabha but were not in BKMS: {no_found_kishores}')
-   print(f"Everythings Done!\nClicked {count} kishores")
+   print(f'These kishores attended sabha but were not in BKMS: {no_found_kishores}\n')
+   print(f"Everythings Done!\nClicked {count} kishores\n")
    time.sleep(3)
    driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
    time.sleep(5)
-   print("Saved Changes and All Kishores who attended sabha are marked as present")
+   print("Saved Changes and All Kishores who attended sabha are marked as present\n")
+
+   sunday_date = get_this_week_sunday()
+   telegram_message = f"BKMS Attendance done for {day.title()} - {sunday_date} ✅"
+   asyncio.run(send_telegram_message(telegram_message))
+   print(f"Telegram message sent: {telegram_message}")
