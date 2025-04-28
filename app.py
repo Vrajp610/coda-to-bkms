@@ -99,17 +99,13 @@ class App(customtkinter.CTk):
         weekday = self.weekday_frame.get()
         sabha_held = self.sabha_held_frame.get()
         p2_guju = self.p2_guju_frame.get()
-        try:
-            week = self.weekdate_frame.get()[1]
-        except:
-            week = None
 
         if date and weekday and sabha_held and p2_guju:
             self.update_frame.change_item(f"Weekday: {weekday}\nDate: {date}")
             attendance, attendance_count = format_data(weekday, date)
             self.update_frame.change_item(f"{attendance_count} Kishores Found\nMoving on to BKMS Reporting")
             self.progress.set(0.75)
-            update_sheet(attendance, weekday, week, sabha_held, p2_guju)
+            update_sheet(attendance, weekday, sabha_held, p2_guju)
             self.progress.set(1)
         else:
             self.update_frame.change_item(f"Try Again, make sure you\nselect all required fields")
