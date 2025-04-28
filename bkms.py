@@ -17,7 +17,7 @@ service = webdriver.ChromeService()
 day = "saturday"
 url = "https://bk.na.baps.org/ssologin"
 
-def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str):
+def update_sheet(attended_kishores, day: str, week, sabha_held: str, p2_guju: str):
    driver = webdriver.Chrome(service=service, options=options)
 
    driver.get(url)
