@@ -2,17 +2,18 @@ from codaio import Coda
 import pandas as pd
 from datetime import datetime
 
+#Coda API Key
 coda = Coda(api_key='35bd65d2-cfd6-4769-85d6-ae2f37f5e99f')
 
+#Coda Doc ID
 doc_id = 'zHizETNk43'
 
 attendance = []
+
+#Table IDs
 saturday_k1 = "table-MRTOERITOp"
-
 saturday_k2 = "table-xR4YI6kcIM"
-
 sunday_k1 = "table-RKMuitiFPU"
-
 sunday_k2 = "table-a6AbGiGGmN"
 
 def convert_date(date_str):
@@ -41,7 +42,7 @@ def get_attendance(table: str, date: str):
 
     attendance.extend(data)
 
-def format_data(weekend, date):
+def format_data(sabha_group, date):
     global attendance
     attendance = []
 
@@ -53,13 +54,13 @@ def format_data(weekend, date):
         return "I don't how you did this\nBut you entered the date wrong\nFix it and rerun"
     
     try:
-        if weekend.lower() == "saturday k1":
+        if sabha_group.lower() == "saturday k1":
             get_attendance(saturday_k1, date)
-        elif weekend.lower() == "saturday k2":
+        elif sabha_group.lower() == "saturday k2":
             get_attendance(saturday_k2, date)
-        elif weekend.lower() == "sunday k1":
+        elif sabha_group.lower() == "sunday k1":
             get_attendance(sunday_k1, date)
-        elif weekend.lower() == "sunday k2":
+        elif sabha_group.lower() == "sunday k2":
             get_attendance(sunday_k2, date)
     except Exception:
         print(Exception)

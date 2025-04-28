@@ -14,7 +14,7 @@ class UpdateFrame(customtkinter.CTkScrollableFrame):
     def change_item(self, new_text):
         self.label.configure(text=new_text)
 
-class WeekdayFrame(customtkinter.CTkFrame):
+class GroupFrame(customtkinter.CTkFrame):
     def __init__(self, master, title, values):
         super().__init__(master)
         self.grid_columnconfigure(0, weight=1)
@@ -70,13 +70,13 @@ class App(customtkinter.CTk):
         self.weekdate_frame = WeekDateFrame(self, "Date", values=["Date (March 12)"])
         self.weekdate_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
-        self.weekday_frame = WeekdayFrame(self, "Group", values=["Saturday K1", "Saturday K2", "Sunday K1", "Sunday K2"])
-        self.weekday_frame.grid(row=0, column=1, padx=(0, 0), pady=(10, 0), sticky="nsew")
+        self.group_frame = GroupFrame(self, "Group", values=["Saturday K1", "Saturday K2", "Sunday K1", "Sunday K2"])
+        self.group_frame.grid(row=0, column=1, padx=(0, 0), pady=(10, 0), sticky="nsew")
 
-        self.sabha_held_frame = WeekdayFrame(self, "Was Sabha Held?", values=["Yes", "No"])
+        self.sabha_held_frame = GroupFrame(self, "Was Sabha Held?", values=["Yes", "No"])
         self.sabha_held_frame.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="nsew")
 
-        self.p2_guju_frame = WeekdayFrame(self, "Was P2 in Guju?", values=["Yes", "No"])
+        self.p2_guju_frame = GroupFrame(self, "Was P2 in Guju?", values=["Yes", "No"])
         self.p2_guju_frame.grid(row=1, column=1, padx=10, pady=(10, 0), sticky="nsew")
 
         self.update_frame = UpdateFrame(master=self, title="Bot Updates", value="Bot is up and ready")
@@ -96,16 +96,16 @@ class App(customtkinter.CTk):
 
     def button_callback(self):
         date = self.weekdate_frame.get()[0]
-        weekday = self.weekday_frame.get()
+        sabha_group = self.group_frame.get()
         sabha_held = self.sabha_held_frame.get()
         p2_guju = self.p2_guju_frame.get()
 
-        if date and weekday and sabha_held and p2_guju:
-            self.update_frame.change_item(f"Weekday: {weekday}\nDate: {date}")
-            attendance, attendance_count = format_data(weekday, date)
+        if date and sabha_group and sabha_held and p2_guju:
+            self.update_frame.change_item(f"Group: {sabha_group}\nDate: {date}")
+            attendance, attendance_count = format_data(sabha_group, date)
             self.update_frame.change_item(f"{attendance_count} Kishores Found\nMoving on to BKMS Reporting")
             self.progress.set(0.75)
-            update_sheet(attendance, weekday, sabha_held, p2_guju)
+            update_sheet(attendance, sabha_group, sabha_held, p2_guju)
             self.progress.set(1)
         else:
             self.update_frame.change_item(f"Try Again, make sure you\nselect all required fields")
