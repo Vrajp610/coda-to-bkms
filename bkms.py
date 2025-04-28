@@ -21,7 +21,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str):
    driver.get(url)
 
    time.sleep(1)
-   print("Logging In to BKMS")
+   print("Logging In to BKMS\n")
    user_id = driver.find_element(By.ID, "user_id") 
    user_email = driver.find_element(By.ID, "email") 
    user_password = driver.find_element(By.ID, "password") 
@@ -39,7 +39,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str):
    driver.get("https://bk.na.baps.org/admin/reports/reportweeksabhaattendance")
    time.sleep(3)
    
-   print("Logged in (if captcha was done)")
+   print("Logged in to BKMS if captcha was solved\n")
    
    if day.lower() == "saturday k1":
       print("Selecting sabha wing\n")
