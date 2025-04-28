@@ -6,9 +6,8 @@ from datetime import datetime, timedelta
 from telegram import Bot
 import asyncio
 
-TOKEN = "8008353281:AAGKOYWJ9Hb5t8ilMQ4i2d3Z3g-0WGC5oLE" # Replace with your actual API token
-CHAT_ID = "-1001570996136"  # Replace with your actual chat ID
-MESSAGE = "Hello from Python!"
+TOKEN = "8008353281:AAGKOYWJ9Hb5t8ilMQ4i2d3Z3g-0WGC5oLE"
+CHAT_ID = "-1001570996136"
 
 async def send_telegram_message(message: str):
     bot = Bot(token=TOKEN)
@@ -16,11 +15,11 @@ async def send_telegram_message(message: str):
 
 def get_this_week_sunday():
    today = datetime.today()
-   days_ahead = 6 - today.weekday()  # weekday() Monday=0, Sunday=6
-   if days_ahead < 0:  # If today is Sunday, we stay
+   days_ahead = 6 - today.weekday()
+   if days_ahead < 0:
       days_ahead += 7
    sunday = today + timedelta(days=days_ahead)
-   return sunday.strftime("%-m/%-d/%Y")  # e.g., 4/27/2025
+   return sunday.strftime("%-m/%-d/%Y")
 
 today = datetime.today()
 week_number = today.isocalendar().week
@@ -30,7 +29,6 @@ options.add_experimental_option('excludeSwitches', ['enable-logging'])
 options.add_experimental_option("detach", True)
 service = webdriver.ChromeService()
 
-day = "saturday"
 url = "https://bk.na.baps.org/ssologin"
 
 def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str):
