@@ -48,10 +48,10 @@ def format_data(sabha_group, date):
 
     try:
         date = convert_date(date)
-        print("Date Converted")
+        print("Date Converted\n")
     except Exception:
         print(Exception)
-        return "I don't how you did this\nBut you entered the date wrong\nFix it and rerun"
+        return "I don't how you did this. But you entered the date wrong! Fix it and rerun"
     
     try:
         if sabha_group.lower() == "saturday k1":
@@ -64,10 +64,10 @@ def format_data(sabha_group, date):
             get_attendance(sunday_k2, date)
     except Exception:
         print(Exception)
-        return "The attendance system is broken\nRerun to see if it might be fixed"
+        return "The attendance system is broken. Rerun to see if it might be fixed"
     
     attendance_count = len(attendance)
-    print(f"Attendence: {attendance_count}\nMoving on to updating BKMS")
+    print(f"Attendence: {attendance_count}\nMoving on to updating BKMS\n")
     print("⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
     print(attendance)
     print("⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")

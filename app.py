@@ -101,14 +101,14 @@ class App(customtkinter.CTk):
         p2_guju = self.p2_guju_frame.get()
 
         if date and sabha_group and sabha_held and p2_guju:
-            self.update_frame.change_item(f"Group: {sabha_group}\nDate: {date}")
+            self.update_frame.change_item(f"Group: {sabha_group}\nDate: {date}\n")
             attendance, attendance_count = format_data(sabha_group, date)
-            self.update_frame.change_item(f"{attendance_count} Kishores Found\nMoving on to BKMS Reporting")
+            self.update_frame.change_item(f"{attendance_count} Kishores Found\nMoving on to BKMS Reporting\n")
             self.progress.set(0.75)
             update_sheet(attendance, sabha_group, sabha_held, p2_guju)
             self.progress.set(1)
         else:
-            self.update_frame.change_item(f"Try Again, make sure you\nselect all required fields")
+            self.update_frame.change_item(f"Try Again! Make sure yous elect all required fields\n")
 
 app = App()
 app.mainloop()
