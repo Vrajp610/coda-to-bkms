@@ -1,5 +1,5 @@
-from codaio import Coda
 import pandas as pd
+from codaio import Coda
 from datetime import datetime
 
 #Coda API Key

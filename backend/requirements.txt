@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+selenium
+python-telegram-bot
+pandas
+codaio
+pydantic

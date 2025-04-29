@@ -1,5 +1,5 @@
-from coda import format_data
-from bkms import update_sheet
+from backend.src.coda import format_data
+from backend.src.bkms import update_sheet
 import customtkinter
 from threading import Thread
 
