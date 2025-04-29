@@ -149,5 +149,5 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Send Telegram Success Notification ---
    sunday_date = get_this_week_sunday(date_string)
    telegram_message = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
-   #asyncio.run(send_telegram_message(telegram_message))
+   asyncio.run(send_telegram_message(telegram_message))
    print(f"Telegram notification sent: {telegram_message}")
