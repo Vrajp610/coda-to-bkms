@@ -1,8 +1,8 @@
 import asyncio
 from pyppeteer import launch
-from src.utils.telegramUtils import send_telegram_message
-from src.utils.dateUtils import calculate_week_number, get_this_week_sunday
-from src.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
+from backend.api.src.utils.telegramUtils import send_telegram_message
+from backend.api.src.utils.dateUtils import calculate_week_number, get_this_week_sunday
+from backend.api.src.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
 
 async def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
    """Update attendance in BKMS using Pyppeteer."""
