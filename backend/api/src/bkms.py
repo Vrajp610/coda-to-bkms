@@ -1,122 +1,154 @@
+import time
 import asyncio
-from pyppeteer import launch
-from pyppeteer.errors import TimeoutError
-from .utils.telegramUtils import send_telegram_message
-from .utils.dateUtils import calculate_week_number, get_this_week_sunday
-from .utils.chromeUtils import get_page
-from .utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
+from selenium.webdriver.common.by import By
+from src.utils.telegramUtils import send_telegram_message
+from src.utils.dateUtils import calculate_week_number, get_this_week_sunday
+from src.utils.chromeUtils import get_chrome_driver
+from src.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
 
-async def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
-   """Update attendance in BKMS using Pyppeteer."""
-   page, browser = await get_page()
-   try:
-      # Navigate to BKMS login page
-      await page.goto(BKMS_LOGIN_URL, timeout=60000)
-      print("Logging into BKMS...")
+# --- BKMS login page ---
+url = BKMS_LOGIN_URL
 
-      # Perform login
-      await page.type("#user_id", USER_ID)
-      await page.type("#email", EMAIL)
-      await page.type("#password", PASSWORD)
-      print("Please solve CAPTCHA manually (30 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-      await asyncio.sleep(30)
-      await page.click(".btn-primary")
-      await page.waitForNavigation()
+# --- Main function: Update attendance in BKMS ---
+def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
+   # --- Open Chrome and Navigate to BKMS login ---
+   driver = get_chrome_driver()
+   driver.get(url)
 
-      # Navigate to attendance page
-      await page.goto("https://bk.na.baps.org/admin/reports/reportweeksabhaattendance", timeout=60000)
-      print("Navigated to attendance page.")
+   # --- Perform Login ---
+   print("Logging into BKMS...")
+   time.sleep(1)
+   driver.find_element(By.ID, "user_id").send_keys(USER_ID)
+   time.sleep(0.5)
+   driver.find_element(By.ID, "email").send_keys(EMAIL)
+   time.sleep(0.5)
+   driver.find_element(By.ID, "password").send_keys(PASSWORD)
+   print("Please solve CAPTCHA manually (30 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
+   time.sleep(30)
+   driver.find_element(By.CLASS_NAME, "btn-primary").click()
+   time.sleep(2)
 
-      # Select Sabha Wing and Year
-      await page.select('select[name="sabhaWing"]', "Kishore")
-      await page.select('select[name="year"]', "2025")
+   # --- Go to Report Attendance Page ---
+   driver.get("https://bk.na.baps.org/admin/reports/reportweeksabhaattendance")
+   time.sleep(2)
 
-      # Select Week based on Entered Date
-      week_number = calculate_week_number(date_string)
-      print(f"Selecting Week {week_number - 1} for {date_string}")
-      await page.select('select[name="week"]', str(week_number))
+   # --- Select Sabha Wing and Year ---
+   print("Selecting Sabha Wing and Year")
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]').click()  # Kishore
+   time.sleep(1)
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]').click()  # 2025
+   time.sleep(1)
 
-      # Select Specific Sabha Group (K1/K2/S1/S2)
-      sabha_row_map = {
-         "saturday k1": 1,
-         "saturday k2": 2,
-         "sunday k1": 3,
-         "sunday k2": 4
-      }
-      row_number = sabha_row_map.get(day.lower())
-      if row_number:
-         await page.click(f'tr:nth-child({row_number}) td:nth-child(9) span a')
-         print(f"Selected {day.title()}")
-      else:
-         print("Error: Invalid Sabha group entered!")
-         return
+   # --- Select Week based on Entered Date ---
+   week_number = calculate_week_number(date_string)
+   print(f"Selecting Week {week_number - 1} for {date_string}")
+   driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{week_number}]').click()
+   time.sleep(2)
 
-      # Mark if Sabha was Held
-      if sabha_held.lower() == "yes":
-         await page.click('label[for="sabhaHeldYes"]')
-         print("Marked: Sabha Held")
-      else:
-         await page.click('label[for="sabhaHeldNo"]')
-         print("Marked: Sabha Not Held")
+   # --- Select Specific Sabha Group (K1/K2/S1/S2) ---
+   sabha_row_map = {
+      "saturday k1": 1,
+      "saturday k2": 2,
+      "sunday k1": 3,
+      "sunday k2": 4
+   }
+   row_number = sabha_row_map.get(day.lower())
+   if row_number:
+      driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row_number}]/td[9]/div/span/a').click()
+      print(f"Selected {day.title()}")
+   else:
+      print("Error: Invalid Sabha group entered!")
+      return
 
-      # Sabha Setup Checklist
-      print("Filling Sabha Setup Checklist")
-      await page.click('label[for="karyakarMeetingDone"]')  # Karyakar Meeting - Done
-      if prep_cycle_done.lower() == "yes":
-         await page.click('label[for="prepCycleDone"]')
-      else:
-         await page.click('label[for="prepCycleNotDone"]')
-      await page.click('label[for="preSabhaReviewDone"]')  # Pre-Sabha Review - Done
-      await page.click('label[for="postSabhaReviewDone"]')  # Post-Sabha Review - Done
-      await page.click('label[for="cultureChangeNotDone"]')  # Culture Change - Not Done
+   time.sleep(3)
 
-      # Content Checklist
-      print("Filling Content Checklist")
-      content_checklist = [
-         'label[for="bapasAshirwadDone"]',
-         'label[for="dhoonPrarthanaDone"]',
-         'label[for="presentation1Done"]',
-         'label[for="kirtanDone"]',
-         'label[for="presentation2Done"]'
-      ]
-      for selector in content_checklist:
-         await page.click(selector)
+   # --- Mark if Sabha was Held ---
+   if sabha_held.lower() == "yes":
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins').click()
+      print("Marked: Sabha Held")
+   else:
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins').click()
+      print("Marked: Sabha Not Held")
+   time.sleep(1)
 
-      # Presentation 2 Language
-      if p2_guju.lower() == "yes":
-         await page.click('label[for="presentation2Guju"]')
-         print("Presentation 2 was in Gujarati")
-      else:
-         await page.click('label[for="presentation2NotGuju"]')
-         print("Presentation 2 was NOT in Gujarati")
+   # --- Sabha Setup Checklist (Done / Not Done) ---
+   print("Filling Sabha Setup Checklist")
+      # Karyakar Meeting - Done
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[1]/label[2]/div/ins').click()
 
-      # Sabha Goshti Marked Not Done
-      await page.click('label[for="sabhaGoshtiNotDone"]')
+   # 2 Week Prep Cycle - Dynamic based on input
+   if prep_cycle_done.lower() == "yes":
+       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[2]/div/ins').click()
+   else:
+       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins').click()
 
-      # Mark all Kishores Absent initially
-      await page.click('button#markAllAbsent')
-      print("All Kishores initially marked Absent")
+   # Pre-Sabha Review - Done
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[3]/label[2]/div/ins').click()
 
-      # Update Attendance: Mark Present Kishores
-      print("Updating attendance...")
-      for bkid in attended_kishores:
-         try:
-               await page.click(f'input[data-bkid="{bkid}"]')
-               print(f"Marked Kishore {bkid} as Present")
-         except Exception:
-               print(f"Kishore {bkid} not found in the system.")
+   # Post-Sabha Review - Done
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[4]/label[2]/div/ins').click()
 
-      # Save Changes
-      await page.click('button#saveChanges')
-      print("Saved attendance successfully!")
+   # Culture Change - Not Done
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[5]/label[3]/div/ins').click()
 
-      # Send Telegram Success Notification
-      sunday_date = get_this_week_sunday(date_string)
-      telegram_message = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
-      await send_telegram_message(telegram_message)
-      print(f"Telegram notification sent: {telegram_message}")
 
-   except TimeoutError:
-      print("Timeout occurred while updating attendance.")
-   finally:
-      await browser.close()
+   # --- Content Checklist (Sabha Activities) ---
+   print("Filling Content Checklist")
+   content_xpaths = [
+      (1, 2),  # Bapa's Ashirwad - Done
+      (2, 2),  # Dhoon & Prarthana - Done
+      (3, 2),  # Presentation 1 - Done
+      (4, 2),  # Kirtan - Done
+      (5, 2)   # Presentation 2 - Done
+   ]
+   for content_idx, label_idx in content_xpaths:
+      driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[{content_idx}]/label[{label_idx}]/div/ins').click()
+
+   # --- Presentation 2 Language (Gujarati or not) ---
+   if p2_guju.lower() == "yes":
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins').click()
+      print("Presentation 2 was in Gujarati")
+   else:
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[3]/div/ins').click()
+      print("Presentation 2 was NOT in Gujarati")
+
+   # --- Sabha Goshti Marked Not Done ---
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[7]/label[3]/div/ins').click()
+
+   # --- Mark all Kishores Absent initially ---
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a').click()
+   print("All Kishores initially marked Absent")
+   time.sleep(2)
+
+   # --- Update Attendance: Mark Present Kishores ---
+   all_kishores = driver.find_elements(By.XPATH, '//tr[@role="row"]')
+   updated_kishores = []
+   index = -1
+   for element in all_kishores:
+      index += 1
+      name_parts = element.text.split()
+      if not name_parts:
+         continue
+      bkid = name_parts[0]
+      if bkid in attended_kishores:
+         radio_button = element.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{index}]/td[10]/label/input')
+         radio_button.click()
+         updated_kishores.append(bkid)
+         time.sleep(0.5)
+
+   not_found = [kid for kid in attended_kishores if kid not in updated_kishores]
+   if not_found:
+      print(f"Kishores not found in system: {not_found}")
+
+   print(f"Successfully marked {len(updated_kishores)} Kishores as Present")
+
+   # --- Save Changes ---
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
+   print("Saved attendance successfully!")
+   time.sleep(5)
+
+   # --- Send Telegram Success Notification ---
+   sunday_date = get_this_week_sunday(date_string)
+   telegram_message = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
+   asyncio.run(send_telegram_message(telegram_message))
+   print(f"Telegram notification sent: {telegram_message}")

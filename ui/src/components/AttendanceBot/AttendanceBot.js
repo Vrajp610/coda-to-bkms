@@ -5,11 +5,6 @@ import AttendanceForm from "../AttendanceForm/AttendanceForm";
 
 const VERSION = "1.0.0"; // Define the version here
 
-const API_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://vrajpatelbe.vercel.app/run-bot"
-    : "http://localhost:8000/run-bot";
-
 const AttendanceBot = () => {
   const [date, setDate] = useState(null);
   const [group, setGroup] = useState("");
@@ -31,7 +26,7 @@ const AttendanceBot = () => {
     setLoading(true);
     setStatus("");
     try {
-      const response = await axios.post(API_URL, {
+      const response = await axios.post("http://localhost:8000/run-bot", {
         date: formattedDate,
         group,
         sabhaHeld,
