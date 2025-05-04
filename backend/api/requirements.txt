@@ -6,3 +6,5 @@ pandas
 codaio
 pydantic
 python-dotenv
+chromedriver-autoinstaller
+setuptools
