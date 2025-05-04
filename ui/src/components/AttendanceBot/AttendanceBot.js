@@ -26,7 +26,7 @@ const AttendanceBot = () => {
     setLoading(true);
     setStatus("");
     try {
-      const response = await axios.post("http://ec2-18-205-160-8.compute-1.amazonaws.com:8000/run-bot", {
+      const response = await axios.post("http://18.205.160.8:8000/run-bot", {
         date: formattedDate,
         group,
         sabhaHeld,
