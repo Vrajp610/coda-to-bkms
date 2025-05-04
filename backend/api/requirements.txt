@@ -1,11 +1,9 @@
 fastapi
 uvicorn
-selenium
 python-telegram-bot
 pandas
 codaio
 pydantic
 python-dotenv
-chromedriver-autoinstaller
 setuptools
 pyppeteer

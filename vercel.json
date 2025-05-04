@@ -12,5 +12,10 @@
       "src": "/(.*)",
       "dest": "backend/api/index.py"
     }
-  ]
+  ],
+  "functions": {
+    "backend/api/index.py": {
+      "includeFiles": "node_modules/puppeteer/.local-chromium/**"
+    }
+  }
 }
