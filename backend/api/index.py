@@ -2,8 +2,8 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from src.coda import format_data
-from src.bkms import update_sheet
+from .src.coda import format_data
+from .src.bkms import update_sheet
 
 app = FastAPI()
 
