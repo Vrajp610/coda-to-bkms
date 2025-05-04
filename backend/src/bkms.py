@@ -134,6 +134,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
          radio_button = element.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{index}]/td[10]/label/input')
          radio_button.click()
          updated_kishores.append(bkid)
+         time.sleep(0.5)
 
    not_found = [kid for kid in attended_kishores if kid not in updated_kishores]
    if not_found:

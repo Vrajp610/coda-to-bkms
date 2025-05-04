@@ -3,6 +3,8 @@ import axios from "axios";
 import styles from "./AttendanceBot.module.css";
 import AttendanceForm from "../AttendanceForm/AttendanceForm";
 
+const VERSION = "1.0.0"; // Define the version here
+
 const AttendanceBot = () => {
   const [date, setDate] = useState(null);
   const [group, setGroup] = useState("");
@@ -57,6 +59,7 @@ const AttendanceBot = () => {
         loading={loading}
         runBot={runBot}
       />
+      <footer className={styles.footer}>Version: {VERSION}</footer>
     </div>
   );
 };
