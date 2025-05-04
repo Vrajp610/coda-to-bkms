@@ -1,10 +1,10 @@
 import time
 import asyncio
 from selenium.webdriver.common.by import By
-from backend.api.src.utils.telegramUtils import send_telegram_message
-from backend.api.src.utils.dateUtils import calculate_week_number, get_this_week_sunday
-from backend.api.src.utils.chromeUtils import get_chrome_driver
-from backend.api.src.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
+from src.utils.telegramUtils import send_telegram_message
+from src.utils.dateUtils import calculate_week_number, get_this_week_sunday
+from src.utils.chromeUtils import get_chrome_driver
+from src.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
 
 # --- BKMS login page ---
 url = BKMS_LOGIN_URL

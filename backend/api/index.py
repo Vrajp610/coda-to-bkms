@@ -2,11 +2,8 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api.src.coda import format_data
-from backend.api.src.bkms import update_sheet
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from src.coda import format_data
+from src.bkms import update_sheet
 
 app = FastAPI()
 
@@ -35,3 +32,8 @@ def run_bot(input_data: BotInput):
         return {"message": f"{count} Kishores found. BKMS updated successfully."}
     except Exception as e:
         return {"error": str(e)}
+
+# Remove this block for production
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
