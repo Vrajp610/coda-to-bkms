@@ -9,10 +9,14 @@ export const filterValidSundays = (date) => {
     const twoWeeksAgoSunday = new Date(currentSunday);
     twoWeeksAgoSunday.setDate(currentSunday.getDate() - 14);
 
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + (7 - today.getDay()));
+
     const allowedDates = [
         currentSunday.toDateString(),
         oneWeekAgoSunday.toDateString(),
         twoWeeksAgoSunday.toDateString(),
+        nextSunday.toDateString(), 
     ];
 
     return date.getDay() === 0 && allowedDates.includes(date.toDateString());
