@@ -1,21 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "backend/api/index.py",
-      "use": "@vercel/python",
-      "config": { "runtime": "python3.9" }
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "backend/api/index.py"
+      "dest": "api/index.py"
     }
   ],
   "functions": {
-    "backend/api/index.py": {
-      "includeFiles": "node_modules/puppeteer/.local-chromium/**"
+    "api/index.py": {
+      "runtime": "python@3.9"
     }
   }
 }
