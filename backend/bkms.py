@@ -24,7 +24,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(PASSWORD)
    print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(60)
+   time.sleep(30)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
 
@@ -147,9 +147,9 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    print(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
 
    # Find kishores from attended_kishores that are not present in BKMS at all
-   not_found_in_table = [kid for kid in attended_kishores if kid not in table_bkids]
-   if not_found_in_table:
-      print(f"Kishores not found in BKMS: {not_found_in_table}")
+   not_found_in_bkms = [kid for kid in attended_kishores if kid not in table_bkids]
+   if not_found_in_bkms:
+      print(f"Kishores not found in BKMS: {not_found_in_bkms}")
 
    # --- Save Changes ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
@@ -161,3 +161,10 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    telegram_message = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
    asyncio.run(send_telegram_message(telegram_message))
    print(f"Telegram notification sent: {telegram_message}")
+
+   # --- Return attendance marking results instead of sending Telegram ---
+   return {
+      "marked_present": len(updated_kishores),
+      "not_marked": len(attended_kishores) - len(updated_kishores),
+      "not_found_in_bkms": not_found_in_bkms
+   }

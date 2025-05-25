@@ -65,4 +65,26 @@
     margin-top: 15px;
     font-weight: bold;
     font-size: 16px;
+    color: #328136;
+  }
+
+  .markedPresent {
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #328136;
+  }
+
+  .notMarked {
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #b43030;
+  }
+
+  .notFoundInBkms {
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #b43030;
   }

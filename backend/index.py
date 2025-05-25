@@ -30,7 +30,12 @@ def run_bot(input_data: BotInput):
         attendance, count = format_data(input_data.group, input_data.date)
         if isinstance(attendance, str):
             return {"message": attendance}
-        update_sheet(attendance, input_data.group, input_data.sabhaHeld, input_data.p2Guju, input_data.date, input_data.prepCycleDone)
-        return {"message": f"{count} Kishores found. BKMS updated successfully."}
+        result = update_sheet(attendance, input_data.group, input_data.sabhaHeld, input_data.p2Guju, input_data.date, input_data.prepCycleDone)
+        return {
+            "message": f"{count} Kishores found in Coda",
+            "marked_present": result["marked_present"],
+            "not_marked": result["not_marked"],
+            "not_found_in_bkms": result["not_found_in_bkms"]
+        }
     except Exception as e:
         return {"error": str(e)}

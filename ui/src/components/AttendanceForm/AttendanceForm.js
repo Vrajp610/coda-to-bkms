@@ -5,6 +5,7 @@ import styles from "./AttendanceForm.module.css";
 import { filterValidSundays, getStatusColor } from "../../utils/functions";
 import SelectField from "../SelectField/SelectField";
 import Button from "../Button/Button";
+import { CONSTANTS } from "../../utils/CONSTANTS";
 
 const AttendanceForm = ({
   date,
@@ -20,6 +21,9 @@ const AttendanceForm = ({
   status,
   loading,
   runBot,
+  markedPresent,
+  notMarked,
+  notFoundInBkms,
 }) => {
   return (
     <div className={styles.form}>
@@ -27,8 +31,8 @@ const AttendanceForm = ({
         selected={date}
         onChange={(selected) => setDate(selected)}
         filterDate={filterValidSundays}
-        placeholderText="Select a valid Sunday"
-        dateFormat="MMMM d"
+        placeholderText={CONSTANTS.SELECT_A_VALID_SUNDAY}
+        dateFormat={CONSTANTS.DATE_FORMAT}
         className={styles.input}
       />
 
@@ -36,46 +40,48 @@ const AttendanceForm = ({
         value={group}
         onChange={(e) => setGroup(e.target.value)}
         options={[
-          { value: "Saturday K1", label: "Saturday K1" },
-          { value: "Saturday K2", label: "Saturday K2" },
-          { value: "Sunday K1", label: "Sunday K1" },
-          { value: "Sunday K2", label: "Sunday K2" },
+          { value: CONSTANTS.SATURDAY_K1, label: CONSTANTS.SATURDAY_K1 },
+          { value: CONSTANTS.SATURDAY_K2, label: CONSTANTS.SATURDAY_K2 },
+          { value: CONSTANTS.SUNDAY_K1, label: CONSTANTS.SUNDAY_K1 },
+          { value: CONSTANTS.SUNDAY_K2, label: CONSTANTS.SUNDAY_K2 },
         ]}
-        placeholder="Select Group"
-        ariaLabel="Select Group"
+        placeholder={CONSTANTS.SELECT_GROUP}
+        ariaLabel={CONSTANTS.SELECT_GROUP}
       />
 
       <SelectField
         value={sabhaHeld}
         onChange={(e) => setSabhaHeld(e.target.value)}
         options={[
-          { value: "Yes", label: "Yes" },
-          { value: "No", label: "No" },
+          { value: CONSTANTS.YES, label: CONSTANTS.YES },
+          { value: CONSTANTS.NO, label: CONSTANTS.NO },
         ]}
-        placeholder="Was Sabha Held?"
-        ariaLabel="Was Sabha Held?"
+        placeholder={CONSTANTS.WAS_SABHA_HELD}
+        ariaLabel={CONSTANTS.WAS_SABHA_HELD}
       />
 
-      {sabhaHeld === "Yes" && (
+      {sabhaHeld === CONSTANTS.YES && (
         <>
           <SelectField
             value={p2Guju}
             onChange={(e) => setP2Guju(e.target.value)}
             options={[
-              { value: "Yes", label: "Yes" },
-              { value: "No", label: "No" },
+              { value: CONSTANTS.YES, label: CONSTANTS.YES },
+              { value: CONSTANTS.NO, label: CONSTANTS.NO },
             ]}
-            placeholder="Was P2 in Guju?"
+            placeholder={CONSTANTS.WAS_P2_IN_GUJU}
+            ariaLabel={CONSTANTS.WAS_P2_IN_GUJU}
           />
 
           <SelectField
             value={prepCycleDone}
             onChange={(e) => setPrepCycleDone(e.target.value)}
             options={[
-              { value: "Yes", label: "Yes" },
-              { value: "No", label: "No" },
+              { value: CONSTANTS.YES, label: CONSTANTS.YES },
+              { value: CONSTANTS.NO, label: CONSTANTS.NO },
             ]}
-            placeholder="2 Week Prep Cycle Done?"
+            placeholder={CONSTANTS.PREP_CYCLE_DONE}
+            ariaLabel={CONSTANTS.PREP_CYCLE_DONE}
           />
         </>
       )}
@@ -87,15 +93,33 @@ const AttendanceForm = ({
           !date ||
           !group ||
           !sabhaHeld ||
-          (sabhaHeld === "Yes" && (!p2Guju || !prepCycleDone))
+          (sabhaHeld === CONSTANTS.YES && (!p2Guju || !prepCycleDone))
         }
       >
-        {loading ? "Running..." : "Run Bot"}
+        {loading ? CONSTANTS.RUNNING : CONSTANTS.RUN_BOT}
       </Button>
 
       {status && (
-        <p className={styles.status} style={{ color: getStatusColor(status) }}>
+        <p className={styles.status}>
           {status}
+        </p>
+      )}
+  
+      {markedPresent !== null && (
+        <p className={styles.markedPresent}>
+          {CONSTANTS.KISHORES_CLICKED} {markedPresent}
+        </p>
+      )}
+
+      {notMarked !== null && (
+        <p className={styles.notMarked}>
+         {CONSTANTS.KISHORES_NOT_CLICKED} {notMarked}
+        </p>
+      )}
+
+      {notFoundInBkms !== null && (
+        <p className={styles.notFoundInBkms}>
+          {CONSTANTS.KISHORES_NOT_FOUND} {notFoundInBkms}
         </p>
       )}
     </div>
