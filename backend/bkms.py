@@ -72,7 +72,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(1)
 
    # --- Sabha Setup Checklist (Done / Not Done) ---
-   print("Filling Sabha Setup Checklist")
+   print("Filling Meeting And Preparations Section in BKMS")
       # Karyakar Meeting - Done
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[1]/label[2]/div/ins').click()
 
@@ -93,7 +93,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
 
    # --- Content Checklist (Sabha Activities) ---
-   print("Filling Content Checklist")
+   print("Filling Syllabus Usage Section in BKMS")
    content_xpaths = [
       (1, 2),  # Bapa's Ashirwad - Done
       (2, 2),  # Dhoon & Prarthana - Done
@@ -123,6 +123,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Update Attendance: Mark Present Kishores ---
    all_kishores = driver.find_elements(By.XPATH, '//tr[@role="row"]')
    updated_kishores = []
+   table_bkids = set()
    index = -1
    for element in all_kishores:
       index += 1
@@ -130,17 +131,25 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       if not name_parts:
          continue
       bkid = name_parts[0]
+      table_bkids.add(bkid)
       if bkid in attended_kishores:
          radio_button = element.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{index}]/td[10]/label/input')
          radio_button.click()
          updated_kishores.append(bkid)
          time.sleep(0.5)
 
-   not_found = [kid for kid in attended_kishores if kid not in updated_kishores]
-   if not_found:
-      print(f"Kishores not found in system: {not_found}")
+   # Find kishores that are present in the BKMS but not marked as present (should be empty unless logic above changes)
+   not_marked = [kid for kid in attended_kishores if kid in table_bkids and kid not in updated_kishores]
+   if not_marked:
+      print(f"Kishores found in BKMS but not marked present: {not_marked}")
 
    print(f"Successfully marked {len(updated_kishores)} Kishores as Present")
+   print(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
+
+   # Find kishores from attended_kishores that are not present in BKMS at all
+   not_found_in_table = [kid for kid in attended_kishores if kid not in table_bkids]
+   if not_found_in_table:
+      print(f"Kishores not found in BKMS: {not_found_in_table}")
 
    # --- Save Changes ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
