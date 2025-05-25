@@ -2,7 +2,7 @@ import React from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./AttendanceForm.module.css";
-import { filterValidSundays, getStatusColor } from "../../utils/functions";
+import { filterValidSundays } from "../../utils/functions";
 import SelectField from "../SelectField/SelectField";
 import Button from "../Button/Button";
 import { CONSTANTS } from "../../utils/CONSTANTS";

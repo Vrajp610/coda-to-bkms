@@ -21,9 +21,3 @@ export const filterValidSundays = (date) => {
 
     return date.getDay() === 0 && allowedDates.includes(date.toDateString());
 };
-
-export const getStatusColor = (status) => {
-    if (status.includes("successfully") || status.includes("✅")) return "green";
-    if (status.includes("wrong") || status.includes("Error") || status.includes("failed")) return "red";
-    return "black";
-};
