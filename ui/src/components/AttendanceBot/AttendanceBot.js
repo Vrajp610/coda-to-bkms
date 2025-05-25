@@ -26,7 +26,9 @@ const AttendanceBot = () => {
     setLoading(true);
     setStatus("");
     try {
-      const response = await axios.post("http://localhost:8000/run-bot", {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
+      const response = await axios.post(`${API_BASE_URL}/run-bot`, {
         date: formattedDate,
         group,
         sabhaHeld,
