@@ -10,3 +10,4 @@ pyppeteer
 uvicorn[standard]
 openpyxl
 httpx
+selenium
