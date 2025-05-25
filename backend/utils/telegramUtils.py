@@ -1,8 +1,12 @@
+import os
 from telegram import Bot
+from dotenv import load_dotenv
 
-# Get sensitive data from environment variables
-TOKEN = '8008353281:AAGKOYWJ9Hb5t8ilMQ4i2d3Z3g-0WGC5oLE'
-CHAT_ID = '-1001570996136'
+# Load environment variables
+load_dotenv()
+
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 async def send_telegram_message(message: str):
     """Send a message to a Telegram chat."""

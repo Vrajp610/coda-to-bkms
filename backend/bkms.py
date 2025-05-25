@@ -1,10 +1,10 @@
 import time
 import asyncio
 from selenium.webdriver.common.by import By
-from src.utils.telegramUtils import send_telegram_message
-from src.utils.dateUtils import calculate_week_number, get_this_week_sunday
-from src.utils.chromeUtils import get_chrome_driver
-from src.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
+from utils.telegramUtils import send_telegram_message
+from utils.dateUtils import calculate_week_number, get_this_week_sunday
+from utils.chromeUtils import get_chrome_driver
+from utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
 
 # --- BKMS login page ---
 url = BKMS_LOGIN_URL
@@ -23,8 +23,8 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    driver.find_element(By.ID, "email").send_keys(EMAIL)
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(PASSWORD)
-   print("Please solve CAPTCHA manually (30 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(30)
+   print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
+   time.sleep(60)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
 

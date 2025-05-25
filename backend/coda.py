@@ -1,9 +1,18 @@
 import pandas as pd
 from codaio import Coda
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
-#Coda API Key
-coda = Coda(api_key='35bd65d2-cfd6-4769-85d6-ae2f37f5e99f')
+load_dotenv()
+
+# Get Coda API Key from environment
+api_key = os.getenv("CODA_API_KEY")
+if not api_key:
+    raise EnvironmentError("CODA_API_KEY is not set in environment variables.")
+
+# Initialize Coda client
+coda = Coda(api_key=api_key)
 
 #Coda Doc ID
 doc_id = 'zHizETNk43'
