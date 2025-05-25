@@ -1,4 +1,3 @@
-import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,8 +31,3 @@ def run_bot(input_data: BotInput):
         return {"message": f"{count} Kishores found. BKMS updated successfully."}
     except Exception as e:
         return {"error": str(e)}
-
-# Remove this block for production
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
