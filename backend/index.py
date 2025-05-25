@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from coda import format_data
-from bkms import update_sheet
+from backend.coda import format_data
+from backend.bkms import update_sheet
 
 app = FastAPI()
 
