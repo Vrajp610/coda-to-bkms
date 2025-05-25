@@ -1,4 +1,3 @@
-import React from "react";
 import styles from "./SelectField.module.css";
 
 const SelectField = ({ value, onChange, options, placeholder, ariaLabel }) => {

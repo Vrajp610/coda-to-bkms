@@ -1,4 +1,3 @@
-import React from "react";
 import AttendanceBot from "./components/AttendanceBot/AttendanceBot";
 
 function App() {

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import axios from "axios";
+import { useState } from "react";
 import styles from "./AttendanceBot.module.css";
 import AttendanceForm from "../AttendanceForm/AttendanceForm";
 import { CONSTANTS } from "../../utils/CONSTANTS";
+import { runAttendanceBot } from "../../utils/functions";
 
 const AttendanceBot = () => {
   const [date, setDate] = useState(null);
@@ -16,39 +16,19 @@ const AttendanceBot = () => {
   const [notMarked, setNotMarked] = useState(null);
   const [notFoundInBkms, setNotFoundInBkms] = useState(null);
 
-  const runBot = async () => {
-    if (!date || !group || !sabhaHeld || (sabhaHeld === CONSTANTS.YES && (!p2Guju || !prepCycleDone))) {
-      window.alert(CONSTANTS.REQUIRED_FIELDS);
-      return;
-    }
-
-    const options = { month: CONSTANTS.LONG, day: CONSTANTS.NUMERIC };
-    const formattedDate = date.toLocaleDateString("en-US", options);
-
-    setLoading(true);
-    setStatus("");
-    setMarkedPresent(null);
-    setNotMarked(null);
-    setNotFoundInBkms(null);
-    try {
-      const API_BASE_URL = process.env.REACT_APP_API_URL || CONSTANTS.LOCAL_URL;
-
-      const response = await axios.post(`${API_BASE_URL}/run-bot`, {
-        date: formattedDate,
-        group,
-        sabhaHeld,
-        p2Guju,
-        prepCycleDone,
-      });
-      setStatus(response.data.message || response.data.error);
-      if (response.data.marked_present !== undefined) setMarkedPresent(response.data.marked_present);
-      if (response.data.not_marked !== undefined) setNotMarked(response.data.not_marked);
-      if (response.data.not_found_in_bkms !== undefined) setNotFoundInBkms(response.data.not_found_in_bkms);
-    } catch (error) {
-      setStatus(CONSTANTS.SOMETHING_WENT_WRONG);
-    }
-    setLoading(false);
-  };
+  const runBot = () =>
+    runAttendanceBot({
+      date,
+      group,
+      sabhaHeld,
+      p2Guju,
+      prepCycleDone,
+      setStatus,
+      setMarkedPresent,
+      setNotMarked,
+      setNotFoundInBkms,
+      setLoading,
+    });
 
   return (
     <div className={styles.container}>
