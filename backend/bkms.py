@@ -144,11 +144,11 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       print(f"Kishores found in BKMS but not marked present: {not_marked}")
 
    print(f"Successfully marked {len(updated_kishores)} Kishores as Present")
-   print(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
 
    # Find kishores from attended_kishores that are not present in BKMS at all
    not_found_in_bkms = [kid for kid in attended_kishores if kid not in table_bkids]
    if not_found_in_bkms:
+      print(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
       print(f"Kishores not found in BKMS: {not_found_in_bkms}")
 
    # --- Save Changes ---
