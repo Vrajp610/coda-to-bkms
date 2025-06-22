@@ -1,4 +1,4 @@
-import axios from "axios";
+import * as axios from "axios";
 import { CONSTANTS } from "./CONSTANTS";
 
 export const filterValidSundays = (date) => {

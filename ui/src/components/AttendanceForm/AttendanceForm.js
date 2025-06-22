@@ -6,7 +6,7 @@ import { CONSTANTS } from "../../utils/CONSTANTS";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import Alert from "@mui/material/Alert";
+import AttendanceAlerts from "../AttendanceAlerts/AttendanceAlerts";
 
 const AttendanceForm = ({
   date,
@@ -101,29 +101,14 @@ const AttendanceForm = ({
         {loading ? CONSTANTS.RUNNING : CONSTANTS.RUN_BOT}
       </Button>
 
-      {status && (
-        <Alert severity="info" className={styles.status}>
-          {status}
-        </Alert>
-      )}
-  
-      {markedPresent !== null && (
-        <Alert severity="success" className={styles.markedPresent}>
-          {CONSTANTS.KISHORES_CLICKED} {markedPresent}
-        </Alert>
-      )}
-
-      {notMarked !== null && (
-        <Alert severity="error" className={styles.notMarked}>
-         {CONSTANTS.KISHORES_NOT_CLICKED} {notMarked}
-        </Alert>
-      )}
-
-      {notFoundInBkms !== null && (
-        <Alert severity="error" className={styles.notFoundInBkms}>
-          {CONSTANTS.KISHORES_NOT_FOUND} {notFoundInBkms}
-        </Alert>
-      )}
+      <AttendanceAlerts
+        status={status}
+        markedPresent={markedPresent}
+        notMarked={notMarked}
+        notFoundInBkms={notFoundInBkms}
+        styles={styles}
+        CONSTANTS={CONSTANTS}
+      />
     </div>
   );
 };

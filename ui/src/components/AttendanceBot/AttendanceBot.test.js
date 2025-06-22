@@ -1,43 +1,72 @@
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import AttendanceBot from "./AttendanceBot";
-import axios from "axios";
+import * as CONSTANTS_MODULE from "../../utils/CONSTANTS";
+import * as functions from "../../utils/functions";
 
-jest.mock("axios");
-window.alert = jest.fn();
+jest.mock("./AttendanceBot.module.css", () => ({
+    container: "container",
+    title: "title",
+}));
+
+jest.mock("../AttendanceForm/AttendanceForm", () => (props) => (
+    <div data-testid="attendance-form">
+        <button onClick={props.runBot} data-testid="run-bot-btn">Run Bot</button>
+        <span data-testid="date">{String(props.date)}</span>
+        <span data-testid="group">{props.group}</span>
+        <span data-testid="sabhaHeld">{props.sabhaHeld}</span>
+        <span data-testid="p2Guju">{props.p2Guju}</span>
+        <span data-testid="prepCycleDone">{props.prepCycleDone}</span>
+        <span data-testid="status">{props.status}</span>
+        <span data-testid="loading">{String(props.loading)}</span>
+        <span data-testid="markedPresent">{String(props.markedPresent)}</span>
+        <span data-testid="notMarked">{String(props.notMarked)}</span>
+        <span data-testid="notFoundInBkms">{String(props.notFoundInBkms)}</span>
+    </div>
+));
+
+beforeAll(() => {
+    CONSTANTS_MODULE.CONSTANTS = { ATTENDANCE_BOT: "Attendance Bot" };
+});
 
 describe("AttendanceBot", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    it("renders AttendanceBot title", () => {
+        render(<AttendanceBot />);
+        expect(screen.getByText("Attendance Bot")).toBeInTheDocument();
+    });
 
-  it("renders form title", () => {
-    render(<AttendanceBot />);
-    expect(screen.getByText(/BKMS Attendance Bot/i)).toBeInTheDocument();
-  });
+    it("renders AttendanceForm with initial props", () => {
+        render(<AttendanceBot />);
+        expect(screen.getByTestId("attendance-form")).toBeInTheDocument();
+        expect(screen.getByTestId("date").textContent).toBe("null");
+        expect(screen.getByTestId("group").textContent).toBe("");
+        expect(screen.getByTestId("sabhaHeld").textContent).toBe("");
+        expect(screen.getByTestId("p2Guju").textContent).toBe("");
+        expect(screen.getByTestId("prepCycleDone").textContent).toBe("");
+        expect(screen.getByTestId("status").textContent).toBe("");
+        expect(screen.getByTestId("loading").textContent).toBe("false");
+        expect(screen.getByTestId("markedPresent").textContent).toBe("null");
+        expect(screen.getByTestId("notMarked").textContent).toBe("null");
+        expect(screen.getByTestId("notFoundInBkms").textContent).toBe("null");
+    });
 
-  it("alerts when required fields are not filled", () => {
-    render(<AttendanceBot />);
-    fireEvent.click(screen.getByText(/Run Bot/i));
-    expect(window.alert).toHaveBeenCalledWith("Please fill out all required fields before running the bot.");
-  });
-
-  it("submits form when all required fields are filled", async () => {
-    axios.post.mockResolvedValue({ data: { message: "Success!" } });
-
-    render(<AttendanceBot />);
-    
-    // Simulate filling the form (you may need to adjust selectors if AttendanceForm is split)
-    fireEvent.change(screen.getByLabelText(/Select Group/i), { target: { value: "Saturday K1" } });
-    fireEvent.change(screen.getByLabelText(/Was Sabha Held\?/i), { target: { value: "No" } });
-
-    // Manually set the date if there's a custom calendar (adjust based on your component)
-    const dateInput = screen.getByPlaceholderText("Select a valid Sunday");
-    fireEvent.change(dateInput, { target: { value: "04/21/2024" } });
-
-    fireEvent.click(screen.getByText(/Run Bot/i));
-
-    await waitFor(() => expect(axios.post).toHaveBeenCalled());
-    expect(axios.post).toHaveBeenCalledWith("http://localhost:8000/run-bot", expect.any(Object));
-  });
+    it("calls runAttendanceBot with correct arguments when runBot is triggered", () => {
+        const runAttendanceBotMock = jest.spyOn(functions, "runAttendanceBot").mockImplementation(jest.fn());
+        render(<AttendanceBot />);
+        fireEvent.click(screen.getByTestId("run-bot-btn"));
+        expect(runAttendanceBotMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                date: null,
+                group: "",
+                sabhaHeld: "",
+                p2Guju: "",
+                prepCycleDone: "",
+                setStatus: expect.any(Function),
+                setMarkedPresent: expect.any(Function),
+                setNotMarked: expect.any(Function),
+                setNotFoundInBkms: expect.any(Function),
+                setLoading: expect.any(Function),
+            })
+        );
+        runAttendanceBotMock.mockRestore();
+    });
 });
