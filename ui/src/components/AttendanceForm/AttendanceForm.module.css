@@ -40,6 +40,33 @@
     font-size: 16px;
   }
   
+  .input :global(.MuiInputBase-root),
+  .input :global(.MuiOutlinedInput-root) {
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5;
+    letter-spacing: 0.00938em;
+    color: rgba(0, 0, 0, 0.87);
+    cursor: text;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  .input {
+    width: 100%;
+  }
+
+  .select {
+    width: 100%;
+  }
+  
   .button {
     background-color: #4CAF50;
     color: white;

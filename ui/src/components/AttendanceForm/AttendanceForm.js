@@ -1,10 +1,12 @@
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import styles from "./AttendanceForm.module.css";
 import { filterValidSundays } from "../../utils/functions";
 import SelectField from "../SelectField/SelectField";
 import Button from "../Button/Button";
 import { CONSTANTS } from "../../utils/CONSTANTS";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import Alert from "@mui/material/Alert";
 
 const AttendanceForm = ({
   date,
@@ -26,14 +28,15 @@ const AttendanceForm = ({
 }) => {
   return (
     <div className={styles.form}>
-      <DatePicker
-        selected={date}
-        onChange={(selected) => setDate(selected)}
-        filterDate={filterValidSundays}
-        placeholderText={CONSTANTS.SELECT_A_VALID_SUNDAY}
-        dateFormat={CONSTANTS.DATE_FORMAT}
-        className={styles.input}
-      />
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <DatePicker
+          label={CONSTANTS.SELECT_A_VALID_SUNDAY}
+          value={date}
+          onChange={(selected) => setDate(selected)}
+          shouldDisableDate={(date) => !filterValidSundays(date)}
+          slotProps={{ textField: { className: styles.input } }}
+        />
+      </LocalizationProvider>
 
       <SelectField
         value={group}
@@ -99,27 +102,27 @@ const AttendanceForm = ({
       </Button>
 
       {status && (
-        <p className={styles.status}>
+        <Alert severity="info" className={styles.status}>
           {status}
-        </p>
+        </Alert>
       )}
   
       {markedPresent !== null && (
-        <p className={styles.markedPresent}>
+        <Alert severity="success" className={styles.markedPresent}>
           {CONSTANTS.KISHORES_CLICKED} {markedPresent}
-        </p>
+        </Alert>
       )}
 
       {notMarked !== null && (
-        <p className={styles.notMarked}>
+        <Alert severity="error" className={styles.notMarked}>
          {CONSTANTS.KISHORES_NOT_CLICKED} {notMarked}
-        </p>
+        </Alert>
       )}
 
       {notFoundInBkms !== null && (
-        <p className={styles.notFoundInBkms}>
+        <Alert severity="error" className={styles.notFoundInBkms}>
           {CONSTANTS.KISHORES_NOT_FOUND} {notFoundInBkms}
-        </p>
+        </Alert>
       )}
     </div>
   );

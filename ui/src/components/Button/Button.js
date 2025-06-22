@@ -1,14 +1,15 @@
-import styles from "./Button.module.css";
+import { Button as MUIButton } from "@mui/material";
 
 const Button = ({ onClick, disabled, className, children }) => {
   return (
-    <button
+    <MUIButton
       onClick={onClick}
       disabled={disabled}
-      className={`${styles.button} ${disabled ? styles.buttonDisabled : ""} ${className}`}
+      className={className}
+      variant="contained"
     >
       {children}
-    </button>
+    </MUIButton>
   );
 };
 
