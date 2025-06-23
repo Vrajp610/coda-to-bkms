@@ -7,6 +7,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import AttendanceAlerts from "../AttendanceAlerts/AttendanceAlerts";
+import SignInModal from "../SignInModal/SignInModal";
 
 const AttendanceForm = ({
   date,
@@ -25,6 +26,9 @@ const AttendanceForm = ({
   markedPresent,
   notMarked,
   notFoundInBkms,
+  signInOpen,
+  setSignInOpen,
+  handleSignInSuccess,
 }) => {
   return (
     <div className={styles.form}>
@@ -108,6 +112,11 @@ const AttendanceForm = ({
         notFoundInBkms={notFoundInBkms}
         styles={styles}
         CONSTANTS={CONSTANTS}
+      />
+      <SignInModal
+        open={signInOpen}
+        onClose={() => setSignInOpen(false)}
+        onSuccess={handleSignInSuccess}
       />
     </div>
   );

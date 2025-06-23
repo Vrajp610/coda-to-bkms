@@ -2,7 +2,7 @@ import { useState } from "react";
 import styles from "./AttendanceBot.module.css";
 import AttendanceForm from "../AttendanceForm/AttendanceForm";
 import { CONSTANTS } from "../../utils/CONSTANTS";
-import { runAttendanceBot } from "../../utils/functions";
+import { runAttendanceBot, handleRunBotHelper, handleSignInSuccessHelper } from "../../utils/functions";
 
 const AttendanceBot = () => {
   const [date, setDate] = useState(null);
@@ -15,6 +15,8 @@ const AttendanceBot = () => {
   const [markedPresent, setMarkedPresent] = useState(null);
   const [notMarked, setNotMarked] = useState(null);
   const [notFoundInBkms, setNotFoundInBkms] = useState(null);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
 
   const runBot = () =>
     runAttendanceBot({
@@ -46,10 +48,13 @@ const AttendanceBot = () => {
         setPrepCycleDone={setPrepCycleDone}
         status={status}
         loading={loading}
-        runBot={runBot}
+        runBot={() => handleRunBotHelper(signedIn, setSignInOpen, runBot)}
         markedPresent={markedPresent}
         notMarked={notMarked}
         notFoundInBkms={notFoundInBkms}
+        signInOpen={signInOpen}
+        setSignInOpen={setSignInOpen}
+        handleSignInSuccess={() => handleSignInSuccessHelper(setSignedIn, setSignInOpen, runBot)}
       />
     </div>
   );

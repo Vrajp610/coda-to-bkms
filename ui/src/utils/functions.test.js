@@ -159,13 +159,11 @@ describe("runAttendanceBot", () => {
     });
 
     it("falls back to axios when axios.default is undefined", async () => {
-        // Save and unset axios.default
         const originalDefault = axios.default;
         delete axios.default;
         axios.post.mockResolvedValue({ data: {} });
         await runAttendanceBot(baseParams);
         expect(axios.post).toHaveBeenCalled();
-        // Restore axios.default
         axios.default = originalDefault;
     });
 });

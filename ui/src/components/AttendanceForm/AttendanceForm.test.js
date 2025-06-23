@@ -264,4 +264,30 @@ describe("AttendanceForm", () => {
         expect(shouldDisable("2024-06-09")).toBe(true);
         expect(shouldDisable("2024-06-16")).toBe(false);
     });
+
+    it("calls setSignInOpen(false) when SignInModal onClose is triggered", () => {
+        const setSignInOpen = jest.fn();
+        render(
+            <AttendanceForm
+                {...defaultProps}
+                signInOpen={true}
+                setSignInOpen={setSignInOpen}
+            />
+        );
+        jest.resetModules();
+        const SignInModal = ({ open, onClose }) => {
+            if (open) onClose();
+            return null;
+        };
+        jest.doMock("../SignInModal/SignInModal", () => SignInModal);
+        const AttendanceFormReloaded = require("./AttendanceForm").default;
+        render(
+            <AttendanceFormReloaded
+                {...defaultProps}
+                signInOpen={true}
+                setSignInOpen={setSignInOpen}
+            />
+        );
+        expect(setSignInOpen).toHaveBeenCalledWith(false);
+    });
 });

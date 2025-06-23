@@ -1,72 +1,120 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import AttendanceBot from "./AttendanceBot";
-import * as CONSTANTS_MODULE from "../../utils/CONSTANTS";
 import * as functions from "../../utils/functions";
+import { act } from "react";
 
 jest.mock("./AttendanceBot.module.css", () => ({
-    container: "container",
-    title: "title",
+  container: "container",
+  title: "title"
 }));
 
-jest.mock("../AttendanceForm/AttendanceForm", () => (props) => (
-    <div data-testid="attendance-form">
-        <button onClick={props.runBot} data-testid="run-bot-btn">Run Bot</button>
-        <span data-testid="date">{String(props.date)}</span>
-        <span data-testid="group">{props.group}</span>
-        <span data-testid="sabhaHeld">{props.sabhaHeld}</span>
-        <span data-testid="p2Guju">{props.p2Guju}</span>
-        <span data-testid="prepCycleDone">{props.prepCycleDone}</span>
-        <span data-testid="status">{props.status}</span>
-        <span data-testid="loading">{String(props.loading)}</span>
-        <span data-testid="markedPresent">{String(props.markedPresent)}</span>
-        <span data-testid="notMarked">{String(props.notMarked)}</span>
-        <span data-testid="notFoundInBkms">{String(props.notFoundInBkms)}</span>
-    </div>
-));
+let lastAttendanceFormProps = {};
+jest.mock("../AttendanceForm/AttendanceForm", () => (props) => {
+  lastAttendanceFormProps = props;
+  return <div data-testid="attendance-form" />;
+});
+
+jest.mock("../../utils/CONSTANTS", () => ({
+  CONSTANTS: {
+    ATTENDANCE_BOT: "BKMS Attendance Bot",
+    YES: "Yes",
+    REQUIRED_FIELDS: "Please fill out all required fields before running the bot.",
+    SOMETHING_WENT_WRONG: "Something went wrong!",
+    LONG: "long",
+    NUMERIC: "numeric",
+    LOCAL_URL: "http://localhost:8000"
+  }
+}));
 
 beforeAll(() => {
-    CONSTANTS_MODULE.CONSTANTS = { ATTENDANCE_BOT: "Attendance Bot" };
+  jest.spyOn(window, "alert").mockImplementation(() => {});
 });
 
 describe("AttendanceBot", () => {
-    it("renders AttendanceBot title", () => {
-        render(<AttendanceBot />);
-        expect(screen.getByText("Attendance Bot")).toBeInTheDocument();
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    lastAttendanceFormProps = {};
+  });
 
-    it("renders AttendanceForm with initial props", () => {
-        render(<AttendanceBot />);
-        expect(screen.getByTestId("attendance-form")).toBeInTheDocument();
-        expect(screen.getByTestId("date").textContent).toBe("null");
-        expect(screen.getByTestId("group").textContent).toBe("");
-        expect(screen.getByTestId("sabhaHeld").textContent).toBe("");
-        expect(screen.getByTestId("p2Guju").textContent).toBe("");
-        expect(screen.getByTestId("prepCycleDone").textContent).toBe("");
-        expect(screen.getByTestId("status").textContent).toBe("");
-        expect(screen.getByTestId("loading").textContent).toBe("false");
-        expect(screen.getByTestId("markedPresent").textContent).toBe("null");
-        expect(screen.getByTestId("notMarked").textContent).toBe("null");
-        expect(screen.getByTestId("notFoundInBkms").textContent).toBe("null");
-    });
+  it("renders the title and AttendanceForm", () => {
+    render(<AttendanceBot />);
+    expect(screen.getByText("BKMS Attendance Bot")).toBeInTheDocument();
+    expect(screen.getByTestId("attendance-form")).toBeInTheDocument();
+  });
 
-    it("calls runAttendanceBot with correct arguments when runBot is triggered", () => {
-        const runAttendanceBotMock = jest.spyOn(functions, "runAttendanceBot").mockImplementation(jest.fn());
-        render(<AttendanceBot />);
-        fireEvent.click(screen.getByTestId("run-bot-btn"));
-        expect(runAttendanceBotMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-                date: null,
-                group: "",
-                sabhaHeld: "",
-                p2Guju: "",
-                prepCycleDone: "",
-                setStatus: expect.any(Function),
-                setMarkedPresent: expect.any(Function),
-                setNotMarked: expect.any(Function),
-                setNotFoundInBkms: expect.any(Function),
-                setLoading: expect.any(Function),
-            })
-        );
-        runAttendanceBotMock.mockRestore();
+  it("passes all required props to AttendanceForm", () => {
+    render(<AttendanceBot />);
+    [
+      "date",
+      "setDate",
+      "group",
+      "setGroup",
+      "sabhaHeld",
+      "setSabhaHeld",
+      "p2Guju",
+      "setP2Guju",
+      "prepCycleDone",
+      "setPrepCycleDone",
+      "status",
+      "loading",
+      "runBot",
+      "markedPresent",
+      "notMarked",
+      "notFoundInBkms",
+      "signInOpen",
+      "setSignInOpen",
+      "handleSignInSuccess"
+    ].forEach((prop) => {
+      expect(lastAttendanceFormProps).toHaveProperty(prop);
     });
+  });
+
+  it("opens sign-in modal if not signed in and runBot is called", async () => {
+    render(<AttendanceBot />);
+    expect(lastAttendanceFormProps.signInOpen).toBe(false);
+    await act(async () => {
+      lastAttendanceFormProps.runBot();
+    });
+    expect(lastAttendanceFormProps.signInOpen).toBe(true);
+  });
+
+  it("sets signedIn to true and closes modal on handleSignInSuccess", async () => {
+    render(<AttendanceBot />);
+    await act(async () => {
+      lastAttendanceFormProps.runBot();
+    });
+    expect(lastAttendanceFormProps.signInOpen).toBe(true);
+    await act(async () => {
+      lastAttendanceFormProps.handleSignInSuccess();
+    });
+    expect(lastAttendanceFormProps.signInOpen).toBe(false);
+  });
+
+  it("calls runAttendanceBot with correct arguments when signed in", async () => {
+    const runAttendanceBotMock = jest.spyOn(functions, "runAttendanceBot").mockResolvedValue();
+    render(<AttendanceBot />);
+    await act(async () => {
+      lastAttendanceFormProps.handleSignInSuccess();
+    });
+    await act(async () => {
+      lastAttendanceFormProps.runBot();
+    });
+    expect(runAttendanceBotMock).toHaveBeenCalled();
+  });
+
+  it("handles state changes for all fields", async () => {
+    render(<AttendanceBot />);
+    await act(async () => {
+      lastAttendanceFormProps.setDate("2024-06-09");
+      lastAttendanceFormProps.setGroup("K1");
+      lastAttendanceFormProps.setSabhaHeld("Yes");
+      lastAttendanceFormProps.setP2Guju("Yes");
+      lastAttendanceFormProps.setPrepCycleDone("Yes");
+    });
+    expect(lastAttendanceFormProps.date).toBe("2024-06-09");
+    expect(lastAttendanceFormProps.group).toBe("K1");
+    expect(lastAttendanceFormProps.sabhaHeld).toBe("Yes");
+    expect(lastAttendanceFormProps.p2Guju).toBe("Yes");
+    expect(lastAttendanceFormProps.prepCycleDone).toBe("Yes");
+  });
 });

@@ -77,3 +77,17 @@ export async function runAttendanceBot({
   }
   setLoading(false);
 }
+
+export function handleRunBotHelper(signedIn, setSignInOpen, runBot) {
+  if (!signedIn) {
+    setSignInOpen(true);
+  } else {
+    runBot();
+  }
+}
+
+export function handleSignInSuccessHelper(setSignedIn, setSignInOpen, runBot) {
+  setSignedIn(true);
+  setSignInOpen(false);
+  runBot();
+}
