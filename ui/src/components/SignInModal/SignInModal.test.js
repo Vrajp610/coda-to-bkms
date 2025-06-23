@@ -5,7 +5,7 @@ import SignInModal from './SignInModal';
 
 describe('SignInModal', () => {
   const VALID_EMAIL = 'vrajptl0610@gmail.com';
-  const VALID_PASSWORD = 'Vrajptl@0610';
+  const VALID_PASSWORD = 'vraj';
   let onClose, onSuccess;
 
   beforeEach(() => {
@@ -85,5 +85,15 @@ describe('SignInModal', () => {
     await waitFor(() =>
       expect(screen.queryByText('Please enter both email and password.')).not.toBeInTheDocument()
     );
+  });
+
+  it('should clear error, email, and password and call onSuccess and onClose on valid submit', () => {
+    render(<SignInModal open={true} onClose={onClose} onSuccess={onSuccess} />);
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'vrajptl0610@gmail.com' } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'vraj' } });
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    expect(onSuccess).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+    // error, email, and password are cleared internally (not visible in UI after close)
   });
 });

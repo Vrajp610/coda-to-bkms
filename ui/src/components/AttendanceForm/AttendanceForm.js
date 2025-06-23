@@ -3,9 +3,7 @@ import { filterValidSundays } from "../../utils/functions";
 import SelectField from "../SelectField/SelectField";
 import Button from "../Button/Button";
 import { CONSTANTS } from "../../utils/CONSTANTS";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import DatePickerField from "../DatePickerField/DatePickerField";
 import AttendanceAlerts from "../AttendanceAlerts/AttendanceAlerts";
 import SignInModal from "../SignInModal/SignInModal";
 
@@ -32,15 +30,13 @@ const AttendanceForm = ({
 }) => {
   return (
     <div className={styles.form}>
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <DatePicker
-          label={CONSTANTS.SELECT_A_VALID_SUNDAY}
-          value={date}
-          onChange={(selected) => setDate(selected)}
-          shouldDisableDate={(date) => !filterValidSundays(date)}
-          slotProps={{ textField: { className: styles.input } }}
-        />
-      </LocalizationProvider>
+      <DatePickerField
+        label={CONSTANTS.SELECT_A_VALID_SUNDAY}
+        value={date}
+        onChange={(selected) => setDate(selected)}
+        shouldDisableDate={(date) => !filterValidSundays(date)}
+        slotProps={{ textField: { className: styles.input } }}
+      />
 
       <SelectField
         value={group}
