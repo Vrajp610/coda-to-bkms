@@ -94,6 +94,5 @@ describe('SignInModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
     expect(onSuccess).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
-    // error, email, and password are cleared internally (not visible in UI after close)
   });
 });

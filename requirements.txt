@@ -11,3 +11,4 @@ uvicorn[standard]
 openpyxl
 httpx
 selenium
+pytest-asyncio
