@@ -7,7 +7,7 @@ module.exports = {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
   },
   transformIgnorePatterns: [
-    "/node_modules/(?!(axios)/)", // allow axios to be transformed
+    "/node_modules/(?!(axios)/)",
   ],
   setupFilesAfterEnv: ["@testing-library/jest-dom/extend-expect"],
 };
