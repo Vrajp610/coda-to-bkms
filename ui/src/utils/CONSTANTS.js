@@ -22,4 +22,6 @@ export const CONSTANTS = {
   LOCAL_URL: "http://localhost:8000",
   SOMETHING_WENT_WRONG: "Something went wrong!",
   ATTENDANCE_BOT: "BKMS Attendance Bot",
+  VALID_EMAIL: process.env.REACT_APP_VALID_EMAIL,
+  VALID_PASSWORD: process.env.REACT_APP_VALID_PASSWORD,
 };

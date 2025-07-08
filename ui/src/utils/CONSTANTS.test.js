@@ -25,6 +25,8 @@ describe('CONSTANTS', () => {
     expect(CONSTANTS.LOCAL_URL).toBe("http://localhost:8000");
     expect(CONSTANTS.SOMETHING_WENT_WRONG).toBe("Something went wrong!");
     expect(CONSTANTS.ATTENDANCE_BOT).toBe("BKMS Attendance Bot");
+    expect(CONSTANTS.VALID_EMAIL).toBe(process.env.REACT_APP_VALID_EMAIL);
+    expect(CONSTANTS.VALID_PASSWORD).toBe(process.env.REACT_APP_VALID_PASSWORD);
   });
 
   it('should not have unexpected keys', () => {
@@ -32,7 +34,8 @@ describe('CONSTANTS', () => {
       "KISHORES_CLICKED", "KISHORES_NOT_CLICKED", "KISHORES_NOT_FOUND", "SELECT_A_VALID_SUNDAY",
       "DATE_FORMAT", "SATURDAY_K1", "SATURDAY_K2", "SUNDAY_K1", "SUNDAY_K2", "SELECT_GROUP",
       "YES", "NO", "WAS_SABHA_HELD", "WAS_P2_IN_GUJU", "PREP_CYCLE_DONE", "RUNNING", "RUN_BOT",
-      "REQUIRED_FIELDS", "LONG", "NUMERIC", "LOCAL_URL", "SOMETHING_WENT_WRONG", "ATTENDANCE_BOT"
+      "REQUIRED_FIELDS", "LONG", "NUMERIC", "LOCAL_URL", "SOMETHING_WENT_WRONG", "ATTENDANCE_BOT",
+      "VALID_EMAIL", "VALID_PASSWORD"
     ];
     expect(Object.keys(CONSTANTS).sort()).toEqual(expectedKeys.sort());
   });

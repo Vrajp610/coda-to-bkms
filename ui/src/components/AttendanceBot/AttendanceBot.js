@@ -1,9 +1,13 @@
 import { useState } from "react";
-import styles from "./AttendanceBot.module.css";
-import AttendanceForm from "../AttendanceForm/AttendanceForm";
-import { CONSTANTS } from "../../utils/CONSTANTS";
 import { runAttendanceBot, handleRunBotHelper, handleSignInSuccessHelper } from "../../utils/functions";
+import { CONSTANTS } from "../../utils/CONSTANTS";
+import AttendanceForm from "../AttendanceForm/AttendanceForm";
+import styles from "./AttendanceBot.module.css";
 
+/** * AttendanceBot component for managing attendance operations.
+ * It includes a form for inputting attendance details and running the attendance bot.
+ * @returns {JSX.Element} The rendered AttendanceBot component.
+ */
 const AttendanceBot = () => {
   const [date, setDate] = useState(null);
   const [group, setGroup] = useState("");

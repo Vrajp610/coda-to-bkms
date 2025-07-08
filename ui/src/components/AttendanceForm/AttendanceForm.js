@@ -1,12 +1,34 @@
-import styles from "./AttendanceForm.module.css";
-import { filterValidSundays } from "../../utils/functions";
 import SelectField from "../SelectField/SelectField";
 import Button from "../Button/Button";
-import { CONSTANTS } from "../../utils/CONSTANTS";
 import DatePickerField from "../DatePickerField/DatePickerField";
 import AttendanceAlerts from "../AttendanceAlerts/AttendanceAlerts";
 import SignInModal from "../SignInModal/SignInModal";
+import styles from "./AttendanceForm.module.css";
+import { filterValidSundays } from "../../utils/functions";
+import { CONSTANTS } from "../../utils/CONSTANTS";
 
+/** AttendanceForm component for managing attendance inputs and actions.
+ * @param {Object} props - Component properties.
+ * @param {Date} props.date - Selected date for attendance.
+ * @param {Function} props.setDate - Function to update the selected date.
+ * @param {string} props.group - Selected group for attendance.
+ * @param {Function} props.setGroup - Function to update the selected group.
+ * @param {string} props.sabhaHeld - Indicates if the sabha was held.
+ * @param {Function} props.setSabhaHeld - Function to update the sabha held status.
+ * @param {string} props.p2Guju - Indicates if P2 was in Guju.
+ * @param {Function} props.setP2Guju - Function to update the P2 Guju status.
+ * @param {string} props.prepCycleDone - Indicates if the prep cycle was done.
+ * @param {Function} props.setPrepCycleDone - Function to update the prep cycle status.
+ * @param {string} props.status - Current status of the attendance bot.
+ * @param {boolean} props.loading - Indicates if the bot is currently running.
+ * @param {Function} props.runBot - Function to run the attendance bot.
+ * @param {Array} props.markedPresent - List of members marked present.
+ * @param {Array} props.notMarked - List of members not marked.
+ * @param {Array} props.notFoundInBkms - List of members not found in BKMS.
+ * @param {boolean} props.signInOpen - Indicates if the sign-in modal is open.
+ * @param {Function} props.setSignInOpen - Function to update the sign-in modal state.
+ * @param {Function} props.handleSignInSuccess - Function to handle successful sign-in.
+ */
 const AttendanceForm = ({
   date,
   setDate,

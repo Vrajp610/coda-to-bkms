@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CONSTANTS } from '../../utils/CONSTANTS';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -7,9 +8,13 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-const VALID_EMAIL = 'vrajptl0610@gmail.com';
-const VALID_PASSWORD = 'vraj';
-
+/** * SignInModal component for user authentication.
+ * Displays a modal dialog for signing in with email and password.
+ * @param {Object} props - Component properties.
+ * @param {boolean} props.open - Whether the modal is open.
+ * @param {Function} props.onClose - Function to call when the modal is closed.
+ * @param {Function} props.onSuccess - Function to call on successful sign-in.
+ */
 const SignInModal = ({ open, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +34,7 @@ const SignInModal = ({ open, onClose, onSuccess }) => {
       setError('Please enter both email and password.');
       return;
     }
-    if (email !== VALID_EMAIL || password !== VALID_PASSWORD) {
+    if (email !== CONSTANTS.VALID_EMAIL || password !== CONSTANTS.VALID_PASSWORD) {
       setError('Invalid email or password.');
       return;
     }

@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import { act } from "react";
 import AttendanceBot from "./AttendanceBot";
 import * as functions from "../../utils/functions";
-import { act } from "react";
 
 jest.mock("./AttendanceBot.module.css", () => ({
   container: "container",
