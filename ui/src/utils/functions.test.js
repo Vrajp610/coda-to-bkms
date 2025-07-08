@@ -26,7 +26,6 @@ describe("filterValidSundays", () => {
     });
 
     it("returns true for current Sunday", () => {
-        // Mock today as 2024-06-16 (Sunday)
         mockDate("2024-06-16T12:00:00Z");
         const today = new Date();
         expect(filterValidSundays(today)).toBe(true);
@@ -144,16 +143,6 @@ describe("runAttendanceBot", () => {
         await runAttendanceBot(baseParams);
         expect(axios.post).toHaveBeenCalledWith(
             "http://test.com/run-bot",
-            expect.any(Object)
-        );
-    });
-
-    it("uses LOCAL_URL if REACT_APP_API_URL is not set", async () => {
-        process.env.REACT_APP_API_URL = "";
-        axios.post.mockResolvedValue({ data: {} });
-        await runAttendanceBot(baseParams);
-        expect(axios.post).toHaveBeenCalledWith(
-            `${CONSTANTS.LOCAL_URL}/run-bot`,
             expect.any(Object)
         );
     });

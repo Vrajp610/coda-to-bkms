@@ -1,7 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-
 def get_chrome_driver():
     """Set up and return a Chrome WebDriver instance."""
     options = Options()

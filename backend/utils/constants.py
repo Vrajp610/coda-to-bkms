@@ -1,21 +1,16 @@
-# URLs
+import os
+
 BKMS_LOGIN_URL = "https://bk.na.baps.org/ssologin"
 BKMS_REPORT_ATTENDANCE_URL = "https://bk.na.baps.org/admin/reports/reportweeksabhaattendance"
-
-# User Credentials
-USER_ID = "3001"
-EMAIL = "vrajptl0610@gmail.com"
-PASSWORD = "12345678"
-
-# Sabha Row Mapping
+USER_ID = os.getenv("USER_ID")
+EMAIL = os.getenv("EMAIL")
+PASSWORD = os.getenv("PASSWORD")
 SABHA_ROW_MAP = {
     "saturday k1": 1,
     "saturday k2": 2,
     "sunday k1": 3,
     "sunday k2": 4,
 }
-
-# XPaths
 XPATHS = {
     "sabha_wing": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]',
     "year": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]',

@@ -15,15 +15,15 @@ if not api_key:
 coda = Coda(api_key=api_key)
 
 #Coda Doc ID
-doc_id = 'zHizETNk43'
+doc_id = os.getenv('CODA_DOC_ID')
 
 attendance = []
 
 #Table IDs
-saturday_k1 = "table-MRTOERITOp"
-saturday_k2 = "table-xR4YI6kcIM"
-sunday_k1 = "table-RKMuitiFPU"
-sunday_k2 = "table-a6AbGiGGmN"
+saturday_k1 = os.getenv("SATURDAY_K1_TABLE_ID")
+saturday_k2 = os.getenv("SATURDAY_K2_TABLE_ID")
+sunday_k1 = os.getenv("SUNDAY_K1_TABLE_ID")
+sunday_k2 = os.getenv("SUNDAY_K2_TABLE_ID")
 
 def convert_date(date_str):
     current_year = datetime.now().year
@@ -35,7 +35,7 @@ def convert_date(date_str):
     return formatted_date
 
 def get_attendance(table: str, date: str):
-    table_data = coda.list_rows('zHizETNk43', table, use_column_names=True)
+    table_data = coda.list_rows(doc_id, table, use_column_names=True)
 
     rows = table_data.get('items', [])
     df = pd.DataFrame([row['values'] for row in rows])

@@ -19,7 +19,6 @@ export const CONSTANTS = {
   REQUIRED_FIELDS: "Please fill out all required fields before running the bot.",
   LONG: "long",
   NUMERIC: "numeric",
-  LOCAL_URL: "http://localhost:8000",
   SOMETHING_WENT_WRONG: "Something went wrong!",
   ATTENDANCE_BOT: "BKMS Attendance Bot",
   VALID_EMAIL: process.env.REACT_APP_VALID_EMAIL,

@@ -82,7 +82,7 @@ export async function runAttendanceBot({
   setNotMarked(null);
   setNotFoundInBkms(null);
   try {
-    const API_BASE_URL = process.env.REACT_APP_API_URL || CONSTANTS.LOCAL_URL;
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
 
     const response = await axios.post(`${API_BASE_URL}/run-bot`, {
       date: formattedDate,
