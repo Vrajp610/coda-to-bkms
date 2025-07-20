@@ -213,3 +213,34 @@ def test_update_sheet_case_insensitivity(
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1003"]
     mock_send_telegram.assert_awaited()
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_update_sheet_skips_empty_row(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
+):
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 9
+    mock_get_sunday.return_value = "2024-06-09"
+    el1 = MagicMock()
+    el1.text = ""
+    el1.find_element.return_value = MagicMock()
+    el2 = MagicMock()
+    el2.text = "1001 Name"
+    el2.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [el1, el2]
+
+    result = update_sheet(
+        attended_kishores=["1001"],
+        day="Sunday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+    assert result["marked_present"] == 1
+    assert result["not_marked"] == 0
+    assert result["not_found_in_bkms"] == []
+    mock_send_telegram.assert_awaited()
