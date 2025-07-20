@@ -14,7 +14,7 @@ This project automates the process of syncing attendance from a **Coda-based ros
 
 ## 🧱 Tech Stack
 
-- **Frontend:** React, React-Datepicker
+- **Frontend:** React
 - **Backend:** FastAPI
 - **Automation:** Selenium WebDriver (Chrome)
 - **Data:** Coda API, Pandas
@@ -24,11 +24,11 @@ This project automates the process of syncing attendance from a **Coda-based ros
 
 1. Clone the repo
 2. Install frontend and backend dependencies
-3. Run backend: `uvicorn main:app --reload --port 8000`
-4. Run frontend: `npm start`
+3. Run backend: `PYTHONPATH=. uvicorn backend.index:app --reload` (make sure you're not in backend folder)
+4. Run frontend: `npm install && npm start`
 5. Open: `http://localhost:3000`
 
-Ensure you have the correct `.env` secrets set for:
+Ensure you have the correct `.env` secrets set for **Backend**:
 - `CODA_API_KEY`
 - `TELEGRAM_TOKEN`
 - BKMS login credentials (currently hardcoded for testing)
