@@ -31,7 +31,23 @@ This project automates the process of syncing attendance from a **Coda-based ros
 Ensure you have the correct `.env` secrets set for **Backend**:
 - `CODA_API_KEY`
 - `TELEGRAM_TOKEN`
-- BKMS login credentials (currently hardcoded for testing)
+- `TELEGRAM_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `CODA_API_KEY`
+- `USER_ID` (BKMS ID)
+- `EMAIL` (BKMS Email)
+- `PASSWORD` (BKMS Password)
+- `SATURDAY_K1_TABLE_ID`
+- `SATURDAY_K2_TABLE_ID`
+- `SUNDAY_K1_TABLE_ID`
+- `SUNDAY_K2_TABLE_ID`
+- `CODA_DOC_ID`
+- BKMS login credentials are not hardcoded, please reach out to Vraj
+
+Ensure you have the correct `.env` secrets set for **Frontend**:
+- `REACT_APP_VALID_EMAIL`
+- `REACT_APP_VALID_PASSWORD`
+- `REACT_APP_API_URL`
 
 ## ✅ Collaboration Guidelines
 
