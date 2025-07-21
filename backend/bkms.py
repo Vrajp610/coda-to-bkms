@@ -54,7 +54,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    }
    row_number = sabha_row_map.get(day.lower())
    if row_number:
-      driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row_number}]/td[9]/div/span/a').click()
+      driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row_number}]/td[9]/div/span[2]/a').click()
       print(f"Selected {day.title()}")
    else:
       print("Error: Invalid Sabha group entered!")
@@ -133,11 +133,13 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       bkid = name_parts[0]
       table_bkids.add(bkid)
       if bkid in attended_kishores:
-         radio_button = element.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{index}]/td[10]/label/input')
-         radio_button.click()
-         updated_kishores.append(bkid)
-         time.sleep(0.5)
-
+         try:
+            radio_button = element.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{index}]/td[10]/label/input')
+            radio_button.click()
+            updated_kishores.append(bkid)
+            time.sleep(0.5)
+         except Exception as e:
+            pass
    # Find kishores that are present in the BKMS but not marked as present (should be empty unless logic above changes)
    not_marked = [kid for kid in attended_kishores if kid in table_bkids and kid not in updated_kishores]
    if not_marked:

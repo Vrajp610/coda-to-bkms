@@ -244,3 +244,41 @@ def test_update_sheet_skips_empty_row(
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
     mock_send_telegram.assert_awaited()
+
+import pytest
+from unittest.mock import patch, MagicMock
+from selenium.common.exceptions import NoSuchElementException
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_update_sheet_handles_click_exception_and_prints_not_marked(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+):
+    mock_get_driver.return_value = mock_driver = MagicMock()
+    mock_week_number.return_value = 10
+    mock_get_sunday.return_value = "2024-06-09"
+
+    el = MagicMock()
+    el.text = "1001 Name"
+    el.find_element.side_effect = NoSuchElementException("Mocked failure")
+
+    mock_driver.find_elements.return_value = [el]
+
+    result = update_sheet(
+        attended_kishores=["1001"],
+        day="Sunday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    # Validate result
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 1
+    assert result["not_found_in_bkms"] == []
+
+    captured = capsys.readouterr()
+    assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
