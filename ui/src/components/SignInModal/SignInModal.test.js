@@ -2,9 +2,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SignInModal from './SignInModal';
 
+jest.mock('../../utils/CONSTANTS', () => ({
+  CONSTANTS: {
+    VALID_EMAIL: 'test@example.com',
+    VALID_PASSWORD: 'testpass123',
+  },
+}));
+
 describe('SignInModal', () => {
-  const VALID_EMAIL = 'vrajptl0610@gmail.com';
-  const VALID_PASSWORD = 'vraj';
+  const VALID_EMAIL = 'test@example.com';
+  const VALID_PASSWORD = 'testpass123';
   let onClose, onSuccess;
 
   beforeEach(() => {
@@ -88,8 +95,8 @@ describe('SignInModal', () => {
 
   it('should clear error, email, and password and call onSuccess and onClose on valid submit', () => {
     render(<SignInModal open={true} onClose={onClose} onSuccess={onSuccess} />);
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'vrajptl0610@gmail.com' } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'vraj' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'testpass123' } });
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
     expect(onSuccess).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();

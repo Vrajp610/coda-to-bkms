@@ -1,4 +1,6 @@
 import backend.utils.constants as constants
+from unittest.mock import patch
+import importlib
 
 def test_bkms_login_url():
     assert constants.BKMS_LOGIN_URL == "https://bk.na.baps.org/ssologin"
@@ -6,10 +8,16 @@ def test_bkms_login_url():
 def test_bkms_report_attendance_url():
     assert constants.BKMS_REPORT_ATTENDANCE_URL == "https://bk.na.baps.org/admin/reports/reportweeksabhaattendance"
 
+@patch.dict("os.environ", {
+    "BKMS_ID": "test-id",
+    "BKMS_EMAIL": "test@example.com",
+    "BKMS_PASSWORD": "test-pass"
+})
 def test_user_credentials():
-    assert constants.BKMS_ID == "3001"
-    assert constants.BKMS_EMAIL == "vrajptl0610@gmail.com"
-    assert constants.BKMS_PASSWORD == "12345678"
+    importlib.reload(constants)
+    assert constants.BKMS_ID == "test-id"
+    assert constants.BKMS_EMAIL == "test@example.com"
+    assert constants.BKMS_PASSWORD == "test-pass"
 
 def test_sabha_row_map_keys_and_values():
     expected = {
