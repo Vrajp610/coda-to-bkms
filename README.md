@@ -34,9 +34,9 @@ Ensure you have the correct `.env` variables set for **Backend**:
 - `TELEGRAM_TOKEN`
 - `TELEGRAM_CHAT_ID`
 - `CODA_API_KEY`
-- `BKID` (BKMS ID)
-- `EMAIL` (BKMS Email)
-- `PASSWORD` (BKMS Password)
+- `BKMS_ID`
+- `BKMS_EMAIL`
+- `BKMS_PASSWORD`
 - `SATURDAY_K1_TABLE_ID`
 - `SATURDAY_K2_TABLE_ID`
 - `SUNDAY_K1_TABLE_ID`

@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from backend.utils.telegramUtils import send_telegram_message
 from backend.utils.dateUtils import calculate_week_number, get_this_week_sunday
 from backend.utils.chromeUtils import get_chrome_driver
-from backend.utils.constants import BKMS_LOGIN_URL, BKID, EMAIL, PASSWORD
+from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD
 
 # --- BKMS login page ---
 url = BKMS_LOGIN_URL
@@ -18,11 +18,11 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Perform Login ---
    print("Logging into BKMS...")
    time.sleep(1)
-   driver.find_element(By.ID, "user_id").send_keys(BKID)
+   driver.find_element(By.ID, "user_id").send_keys(BKMS_ID)
    time.sleep(0.5)
-   driver.find_element(By.ID, "email").send_keys(EMAIL)
+   driver.find_element(By.ID, "email").send_keys(BKMS_EMAIL)
    time.sleep(0.5)
-   driver.find_element(By.ID, "password").send_keys(PASSWORD)
+   driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
    print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
    time.sleep(60)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()

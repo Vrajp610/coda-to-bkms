@@ -7,9 +7,9 @@ def test_bkms_report_attendance_url():
     assert constants.BKMS_REPORT_ATTENDANCE_URL == "https://bk.na.baps.org/admin/reports/reportweeksabhaattendance"
 
 def test_user_credentials():
-    assert constants.BKID == "3001"
-    assert constants.EMAIL == "vrajptl0610@gmail.com"
-    assert constants.PASSWORD == "12345678"
+    assert constants.BKMS_ID == "3001"
+    assert constants.BKMS_EMAIL == "vrajptl0610@gmail.com"
+    assert constants.BKMS_PASSWORD == "12345678"
 
 def test_sabha_row_map_keys_and_values():
     expected = {
@@ -84,9 +84,9 @@ def test_constants_module_has_expected_attributes():
     for attr in [
         "BKMS_LOGIN_URL",
         "BKMS_REPORT_ATTENDANCE_URL",
-        "BKID",
-        "EMAIL",
-        "PASSWORD",
+        "BKMS_ID",
+        "BKMS_EMAIL",
+        "BKMS_PASSWORD",
         "SABHA_ROW_MAP",
         "XPATHS"
     ]:
