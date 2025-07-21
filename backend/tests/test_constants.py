@@ -1,4 +1,3 @@
-import pytest
 import backend.utils.constants as constants
 
 def test_bkms_login_url():

@@ -1,15 +1,10 @@
-import os
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 import sys
 import types
-import importlib
 
 @pytest.fixture(autouse=True)
 def reload_telegramUtils():
-    """
-    Reload the telegramUtils module before each test to ensure environment variables are loaded fresh.
-    """
     if "backend.utils.telegramUtils" in sys.modules:
         del sys.modules["backend.utils.telegramUtils"]
     yield

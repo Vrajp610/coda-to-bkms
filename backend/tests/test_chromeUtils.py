@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock, call
 from backend.utils import chromeUtils
 

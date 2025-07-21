@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from backend.index import app
 
 client = TestClient(app)
@@ -52,7 +52,6 @@ def test_run_bot_update_sheet_raises(bot_input):
         assert "Update failed" in data["error"]
 
 def test_run_bot_invalid_input():
-    # Missing required field 'group'
     invalid_input = {
         "date": "2024-06-01",
         "sabhaHeld": "Yes",
@@ -89,5 +88,4 @@ def test_cors_headers(bot_input):
         assert response.status_code == 200
         assert "access-control-allow-origin" in response.headers
         assert response.headers["access-control-allow-origin"] in [
-            "http://localhost:3000", "https://vrajpatelbkms.vercel.app"
-        ]
+            "http://localhost:3000"]

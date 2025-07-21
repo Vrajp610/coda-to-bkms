@@ -69,13 +69,6 @@ Ensure you have the correct `.env` secrets set for **Frontend**:
   - A screenshot/video of your feature working
   - Any edge cases or limitations to be aware of
 
-## 📦 Deployment
-
-To deploy:
-- Push to `main` (or your production branch)
-- The backend can be hosted on AWS, Render, or Railway
-- The frontend can be deployed via Vercel, Netlify, or Amplify
-
 ---
 
 👋 Feel free to contribute! Reach out with any questions before diving in.

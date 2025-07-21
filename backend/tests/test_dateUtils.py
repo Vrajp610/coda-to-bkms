@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from backend.utils import dateUtils
 
 class FixedDatetime(datetime):
-    """A fixed datetime class for mocking datetime.now()."""
     @classmethod
     def now(cls):
         return cls(2024, 1, 1)
