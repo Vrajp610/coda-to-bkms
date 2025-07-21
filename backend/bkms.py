@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from backend.utils.telegramUtils import send_telegram_message
 from backend.utils.dateUtils import calculate_week_number, get_this_week_sunday
 from backend.utils.chromeUtils import get_chrome_driver
-from backend.utils.constants import BKMS_LOGIN_URL, USER_ID, EMAIL, PASSWORD
+from backend.utils.constants import BKMS_LOGIN_URL, BKID, EMAIL, PASSWORD
 
 # --- BKMS login page ---
 url = BKMS_LOGIN_URL
@@ -18,7 +18,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Perform Login ---
    print("Logging into BKMS...")
    time.sleep(1)
-   driver.find_element(By.ID, "user_id").send_keys(USER_ID)
+   driver.find_element(By.ID, "user_id").send_keys(BKID)
    time.sleep(0.5)
    driver.find_element(By.ID, "email").send_keys(EMAIL)
    time.sleep(0.5)

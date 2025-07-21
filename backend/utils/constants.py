@@ -2,7 +2,7 @@ import os
 
 BKMS_LOGIN_URL = "https://bk.na.baps.org/ssologin"
 BKMS_REPORT_ATTENDANCE_URL = "https://bk.na.baps.org/admin/reports/reportweeksabhaattendance"
-USER_ID = os.getenv("USER_ID")
+BKID = os.getenv("BKID")
 EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 SABHA_ROW_MAP = {
