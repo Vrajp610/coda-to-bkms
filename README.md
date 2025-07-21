@@ -43,14 +43,12 @@ Ensure you have the correct `.env` variables set for **Backend**:
 - `SUNDAY_K2_TABLE_ID`
 - `CODA_DOC_ID`
 
-**Please reach out to Vraj regarding these**
-
 Ensure you have the correct `.env` variables set for **Frontend**:
 - `REACT_APP_VALID_EMAIL`
 - `REACT_APP_VALID_PASSWORD`
 - `REACT_APP_API_URL`
 
-**Please reach out to Vraj regarding these**
+# **Please reach out to Vraj regarding the `.env` variables for backend and frontend**
 
 ## ✅ Collaboration Guidelines
 
