@@ -1,4 +1,4 @@
-# BKMS ↔ Coda Attendance Automation Bot
+# Coda -> BKMS Attendance Automation Bot
 
 This project automates the process of syncing attendance from a **Coda-based roster** to the **BKMS (BAPS Kishore Management System)** website using a full-stack solution with **React**, **FastAPI**, **Selenium**, and **Coda API**.
 
