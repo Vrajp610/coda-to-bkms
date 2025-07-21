@@ -72,6 +72,7 @@ Ensure you have the correct `.env` variables set for **Frontend**:
   - A brief summary of your changes
   - A screenshot/video of your feature working
   - Any edge cases or limitations to be aware of
+  - Screenshot of 100% coverage for frontend and backend code!!!
 
 ---
 
