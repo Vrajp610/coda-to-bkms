@@ -25,10 +25,10 @@ This project automates the process of syncing attendance from a **Coda-based ros
 1. Clone the repo
 2. Install frontend and backend dependencies
 3. Run backend: `PYTHONPATH=. uvicorn backend.index:app --reload` (make sure you're not in backend folder)
-4. Run frontend: `npm install && npm start`
+4. Run frontend: `npm install && npm start` (make sure you're in the UI folder)
 5. Open: `http://localhost:3000`
 
-Ensure you have the correct `.env` secrets set for **Backend**:
+Ensure you have the correct `.env` variables set for **Backend**:
 - `CODA_API_KEY`
 - `TELEGRAM_TOKEN`
 - `TELEGRAM_TOKEN`
@@ -42,12 +42,15 @@ Ensure you have the correct `.env` secrets set for **Backend**:
 - `SUNDAY_K1_TABLE_ID`
 - `SUNDAY_K2_TABLE_ID`
 - `CODA_DOC_ID`
-- BKMS login credentials are not hardcoded, please reach out to Vraj
 
-Ensure you have the correct `.env` secrets set for **Frontend**:
+**Please reach out to Vraj regarding these**
+
+Ensure you have the correct `.env` variables set for **Frontend**:
 - `REACT_APP_VALID_EMAIL`
 - `REACT_APP_VALID_PASSWORD`
 - `REACT_APP_API_URL`
+
+**Please reach out to Vraj regarding these**
 
 ## ✅ Collaboration Guidelines
 
@@ -57,7 +60,7 @@ Ensure you have the correct `.env` secrets set for **Frontend**:
   - `feature/improve-telegram-alert`
 
 - **Testing Requirements:**  
-  All changes must be tested **locally** and confirmed to work before submitting a PR.
+  All changes must be tested **locally** and confirmed to work before submitting a pull request.
   - Add a **screenshot or short video** showing your feature in action.
   - To test **BACKEND CODE** run this command: `export $(cat backend/.env | xargs) && coverage run -m pytest backend/tests`
     - To run **BACKEND CODE** report, run this command: `coverage report`
