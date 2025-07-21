@@ -61,7 +61,7 @@ Ensure you have the correct `.env` secrets set for **Frontend**:
   - Add a **screenshot or short video** showing your feature in action.
   - To test **BACKEND CODE** run this command: `export $(cat backend/.env | xargs) && coverage run -m pytest backend/tests`
     - To run **BACKEND CODE** report, run this command: `coverage report`
-  - To test **FRONTEND CODE** run this command: `npm run test:ci`
+  - To test **FRONTEND CODE** and get the report, run this command: `npm run test:ci`
 
 - **Date Selection for Testing:**  
   Use the **closest recent Sunday** you attended sabha for the most accurate and working test scenario. Data from that date should exist in Coda for your group.
