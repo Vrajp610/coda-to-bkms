@@ -48,7 +48,7 @@ Ensure you have the correct `.env` variables set for **Frontend**:
 - `REACT_APP_VALID_PASSWORD`
 - `REACT_APP_API_URL`
 
-### **Please reach out to Vraj regarding the `.env` variables for backend and frontend**
+##### **Please reach out to Vraj regarding the `.env` variables for backend and frontend**
 
 ## ✅ Collaboration Guidelines
 
