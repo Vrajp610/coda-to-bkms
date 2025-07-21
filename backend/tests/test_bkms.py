@@ -275,7 +275,6 @@ def test_update_sheet_handles_click_exception_and_prints_not_marked(
         prep_cycle_done="yes"
     )
 
-    # Validate result
     assert result["marked_present"] == 0
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == []
