@@ -54,7 +54,7 @@ def test_get_attendance_filters_and_sorts(mock_coda, mock_getenv, patch_external
         ]
     }
     coda_mod.attendance = []
-    coda_mod.get_attendance("table-MRTOERITOp", "2024-03-15T00:00:00.000-08:00")
+    coda_mod.get_attendance("dummy-table-id", "2024-03-15T00:00:00.000-08:00")
     assert coda_mod.attendance == ["123", "456"]
 
 @patch("os.getenv")
@@ -73,7 +73,7 @@ def test_get_attendance_empty(mock_coda, mock_getenv, patch_external_modules, mo
         return original_df([], columns=["Attended", "Weekend", "BKMS ID"])
     monkeypatch.setattr(pd, "DataFrame", fake_df)
     coda_mod.attendance = []
-    result = coda_mod.get_attendance("table-MRTOERITOp", "2024-03-15T00:00:00.000-08:00")
+    result = coda_mod.get_attendance("dummy-table-id", "2024-03-15T00:00:00.000-08:00")
     assert coda_mod.attendance == []
     assert result is None
 
