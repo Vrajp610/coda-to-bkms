@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from backend.utils.telegramUtils import send_telegram_message
 from backend.utils.dateUtils import calculate_week_number, get_this_week_sunday
 from backend.utils.chromeUtils import get_chrome_driver
-from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD
+from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD, BKMS_REPORT_ATTENDANCE_URL
 
 # --- BKMS login page ---
 url = BKMS_LOGIN_URL
@@ -29,7 +29,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(2)
 
    # --- Go to Report Attendance Page ---
-   driver.get("https://bk.na.baps.org/admin/reports/reportweeksabhaattendance")
+   driver.get(BKMS_REPORT_ATTENDANCE_URL)
    time.sleep(2)
 
    # --- Select Sabha Wing and Year ---
