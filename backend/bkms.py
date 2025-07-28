@@ -6,14 +6,11 @@ from backend.utils.dateUtils import calculate_week_number, get_this_week_sunday
 from backend.utils.chromeUtils import get_chrome_driver
 from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD, BKMS_REPORT_ATTENDANCE_URL
 
-# --- BKMS login page ---
-url = BKMS_LOGIN_URL
-
 # --- Main function: Update attendance in BKMS ---
 def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
    # --- Open Chrome and Navigate to BKMS login ---
    driver = get_chrome_driver()
-   driver.get(url)
+   driver.get(BKMS_LOGIN_URL)
 
    # --- Perform Login ---
    print("Logging into BKMS...")
