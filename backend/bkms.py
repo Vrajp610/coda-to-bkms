@@ -156,6 +156,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
             time.sleep(0.5)
          except Exception as e:
             pass
+   
    # Find kishores that are present in the BKMS but not marked as present (should be empty unless logic above changes)
    not_marked = [kid for kid in attended_kishores if kid in table_bkids and kid not in updated_kishores]
    if not_marked:
