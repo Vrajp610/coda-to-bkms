@@ -62,25 +62,45 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    time.sleep(3)
 
-   # --- Mark if Sabha was Held ---
-   if sabha_held.lower() == "yes":
-      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins').click()
-      print("Marked: Sabha Held")
-   else:
+   # --- Sabha WAS NOT held ---
+   if sabha_held.lower() == "no":
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins').click()
       print("Marked: Sabha Not Held")
+      time.sleep(2)
+
+      # --- Save Changes Immediately ---
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
+      print("Saved attendance successfully!")
+      time.sleep(2)
+
+      # --- Send Telegram Success Notification ---
+      sunday_date = get_this_week_sunday(date_string)
+      telegram_message = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
+      asyncio.run(send_telegram_message(telegram_message))
+      print(f"Telegram notification sent: {telegram_message}")
+
+      return {
+         "marked_present": 0,
+         "not_marked": 0,
+         "not_found_in_bkms": []
+      }
+
+   # --- Sabha WAS held, continue with full checklist ---
+   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins').click()
+   print("Marked: Sabha Held")
    time.sleep(1)
 
    # --- Sabha Setup Checklist (Done / Not Done) ---
    print("Filling Meeting And Preparations Section in BKMS")
-      # Karyakar Meeting - Done
+   
+   # Karyakar Meeting - Done
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[1]/label[2]/div/ins').click()
 
    # 2 Week Prep Cycle - Dynamic based on input
    if prep_cycle_done.lower() == "yes":
-       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[2]/div/ins').click()
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[2]/div/ins').click()
    else:
-       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins').click()
+      driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins').click()
 
    # Pre-Sabha Review - Done
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[3]/label[2]/div/ins').click()
@@ -90,7 +110,6 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    # Culture Change - Not Done
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[5]/label[3]/div/ins').click()
-
 
    # --- Content Checklist (Sabha Activities) ---
    print("Filling Syllabus Usage Section in BKMS")

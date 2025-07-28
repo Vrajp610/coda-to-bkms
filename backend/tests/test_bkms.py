@@ -22,6 +22,10 @@ def all_kishores_elements():
         return el
     return [make_element("1001"), make_element("1002"), make_element("9999")]
 
+@pytest.fixture(autouse=True)
+def fast_sleep(monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda x: None)
+
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
@@ -153,7 +157,7 @@ def test_update_sheet_p2_guju_yes_and_prep_cycle_no(
         date_string="2024-06-05",
         prep_cycle_done="no"
     )
-    assert result["marked_present"] == 2
+    assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
     mock_send_telegram.assert_awaited()
@@ -281,3 +285,120 @@ def test_update_sheet_handles_click_exception_and_prints_not_marked(
 
     captured = capsys.readouterr()
     assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_update_sheet_all_checklist_clicks_and_p2_guju_yes(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 2
+    mock_get_sunday.return_value = "2024-06-09"
+
+    mock_driver.find_elements.return_value = []
+    result = update_sheet(
+        attended_kishores=[],
+        day="Saturday K2",
+        sabha_held="yes",
+        p2_guju="yes",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 0
+    assert result["not_found_in_bkms"] == []
+    mock_send_telegram.assert_awaited()
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_update_sheet_all_checklist_clicks_and_p2_guju_no(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 2
+    mock_get_sunday.return_value = "2024-06-09"
+
+    mock_driver.find_elements.return_value = []
+    result = update_sheet(
+        attended_kishores=[],
+        day="Sunday K2",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="no"
+    )
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 0
+    assert result["not_found_in_bkms"] == []
+    mock_send_telegram.assert_awaited()
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_update_sheet_kishore_not_marked_and_not_found(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 2
+    mock_get_sunday.return_value = "2024-06-09"
+
+    el1 = MagicMock()
+    el1.text = "1001 Name"
+    el1.find_element.side_effect = Exception("Click failed")
+    el2 = MagicMock()
+    el2.text = "1002 Name"
+    el2.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [el1, el2]
+    result = update_sheet(
+        attended_kishores=["1001", "1002", "1003"],
+        day="Saturday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+    assert result["marked_present"] == 1
+    assert result["not_marked"] == 2
+    assert result["not_found_in_bkms"] == ["1003"]
+    mock_send_telegram.assert_awaited()
+    captured = capsys.readouterr()
+    assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
+    assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out or "Kishores not found in BKMS: ['1003']" in captured.out
+    mock_send_telegram.assert_awaited()
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_update_sheet_prints_and_returns_for_all_paths(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 2
+    mock_get_sunday.return_value = "2024-06-09"
+
+    mock_driver.find_elements.return_value = []
+    result = update_sheet(
+        attended_kishores=["1001", "1002"],
+        day="Sunday K2",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 2
+    assert result["not_found_in_bkms"] == ["1001", "1002"]
+    mock_send_telegram.assert_awaited()
+    captured = capsys.readouterr()
+    assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out
+    assert "Kishores not found in BKMS: ['1001', '1002']" in captured.out
