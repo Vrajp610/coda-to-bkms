@@ -113,6 +113,6 @@ Ensure you have the correct `.env` variables set for **Frontend**:
    install_dependencies.bat
    ```
 
-This will automatically install all required dependencies for both the backend and UI.
+This will automatically install all required dependencies for both the Backend and Frontend.
 
 👋 Feel free to contribute! Reach out with any questions before diving in.
