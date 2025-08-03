@@ -76,4 +76,43 @@ Ensure you have the correct `.env` variables set for **Frontend**:
 
 ---
 
+# Project Setup Instructions
+
+## Prerequisites
+
+- Make sure you are in the project root directory before running any commands.
+
+## For macOS/Linux
+
+1. Open your terminal and navigate to the project directory:
+   ```sh
+   cd /path/to/your/project
+   ```
+2. Run the install script:
+   ```sh
+   ./install_dependencies.sh
+   ```
+   If you see this error:
+   ```
+   zsh: permission denied: ./install_dependencies.sh
+   ```
+   Run the following command to make the script executable, then try again:
+   ```sh
+   chmod +x install_dependencies.sh
+   ./install_dependencies.sh
+   ```
+
+## For Windows
+
+1. Open Command Prompt and navigate to the project directory:
+   ```bat
+   cd path\to\your\project
+   ```
+2. Run the install script:
+   ```bat
+   install_dependencies.bat
+   ```
+
+This will automatically install all required dependencies for both the backend and UI.
+
 👋 Feel free to contribute! Reach out with any questions before diving in.
