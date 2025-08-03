@@ -1,4 +1,4 @@
-import Alert from "@mui/material/Alert";
+import CustomAlert from "../CustomAlert/CustomAlert";
 
 /** * AttendanceAlerts component for displaying attendance-related alerts.
  * It shows different alerts based on the attendance status,
@@ -21,27 +21,27 @@ const AttendanceAlerts = ({
 }) => (
   <>
     {status && (
-      <Alert severity="info" className={styles.status}>
+      <CustomAlert severity="info" className={styles.status}>
         {status}
-      </Alert>
+      </CustomAlert>
     )}
 
     {markedPresent !== null && (
-      <Alert severity="success" className={styles.markedPresent}>
+      <CustomAlert severity="success" className={styles.markedPresent}>
         {CONSTANTS.KISHORES_CLICKED} {markedPresent}
-      </Alert>
+      </CustomAlert>
     )}
 
     {notMarked !== null && (
-      <Alert severity="error" className={styles.notMarked}>
+      <CustomAlert severity="error" className={styles.notMarked}>
         {CONSTANTS.KISHORES_NOT_CLICKED} {notMarked}
-      </Alert>
+      </CustomAlert>
     )}
 
     {notFoundInBkms !== null && (
-      <Alert severity="error" className={styles.notFoundInBkms}>
+      <CustomAlert severity="error" className={styles.notFoundInBkms}>
         {CONSTANTS.KISHORES_NOT_FOUND} {notFoundInBkms}
-      </Alert>
+      </CustomAlert>
     )}
   </>
 );

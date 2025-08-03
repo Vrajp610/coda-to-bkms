@@ -3,7 +3,6 @@ export const CONSTANTS = {
   KISHORES_NOT_CLICKED: "Kishores not clicked in BKMS:",
   KISHORES_NOT_FOUND: "Kishores not found in BKMS:",
   SELECT_A_VALID_SUNDAY: "Select a valid Sunday",
-  DATE_FORMAT: "MMMM d",
   SATURDAY_K1: "Saturday K1",
   SATURDAY_K2: "Saturday K2",
   SUNDAY_K1: "Sunday K1",
@@ -23,4 +22,8 @@ export const CONSTANTS = {
   ATTENDANCE_BOT: "BKMS Attendance Bot",
   VALID_EMAIL: process.env.REACT_APP_VALID_EMAIL,
   VALID_PASSWORD: process.env.REACT_APP_VALID_PASSWORD,
+  CANCEL: "Cancel",
+  SIGN_IN: "Sign In",
+  PASSWORD: "Password",
+  EMAIL: "Email",
 };

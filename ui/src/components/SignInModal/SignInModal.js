@@ -4,7 +4,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
+import Button from '../Button/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
@@ -82,10 +82,8 @@ const SignInModal = ({ open, onClose, onSuccess }) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit" variant="contained" color="primary">
-            Sign In
-          </Button>
+          <Button onClick={handleClose} variant="outlined">Cancel</Button>
+          <Button type="submit" variant="contained">Sign In</Button>
         </DialogActions>
       </form>
     </Dialog>

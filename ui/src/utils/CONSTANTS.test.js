@@ -6,7 +6,6 @@ describe('CONSTANTS', () => {
     expect(CONSTANTS.KISHORES_NOT_CLICKED).toBe("Kishores not clicked in BKMS:");
     expect(CONSTANTS.KISHORES_NOT_FOUND).toBe("Kishores not found in BKMS:");
     expect(CONSTANTS.SELECT_A_VALID_SUNDAY).toBe("Select a valid Sunday");
-    expect(CONSTANTS.DATE_FORMAT).toBe("MMMM d");
     expect(CONSTANTS.SATURDAY_K1).toBe("Saturday K1");
     expect(CONSTANTS.SATURDAY_K2).toBe("Saturday K2");
     expect(CONSTANTS.SUNDAY_K1).toBe("Sunday K1");
@@ -26,15 +25,19 @@ describe('CONSTANTS', () => {
     expect(CONSTANTS.ATTENDANCE_BOT).toBe("BKMS Attendance Bot");
     expect(CONSTANTS.VALID_EMAIL).toBe(process.env.REACT_APP_VALID_EMAIL);
     expect(CONSTANTS.VALID_PASSWORD).toBe(process.env.REACT_APP_VALID_PASSWORD);
+    expect(CONSTANTS.CANCEL).toBe("Cancel");
+    expect(CONSTANTS.SIGN_IN).toBe("Sign In");
+    expect(CONSTANTS.PASSWORD).toBe("Password");
+    expect(CONSTANTS.EMAIL).toBe("Email");
   });
 
   it('should not have unexpected keys', () => {
     const expectedKeys = [
       "KISHORES_CLICKED", "KISHORES_NOT_CLICKED", "KISHORES_NOT_FOUND", "SELECT_A_VALID_SUNDAY",
-      "DATE_FORMAT", "SATURDAY_K1", "SATURDAY_K2", "SUNDAY_K1", "SUNDAY_K2", "SELECT_GROUP",
+      "SATURDAY_K1", "SATURDAY_K2", "SUNDAY_K1", "SUNDAY_K2", "SELECT_GROUP",
       "YES", "NO", "WAS_SABHA_HELD", "WAS_P2_IN_GUJU", "PREP_CYCLE_DONE", "RUNNING", "RUN_BOT",
       "REQUIRED_FIELDS", "LONG", "NUMERIC", "SOMETHING_WENT_WRONG", "ATTENDANCE_BOT",
-      "VALID_EMAIL", "VALID_PASSWORD"
+      "VALID_EMAIL", "VALID_PASSWORD", "CANCEL", "SIGN_IN", "PASSWORD", "EMAIL"
     ];
     expect(Object.keys(CONSTANTS).sort()).toEqual(expectedKeys.sort());
   });

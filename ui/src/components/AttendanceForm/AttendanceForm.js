@@ -119,6 +119,7 @@ const AttendanceForm = ({
           !sabhaHeld ||
           (sabhaHeld === CONSTANTS.YES && (!p2Guju || !prepCycleDone))
         }
+        variant="contained"
       >
         {loading ? CONSTANTS.RUNNING : CONSTANTS.RUN_BOT}
       </Button>

@@ -7,13 +7,22 @@ import { Button as MUIButton } from "@mui/material";
  * @param {string} [props.className] - Additional CSS class for styling.
  * @param {ReactNode} props.children - Content to display inside the button.
  */
-const Button = ({ onClick, disabled, className, children }) => {
+const Button = ({ 
+  onClick, 
+  disabled, 
+  className, 
+  children, 
+  variant = "contained", 
+  type 
+}) => {
   return (
     <MUIButton
       onClick={onClick}
       disabled={disabled}
       className={className}
-      variant="contained"
+      variant={variant}
+      type={type}
+      data-variant={variant}
     >
       {children}
     </MUIButton>
