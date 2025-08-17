@@ -401,4 +401,4 @@ def test_update_sheet_prints_and_returns_for_all_paths(
     mock_send_telegram.assert_awaited()
     captured = capsys.readouterr()
     assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out
-    assert "Kishores not found in BKMS: ['1001', '1002']" in captured.out
+    assert "Kishores not found in BKMS: 1001, 1002" in captured.out

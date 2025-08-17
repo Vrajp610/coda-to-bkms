@@ -168,7 +168,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    not_found_in_bkms = [kid for kid in attended_kishores if kid not in table_bkids]
    if not_found_in_bkms:
       print(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
-      print(f"Kishores not found in BKMS: {not_found_in_bkms}")
+   print(f"Kishores not found in BKMS: {', '.join(str(kid) for kid in not_found_in_bkms)}")
 
    # --- Save Changes ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
