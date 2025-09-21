@@ -29,7 +29,6 @@ This project automates the process of syncing attendance from a **Coda-based ros
 5. Open: `http://localhost:3000`
 
 Ensure you have the correct `.env` variables set for **Backend**:
-- `CODA_API_KEY`
 - `MAIN_GROUP_TELEGRAM_TOKEN`
 - `MAIN_GROUP_TELEGRAM_CHAT_ID`
 - `SAT_K1_TELEGRAM_TOKEN`
