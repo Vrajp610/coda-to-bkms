@@ -9,7 +9,7 @@ This project automates the process of syncing attendance from a **Coda-based ros
   1. User selects sabha group, date (restricted to recent Sundays), and setup options.
   2. Bot fetches attendance from Coda for the selected sabha and date.
   3. Bot opens BKMS and automates the submission of attendance using Selenium.  
-     > ⚠️ **CAPTCHA Notice:** After login, a CAPTCHA **must be solved manually within 30 seconds**, or the submission will fail.
+     > ⚠️ **CAPTCHA Notice:** After login, a CAPTCHA **must be solved manually within 60 seconds**, or the submission will fail.
   4. Telegram notification confirms successful submission.
 
 ## 🧱 Tech Stack
