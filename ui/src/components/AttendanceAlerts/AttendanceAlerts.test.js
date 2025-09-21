@@ -127,14 +127,11 @@ describe("AttendanceAlerts", () => {
                 CONSTANTS={CONSTANTS}
             />
         );
-
         expect(screen.getByText("Coda attendance is not filled")).toBeInTheDocument();
-        
         expect(screen.queryByText("Status that should not show")).not.toBeInTheDocument();
         expect(screen.queryByText(/Marked Present:/)).not.toBeInTheDocument();
         expect(screen.queryByText(/Not Marked:/)).not.toBeInTheDocument();
         expect(screen.queryByText(/Not Found:/)).not.toBeInTheDocument();
-        
         expect(screen.getByRole("alert")).toHaveClass(styles.markedPresent);
     });
 });
