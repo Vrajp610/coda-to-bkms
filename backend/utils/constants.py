@@ -21,3 +21,27 @@ XPATHS = {
     "mark_absent": '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a',
     "save_changes": '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]',
 }
+TELEGRAM_GROUP_CONFIG = {
+    "saturday k1": {
+        "token": os.getenv("SAT_K1_TELEGRAM_TOKEN"),
+        "chat_id": os.getenv("SAT_K1_TELEGRAM_CHAT_ID"),
+    },
+    "saturday k2": {
+        "token": os.getenv("SAT_K2_TELEGRAM_TOKEN"),
+        "chat_id": os.getenv("SAT_K2_TELEGRAM_CHAT_ID"),
+    },
+    "sunday k1": {
+        "token": os.getenv("SUN_K1_TELEGRAM_TOKEN"),
+        "chat_id": os.getenv("SUN_K1_TELEGRAM_CHAT_ID"),
+    },
+    "sunday k2": {
+        "token": os.getenv("SUN_K2_TELEGRAM_TOKEN"),
+        "chat_id": os.getenv("SUN_K2_TELEGRAM_CHAT_ID"),
+    },
+}
+TELEGRAM_GROUP_MENTIONS = {
+    "saturday k1": "@rishipats04 @parthypatel",
+    "saturday k2": "@JayprakashPatel @yashp705",
+    "sunday k1":   "@mananedison @SharadVP",
+    "sunday k2":   "@isthatdhrooo @ParthVinod",
+}

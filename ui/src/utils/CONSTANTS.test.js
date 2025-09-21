@@ -29,6 +29,7 @@ describe('CONSTANTS', () => {
     expect(CONSTANTS.SIGN_IN).toBe("Sign In");
     expect(CONSTANTS.PASSWORD).toBe("Password");
     expect(CONSTANTS.EMAIL).toBe("Email");
+    expect(CONSTANTS.CODA_ATTENDANCE_MISSING).toBe("Coda attendance is currently missing. Please ensure it’s filled out before proceeding further.");
   });
 
   it('should not have unexpected keys', () => {
@@ -37,7 +38,7 @@ describe('CONSTANTS', () => {
       "SATURDAY_K1", "SATURDAY_K2", "SUNDAY_K1", "SUNDAY_K2", "SELECT_GROUP",
       "YES", "NO", "WAS_SABHA_HELD", "WAS_P2_IN_GUJU", "PREP_CYCLE_DONE", "RUNNING", "RUN_BOT",
       "REQUIRED_FIELDS", "LONG", "NUMERIC", "SOMETHING_WENT_WRONG", "ATTENDANCE_BOT",
-      "VALID_EMAIL", "VALID_PASSWORD", "CANCEL", "SIGN_IN", "PASSWORD", "EMAIL"
+      "VALID_EMAIL", "VALID_PASSWORD", "CANCEL", "SIGN_IN", "PASSWORD", "EMAIL", "CODA_ATTENDANCE_MISSING"
     ];
     expect(Object.keys(CONSTANTS).sort()).toEqual(expectedKeys.sort());
   });

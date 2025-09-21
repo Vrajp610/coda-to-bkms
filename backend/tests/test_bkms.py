@@ -402,3 +402,184 @@ def test_update_sheet_prints_and_returns_for_all_paths(
     captured = capsys.readouterr()
     assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out
     assert "Kishores not found in BKMS: 1001, 1002" in captured.out
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday") 
+@patch("backend.bkms.send_telegram_message")
+def test_presentation2_gujarati_flag_yes(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 1
+    mock_get_sunday.return_value = "2024-06-09"
+    
+    clicked_xpath = None
+    def mock_click():
+        nonlocal clicked_xpath
+        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins'
+    
+    mock_element = MagicMock()
+    mock_element.click = mock_click
+    mock_driver.find_element.return_value = mock_element
+    
+    kishore_element = MagicMock()
+    kishore_element.text = "1001 Test Kishore"
+    kishore_element.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [kishore_element]
+
+    update_sheet(
+        attended_kishores=["1001"],
+        day="Sunday K1",
+        sabha_held="yes",
+        p2_guju="yes",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    captured = capsys.readouterr()
+    assert "Presentation 2 was in Gujarati" in captured.out
+    assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins'
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_presentation2_gujarati_flag_no(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 1
+    mock_get_sunday.return_value = "2024-06-09"
+    
+    clicked_xpath = None
+    def mock_click():
+        nonlocal clicked_xpath
+        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[3]/div/ins'
+    
+    mock_element = MagicMock()
+    mock_element.click = mock_click
+    mock_driver.find_element.return_value = mock_element
+    
+    kishore_element = MagicMock()
+    kishore_element.text = "1001 Test Kishore"
+    kishore_element.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [kishore_element]
+
+    update_sheet(
+        attended_kishores=["1001"],
+        day="Sunday K1", 
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    captured = capsys.readouterr()
+    assert "Presentation 2 was NOT in Gujarati" in captured.out
+    assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[3]/div/ins'
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_presentation2_gujarati_element_not_found(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 1
+    mock_get_sunday.return_value = "2024-06-09"
+
+    mock_driver.find_element.side_effect = NoSuchElementException("Element not found")
+    mock_driver.find_elements.return_value = []
+
+    update_sheet(
+        attended_kishores=[],
+        day="Sunday K1",
+        sabha_held="yes",
+        p2_guju="yes",
+        date_string="2024-06-05", 
+        prep_cycle_done="yes"
+    )
+
+    captured = capsys.readouterr()
+    assert "Element not found" not in captured.out
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_prep_cycle_not_done(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 1
+    mock_get_sunday.return_value = "2024-06-09"
+
+    clicked_xpath = None
+    def mock_click():
+        nonlocal clicked_xpath
+        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
+    
+    mock_element = MagicMock()
+    mock_element.click = mock_click
+    mock_driver.find_element.return_value = mock_element
+    
+    kishore_element = MagicMock()
+    kishore_element.text = "1001 Test Kishore"
+    kishore_element.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [kishore_element]
+
+    update_sheet(
+        attended_kishores=["1001"],
+        day="Sunday K1",
+        sabha_held="yes",
+        p2_guju="yes",
+        date_string="2024-06-05",
+        prep_cycle_done="no"
+    )
+
+    assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_telegram_message")
+def test_prep_cycle_case_insensitive(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 1
+    mock_get_sunday.return_value = "2024-06-09"
+
+    clicked_xpath = None
+    def mock_click():
+        nonlocal clicked_xpath
+        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
+    
+    mock_element = MagicMock()
+    mock_element.click = mock_click
+    mock_driver.find_element.return_value = mock_element
+    
+    kishore_element = MagicMock()
+    kishore_element.text = "1001 Test Kishore"
+    kishore_element.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [kishore_element]
+
+    test_values = ["NO", "No", "no", " no ", "nO"]
+    for test_value in test_values:
+        clicked_xpath = None
+        update_sheet(
+            attended_kishores=["1001"],
+            day="Sunday K1",
+            sabha_held="yes",
+            p2_guju="yes",
+            date_string="2024-06-05",
+            prep_cycle_done=test_value
+        )
+        assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'

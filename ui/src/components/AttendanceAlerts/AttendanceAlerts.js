@@ -20,28 +20,36 @@ const AttendanceAlerts = ({
   CONSTANTS,
 }) => (
   <>
-    {status && (
-      <CustomAlert severity="info" className={styles.status}>
-        {status}
+    {markedPresent === 0 ? (
+      <CustomAlert severity="error" className={styles.markedPresent}>
+        {CONSTANTS.CODA_ATTENDANCE_MISSING}
       </CustomAlert>
-    )}
+    ) : (
+      <>
+        {status && (
+          <CustomAlert severity="info" className={styles.status}>
+            {status}
+          </CustomAlert>
+        )}
 
-    {markedPresent !== null && (
-      <CustomAlert severity="success" className={styles.markedPresent}>
-        {CONSTANTS.KISHORES_CLICKED} {markedPresent}
-      </CustomAlert>
-    )}
+        {markedPresent !== null && (
+          <CustomAlert severity="success" className={styles.markedPresent}>
+            {CONSTANTS.KISHORES_CLICKED} {markedPresent}
+          </CustomAlert>
+        )}
 
-    {notMarked !== null && (
-      <CustomAlert severity="error" className={styles.notMarked}>
-        {CONSTANTS.KISHORES_NOT_CLICKED} {notMarked}
-      </CustomAlert>
-    )}
+        {notMarked !== null && (
+          <CustomAlert severity="error" className={styles.notMarked}>
+            {CONSTANTS.KISHORES_NOT_CLICKED} {notMarked}
+          </CustomAlert>
+        )}
 
-    {notFoundInBkms !== null && (
-      <CustomAlert severity="error" className={styles.notFoundInBkms}>
-        {CONSTANTS.KISHORES_NOT_FOUND} {notFoundInBkms}
-      </CustomAlert>
+        {notFoundInBkms !== null && (
+          <CustomAlert severity="error" className={styles.notFoundInBkms}>
+            {CONSTANTS.KISHORES_NOT_FOUND} {notFoundInBkms}
+          </CustomAlert>
+        )}
+      </>
     )}
   </>
 );

@@ -30,9 +30,16 @@ This project automates the process of syncing attendance from a **Coda-based ros
 
 Ensure you have the correct `.env` variables set for **Backend**:
 - `CODA_API_KEY`
-- `TELEGRAM_TOKEN`
-- `TELEGRAM_TOKEN`
-- `TELEGRAM_CHAT_ID`
+- `MAIN_GROUP_TELEGRAM_TOKEN`
+- `MAIN_GROUP_TELEGRAM_CHAT_ID`
+- `SAT_K1_TELEGRAM_TOKEN`
+- `SAT_K1_TELEGRAM_CHAT_ID`
+- `SAT_K2_TELEGRAM_TOKEN`
+- `SAT_K2_TELEGRAM_CHAT_ID`
+- `SUN_K1_TELEGRAM_TOKEN`
+- `SUN_K1_TELEGRAM_CHAT_ID`
+- `SUN_K2_TELEGRAM_TOKEN`
+- `SUN_K2_TELEGRAM_CHAT_ID`
 - `CODA_API_KEY`
 - `BKMS_ID`
 - `BKMS_EMAIL`
