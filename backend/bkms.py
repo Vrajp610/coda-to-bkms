@@ -1,12 +1,10 @@
 import time
-import asyncio
 from selenium.webdriver.common.by import By
-from backend.utils.telegramUtils import send_telegram_message
 from backend.utils.dateUtils import calculate_week_number, get_this_week_sunday
 from backend.utils.chromeUtils import get_chrome_driver
-from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD, BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_CONFIG, TELEGRAM_GROUP_MENTIONS
+from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD, BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_MENTIONS
+from backend.utils.sendNotifications import send_notifications
 
-# --- Main function: Update attendance in BKMS ---
 def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
    # If sabha was held but Coda attendance is empty, notify and abort BEFORE opening Chromium
    if sabha_held.lower() == "yes" and (not attended_kishores or len(attended_kishores) == 0):
@@ -14,12 +12,9 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       base_msg = f"{day.title()} attendance ({sunday_date}) is not marked in Coda. Please update Coda so BKMS can be updated. ❌"
       mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
       telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
-      # Send to group-specific channel if configured
-      group_cfg = TELEGRAM_GROUP_CONFIG.get(day.lower())
-      if group_cfg and group_cfg.get("token") and group_cfg.get("chat_id"):
-         asyncio.run(send_telegram_message(telegram_message, token=group_cfg["token"], chat_id=group_cfg["chat_id"]))
-      # Always send to central channel
-      asyncio.run(send_telegram_message(telegram_message))
+      
+      # Send notifications to both groups
+      send_notifications(telegram_message, day)
       print(f"Telegram notification sent: {telegram_message}")
       return {
          "marked_present": 0,
@@ -94,10 +89,9 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅ as Sabha not held!"
       mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
       telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
-      group_cfg = TELEGRAM_GROUP_CONFIG.get(day.lower())
-      if group_cfg and group_cfg.get("token") and group_cfg.get("chat_id"):
-         asyncio.run(send_telegram_message(telegram_message, token=group_cfg["token"], chat_id=group_cfg["chat_id"]))
-      asyncio.run(send_telegram_message(telegram_message))
+      
+      # Send notifications to both groups
+      send_notifications(telegram_message, day)
       print(f"Telegram notification sent: {telegram_message}")
 
       return {
@@ -203,14 +197,13 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    sunday_date = get_this_week_sunday(date_string)
    base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
    mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
-   telegram_message = f"{base_msg}" if mentions else base_msg
-   group_cfg = TELEGRAM_GROUP_CONFIG.get(day.lower())
-   if group_cfg and group_cfg.get("token") and group_cfg.get("chat_id"):
-      asyncio.run(send_telegram_message(telegram_message, token=group_cfg["token"], chat_id=group_cfg["chat_id"]))
-   asyncio.run(send_telegram_message(telegram_message))
+   telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
+   
+   # Send notifications to both groups
+   send_notifications(telegram_message, day)
    print(f"Telegram notification sent: {telegram_message}")
 
-   # --- Return attendance marking results instead of sending Telegram ---
+   # --- Return attendance marking results ---
    return {
       "marked_present": len(updated_kishores),
       "not_marked": len(attended_kishores) - len(updated_kishores),

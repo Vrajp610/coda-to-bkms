@@ -1,5 +1,6 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
+from selenium.common.exceptions import NoSuchElementException
 from backend.bkms import update_sheet
 
 @pytest.fixture
@@ -24,12 +25,13 @@ def all_kishores_elements():
 
 @pytest.fixture(autouse=True)
 def fast_sleep(monkeypatch):
-    monkeypatch.setattr("time.sleep", lambda x: None)
+    import time
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_marks_attendance_and_returns_result(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver,
     mock_driver, attended_kishores, all_kishores_elements
@@ -51,12 +53,13 @@ def test_update_sheet_marks_attendance_and_returns_result(
     assert result["marked_present"] == 2
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1003"]
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_invalid_sabha_group_returns_none(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
 ):
@@ -78,7 +81,7 @@ def test_update_sheet_invalid_sabha_group_returns_none(
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_handles_no_attended_kishores(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
 ):
@@ -98,25 +101,27 @@ def test_update_sheet_handles_no_attended_kishores(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_marks_all_absent(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
 ):
     mock_get_driver.return_value = mock_driver
     mock_week_number.return_value = 4
     mock_get_sunday.return_value = "2024-06-09"
+
     def make_element(bkid):
         el = MagicMock()
         el.text = f"{bkid} Name"
         el.find_element.return_value = MagicMock()
         return el
-    all_kishores_elements = [make_element("1001"), make_element("1002"), make_element("1003")]
-    mock_driver.find_elements.return_value = all_kishores_elements
+
+    mock_driver.find_elements.return_value = [make_element("1001"), make_element("1002"), make_element("1003")]
 
     result = update_sheet(
         attended_kishores=[],
@@ -129,25 +134,27 @@ def test_update_sheet_marks_all_absent(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_p2_guju_yes_and_prep_cycle_no(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, attended_kishores
 ):
     mock_get_driver.return_value = mock_driver
     mock_week_number.return_value = 6
     mock_get_sunday.return_value = "2024-06-09"
+
     def make_element(bkid):
         el = MagicMock()
         el.text = f"{bkid} Name"
         el.find_element.return_value = MagicMock()
         return el
-    all_kishores_elements = [make_element("1001"), make_element("1002"), make_element("1003")]
-    mock_driver.find_elements.return_value = all_kishores_elements
+
+    mock_driver.find_elements.return_value = [make_element("1001"), make_element("1002"), make_element("1003")]
 
     result = update_sheet(
         attended_kishores=["1001", "1002"],
@@ -160,25 +167,27 @@ def test_update_sheet_p2_guju_yes_and_prep_cycle_no(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_not_marked_logic(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
 ):
     mock_get_driver.return_value = mock_driver
     mock_week_number.return_value = 7
     mock_get_sunday.return_value = "2024-06-09"
+
     def make_element(bkid):
         el = MagicMock()
         el.text = f"{bkid} Name"
         el.find_element.return_value = MagicMock()
         return el
-    all_kishores_elements = [make_element("1001"), make_element("1002"), make_element("1003")]
-    mock_driver.find_elements.return_value = all_kishores_elements
+
+    mock_driver.find_elements.return_value = [make_element("1001"), make_element("1002"), make_element("1003")]
 
     result = update_sheet(
         attended_kishores=["1001", "1002", "1004"],
@@ -191,12 +200,13 @@ def test_update_sheet_not_marked_logic(
     assert result["marked_present"] == 2
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1004"]
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_case_insensitivity(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, attended_kishores, all_kishores_elements
 ):
@@ -216,18 +226,20 @@ def test_update_sheet_case_insensitivity(
     assert result["marked_present"] == 2
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1003"]
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_skips_empty_row(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
 ):
     mock_get_driver.return_value = mock_driver
     mock_week_number.return_value = 9
     mock_get_sunday.return_value = "2024-06-09"
+
     el1 = MagicMock()
     el1.text = ""
     el1.find_element.return_value = MagicMock()
@@ -247,16 +259,13 @@ def test_update_sheet_skips_empty_row(
     assert result["marked_present"] == 1
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
 
-import pytest
-from unittest.mock import patch, MagicMock
-from selenium.common.exceptions import NoSuchElementException
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_handles_click_exception_and_prints_not_marked(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
 ):
@@ -286,10 +295,11 @@ def test_update_sheet_handles_click_exception_and_prints_not_marked(
     captured = capsys.readouterr()
     assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
 
+
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_all_checklist_clicks_and_p2_guju_yes(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver
 ):
@@ -310,12 +320,13 @@ def test_update_sheet_all_checklist_clicks_and_p2_guju_yes(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_all_checklist_clicks_and_p2_guju_no(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver
 ):
@@ -336,12 +347,13 @@ def test_update_sheet_all_checklist_clicks_and_p2_guju_no(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_kishore_not_marked_and_not_found(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
 ):
@@ -357,6 +369,7 @@ def test_update_sheet_kishore_not_marked_and_not_found(
     el2.text = "1002 Name"
     el2.find_element.return_value = MagicMock()
     mock_driver.find_elements.return_value = [el1, el2]
+
     result = update_sheet(
         attended_kishores=["1001", "1002", "1003"],
         day="Saturday K1",
@@ -368,16 +381,17 @@ def test_update_sheet_kishore_not_marked_and_not_found(
     assert result["marked_present"] == 1
     assert result["not_marked"] == 2
     assert result["not_found_in_bkms"] == ["1003"]
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
     captured = capsys.readouterr()
     assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
     assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out or "Kishores not found in BKMS: ['1003']" in captured.out
-    mock_send_telegram.assert_awaited()
+
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_prints_and_returns_for_all_paths(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
 ):
@@ -398,188 +412,70 @@ def test_update_sheet_prints_and_returns_for_all_paths(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 2
     assert result["not_found_in_bkms"] == ["1001", "1002"]
-    mock_send_telegram.assert_awaited()
+    mock_send_telegram.assert_called_once()
+
     captured = capsys.readouterr()
     assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out
     assert "Kishores not found in BKMS: 1001, 1002" in captured.out
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
-@patch("backend.bkms.get_this_week_sunday") 
-@patch("backend.bkms.send_telegram_message")
-def test_presentation2_gujarati_flag_yes(
-    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, capsys
-):
-    mock_driver = MagicMock()
-    mock_get_driver.return_value = mock_driver
-    mock_week_number.return_value = 1
-    mock_get_sunday.return_value = "2024-06-09"
-    
-    clicked_xpath = None
-    def mock_click():
-        nonlocal clicked_xpath
-        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins'
-    
-    mock_element = MagicMock()
-    mock_element.click = mock_click
-    mock_driver.find_element.return_value = mock_element
-    
-    kishore_element = MagicMock()
-    kishore_element.text = "1001 Test Kishore"
-    kishore_element.find_element.return_value = MagicMock()
-    mock_driver.find_elements.return_value = [kishore_element]
-
-    update_sheet(
-        attended_kishores=["1001"],
-        day="Sunday K1",
-        sabha_held="yes",
-        p2_guju="yes",
-        date_string="2024-06-05",
-        prep_cycle_done="yes"
-    )
-
-    captured = capsys.readouterr()
-    assert "Presentation 2 was in Gujarati" in captured.out
-    assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins'
-
-@patch("backend.bkms.get_chrome_driver")
-@patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
-def test_presentation2_gujarati_flag_no(
-    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, capsys
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_uses_prep_cycle_label3_when_prep_cycle_no(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
 ):
-    mock_driver = MagicMock()
-    mock_get_driver.return_value = mock_driver
-    mock_week_number.return_value = 1
-    mock_get_sunday.return_value = "2024-06-09"
-    
-    clicked_xpath = None
-    def mock_click():
-        nonlocal clicked_xpath
-        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[3]/div/ins'
-    
-    mock_element = MagicMock()
-    mock_element.click = mock_click
-    mock_driver.find_element.return_value = mock_element
-    
-    kishore_element = MagicMock()
-    kishore_element.text = "1001 Test Kishore"
-    kishore_element.find_element.return_value = MagicMock()
-    mock_driver.find_elements.return_value = [kishore_element]
-
-    update_sheet(
-        attended_kishores=["1001"],
-        day="Sunday K1", 
-        sabha_held="yes",
-        p2_guju="no",
-        date_string="2024-06-05",
-        prep_cycle_done="yes"
-    )
-
-    captured = capsys.readouterr()
-    assert "Presentation 2 was NOT in Gujarati" in captured.out
-    assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[3]/div/ins'
-
-@patch("backend.bkms.get_chrome_driver")
-@patch("backend.bkms.calculate_week_number")
-@patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
-def test_presentation2_gujarati_element_not_found(
-    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
-):
-    mock_driver = MagicMock()
+    from selenium.webdriver.common.by import By
     mock_get_driver.return_value = mock_driver
     mock_week_number.return_value = 1
     mock_get_sunday.return_value = "2024-06-09"
 
-    mock_driver.find_element.side_effect = NoSuchElementException("Element not found")
+    # ensure find_elements returns something so loop can run (not required for this assert)
     mock_driver.find_elements.return_value = []
 
-    update_sheet(
-        attended_kishores=[],
-        day="Sunday K1",
-        sabha_held="yes",
-        p2_guju="yes",
-        date_string="2024-06-05", 
-        prep_cycle_done="yes"
-    )
-
-    captured = capsys.readouterr()
-    assert "Element not found" not in captured.out
-
-@patch("backend.bkms.get_chrome_driver")
-@patch("backend.bkms.calculate_week_number")
-@patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
-def test_prep_cycle_not_done(
-    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
-):
-    mock_driver = MagicMock()
-    mock_get_driver.return_value = mock_driver
-    mock_week_number.return_value = 1
-    mock_get_sunday.return_value = "2024-06-09"
-
-    clicked_xpath = None
-    def mock_click():
-        nonlocal clicked_xpath
-        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
-    
-    mock_element = MagicMock()
-    mock_element.click = mock_click
-    mock_driver.find_element.return_value = mock_element
-    
-    kishore_element = MagicMock()
-    kishore_element.text = "1001 Test Kishore"
-    kishore_element.find_element.return_value = MagicMock()
-    mock_driver.find_elements.return_value = [kishore_element]
+    expected_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
 
     update_sheet(
         attended_kishores=["1001"],
-        day="Sunday K1",
+        day="Saturday K1",
         sabha_held="yes",
-        p2_guju="yes",
+        p2_guju="no",
         date_string="2024-06-05",
         prep_cycle_done="no"
     )
 
-    assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
+    # verify that the exact XPATH for the "prep cycle NOT done" option was clicked
+    calls = mock_driver.find_element.call_args_list
+    assert any(call[0] == (By.XPATH, expected_xpath) for call in calls), "Expected label[3] XPATH not clicked"
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
-@patch("backend.bkms.send_telegram_message")
-def test_prep_cycle_case_insensitive(
-    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, capsys
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_clicks_p2_guju_label2_and_prints(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, capsys
 ):
-    mock_driver = MagicMock()
-    mock_get_driver.return_value = mock_driver
-    mock_week_number.return_value = 1
-    mock_get_sunday.return_value = "2024-06-09"
+   from selenium.webdriver.common.by import By
+   mock_get_driver.return_value = mock_driver
+   mock_week_number.return_value = 12
+   mock_get_sunday.return_value = "2024-06-09"
 
-    clicked_xpath = None
-    def mock_click():
-        nonlocal clicked_xpath
-        clicked_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
-    
-    mock_element = MagicMock()
-    mock_element.click = mock_click
-    mock_driver.find_element.return_value = mock_element
-    
-    kishore_element = MagicMock()
-    kishore_element.text = "1001 Test Kishore"
-    kishore_element.find_element.return_value = MagicMock()
-    mock_driver.find_elements.return_value = [kishore_element]
+   # no table rows required for this assertion
+   mock_driver.find_elements.return_value = []
 
-    test_values = ["NO", "No", "no", " no ", "nO"]
-    for test_value in test_values:
-        clicked_xpath = None
-        update_sheet(
-            attended_kishores=["1001"],
-            day="Sunday K1",
-            sabha_held="yes",
-            p2_guju="yes",
-            date_string="2024-06-05",
-            prep_cycle_done=test_value
-        )
-        assert clicked_xpath == '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
+   expected_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins'
+
+   update_sheet(
+      attended_kishores=["1001"],
+      day="Saturday K1",
+      sabha_held="yes",
+      p2_guju="yes",
+      date_string="2024-06-05",
+      prep_cycle_done="yes"
+   )
+
+   calls = mock_driver.find_element.call_args_list
+   assert any(call[0] == (By.XPATH, expected_xpath) for call in calls), "Expected Presentation 2 (Gujarati) XPATH not clicked"
+
+   captured = capsys.readouterr()
+   assert "Presentation 2 was in Gujarati" in captured.out

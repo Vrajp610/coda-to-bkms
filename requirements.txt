@@ -12,3 +12,4 @@ openpyxl
 httpx
 selenium
 pytest-asyncio
+psycopg2-binary

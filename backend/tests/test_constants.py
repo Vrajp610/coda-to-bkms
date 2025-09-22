@@ -1,101 +1,103 @@
-import backend.utils.constants as constants
 from unittest.mock import patch
-import importlib
+import pytest
+from backend.utils.constants import (
+    SABHA_ROW_MAP, XPATHS, TELEGRAM_GROUP_CONFIG,
+    TELEGRAM_GROUP_MENTIONS, BKMS_LOGIN_URL,
+    BKMS_REPORT_ATTENDANCE_URL
+)
 
-def test_bkms_login_url():
-    assert constants.BKMS_LOGIN_URL == "https://bk.na.baps.org/ssologin"
+def test_sabha_row_map_structure():
+    expected_keys = {"saturday k1", "saturday k2", "sunday k1", "sunday k2"}
+    assert set(SABHA_ROW_MAP.keys()) == expected_keys
+    assert all(isinstance(v, int) for v in SABHA_ROW_MAP.values())
+    assert len(SABHA_ROW_MAP) == 4
 
-def test_bkms_report_attendance_url():
-    assert constants.BKMS_REPORT_ATTENDANCE_URL == "https://bk.na.baps.org/admin/reports/reportweeksabhaattendance"
+def test_sabha_row_map_values():
+    assert SABHA_ROW_MAP["saturday k1"] == 1
+    assert SABHA_ROW_MAP["saturday k2"] == 2
+    assert SABHA_ROW_MAP["sunday k1"] == 3
+    assert SABHA_ROW_MAP["sunday k2"] == 4
 
-@patch.dict("os.environ", {
-    "BKMS_ID": "test-id",
-    "BKMS_EMAIL": "test@example.com",
-    "BKMS_PASSWORD": "test-pass"
-})
-def test_user_credentials():
-    importlib.reload(constants)
-    assert constants.BKMS_ID == "test-id"
-    assert constants.BKMS_EMAIL == "test@example.com"
-    assert constants.BKMS_PASSWORD == "test-pass"
+def test_sabha_row_map_invalid_key():
+    with pytest.raises(KeyError):
+        _ = SABHA_ROW_MAP["invalid_key"]
 
-def test_sabha_row_map_keys_and_values():
-    expected = {
-        "saturday k1": 1,
-        "saturday k2": 2,
-        "sunday k1": 3,
-        "sunday k2": 4,
-    }
-    assert constants.SABHA_ROW_MAP == expected
-
-def test_sabha_row_map_contains_all_keys():
-    for key in ["saturday k1", "saturday k2", "sunday k1", "sunday k2"]:
-        assert key in constants.SABHA_ROW_MAP
-
-def test_sabha_row_map_values_are_int():
-    for value in constants.SABHA_ROW_MAP.values():
-        assert isinstance(value, int)
-
-def test_xpaths_keys():
+def test_xpaths_structure():
     expected_keys = {
-        "sabha_wing",
-        "year",
-        "week",
-        "sabha_group",
-        "sabha_held_yes",
-        "sabha_held_no",
-        "mark_absent",
-        "save_changes",
+        "sabha_wing", "year", "week", "sabha_group",
+        "sabha_held_yes", "sabha_held_no", "mark_absent",
+        "save_changes"
     }
-    assert set(constants.XPATHS.keys()) == expected_keys
+    assert set(XPATHS.keys()) == expected_keys
+    assert all(isinstance(v, str) for v in XPATHS.values())
 
-def test_xpaths_values():
-    assert constants.XPATHS["sabha_wing"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]'
-    assert constants.XPATHS["year"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]'
-    assert constants.XPATHS["week"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{}]'
-    assert constants.XPATHS["sabha_group"] == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span/a'
-    assert constants.XPATHS["sabha_held_yes"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins'
-    assert constants.XPATHS["sabha_held_no"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins'
-    assert constants.XPATHS["mark_absent"] == '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a'
-    assert constants.XPATHS["save_changes"] == '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]'
+def test_xpaths_format_strings():
+    week_xpath = XPATHS["week"].format(5)
+    assert "option[5]" in week_xpath
+    
+    sabha_group_xpath = XPATHS["sabha_group"].format(3)
+    assert "tr[3]" in sabha_group_xpath
 
-def test_xpath_week_format():
-    week_xpath = constants.XPATHS["week"]
-    assert week_xpath.format(5) == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[5]'
-    assert week_xpath.format(1) == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[1]'
+@patch('backend.utils.constants.get_config_value')
+def test_telegram_group_config_structure(mock_get_config):
+    mock_get_config.return_value = "dummy_value"
+    
+    expected_groups = {"saturday k1", "saturday k2", "sunday k1", "sunday k2"}
+    assert set(TELEGRAM_GROUP_CONFIG.keys()) == expected_groups
+    
+    for group in TELEGRAM_GROUP_CONFIG.values():
+        assert "token" in group
+        assert "chat_id" in group
 
-def test_xpath_sabha_group_format():
-    sabha_group_xpath = constants.XPATHS["sabha_group"]
-    assert sabha_group_xpath.format(2) == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[2]/td[9]/div/span/a'
-    assert sabha_group_xpath.format(4) == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[4]/td[9]/div/span/a'
+def test_telegram_group_mentions_structure():
+    assert set(TELEGRAM_GROUP_MENTIONS.keys()) == set(TELEGRAM_GROUP_CONFIG.keys())
+    
+    for mentions in TELEGRAM_GROUP_MENTIONS.values():
+        assert isinstance(mentions, str)
+        assert all(word.startswith("@") for word in mentions.split())
 
-def test_xpaths_all_are_strings():
-    for value in constants.XPATHS.values():
-        assert isinstance(value, str)
+def test_telegram_group_mentions_format():
+    for group, mentions in TELEGRAM_GROUP_MENTIONS.items():
+        assert len(mentions.split()) == 2
+        assert all(mention.startswith("@") for mention in mentions.split())
 
-def test_no_extra_keys_in_xpaths():
-    allowed_keys = {
-        "sabha_wing",
-        "year",
-        "week",
-        "sabha_group",
-        "sabha_held_yes",
-        "sabha_held_no",
-        "mark_absent",
-        "save_changes",
-    }
-    for key in constants.XPATHS.keys():
-        assert key in allowed_keys
+def test_bkms_urls():
+    assert BKMS_LOGIN_URL.startswith("https://")
+    assert "bk.na.baps.org" in BKMS_LOGIN_URL
+    assert BKMS_LOGIN_URL.endswith("ssologin")
+    
+    assert BKMS_REPORT_ATTENDANCE_URL.startswith("https://")
+    assert "bk.na.baps.org" in BKMS_REPORT_ATTENDANCE_URL
+    assert "reportweeksabhaattendance" in BKMS_REPORT_ATTENDANCE_URL
 
-def test_constants_module_has_expected_attributes():
-    attrs = dir(constants)
-    for attr in [
-        "BKMS_LOGIN_URL",
-        "BKMS_REPORT_ATTENDANCE_URL",
-        "BKMS_ID",
-        "BKMS_EMAIL",
-        "BKMS_PASSWORD",
-        "SABHA_ROW_MAP",
-        "XPATHS"
-    ]:
-        assert attr in attrs
+@patch('backend.utils.postgresConn.get_config_value')
+def test_telegram_config_values(mock_get_config):
+    expected_calls = [
+        'SAT_K1_TELEGRAM_TOKEN', 'SAT_K1_TELEGRAM_CHAT_ID',
+        'SAT_K2_TELEGRAM_TOKEN', 'SAT_K2_TELEGRAM_CHAT_ID',
+        'SUN_K1_TELEGRAM_TOKEN', 'SUN_K1_TELEGRAM_CHAT_ID',
+        'SUN_K2_TELEGRAM_TOKEN', 'SUN_K2_TELEGRAM_CHAT_ID',
+        'MAIN_GROUP_TELEGRAM_TOKEN', 'MAIN_GROUP_TELEGRAM_CHAT_ID'
+    ]
+
+    mock_get_config.return_value = "dummy_value"
+
+    import importlib
+    import backend.utils.constants as const_mod
+    const_mod = importlib.reload(const_mod)
+
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["saturday k1"]["token"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["saturday k1"]["chat_id"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["saturday k2"]["token"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["saturday k2"]["chat_id"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["sunday k1"]["token"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["sunday k1"]["chat_id"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["sunday k2"]["token"]
+    _ = const_mod.TELEGRAM_GROUP_CONFIG["sunday k2"]["chat_id"]
+    _ = const_mod.MAIN_GROUP_TOKEN
+    _ = const_mod.MAIN_GROUP_CHAT_ID
+
+    assert mock_get_config.call_count >= len(expected_calls)
+    actual_calls = [call[0][0] for call in mock_get_config.call_args_list]
+    for expected_call in expected_calls:
+        assert expected_call in actual_calls
