@@ -203,7 +203,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    sunday_date = get_this_week_sunday(date_string)
    base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
    mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
-   telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
+   telegram_message = f"{base_msg}" if mentions else base_msg
    group_cfg = TELEGRAM_GROUP_CONFIG.get(day.lower())
    if group_cfg and group_cfg.get("token") and group_cfg.get("chat_id"):
       asyncio.run(send_telegram_message(telegram_message, token=group_cfg["token"], chat_id=group_cfg["chat_id"]))
