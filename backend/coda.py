@@ -1,7 +1,7 @@
+import os
 import pandas as pd
 from codaio import Coda
 from datetime import datetime
-import os
 from dotenv import load_dotenv
 
 load_dotenv()

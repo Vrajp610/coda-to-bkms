@@ -1,7 +1,6 @@
 import asyncio
 import backend.utils.sendNotifications as under_test
 
-
 def _fake_asyncio_run(coro):
     loop = asyncio.new_event_loop()
     try:

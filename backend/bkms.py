@@ -2,7 +2,11 @@ import time
 from selenium.webdriver.common.by import By
 from backend.utils.dateUtils import calculate_week_number, get_this_week_sunday
 from backend.utils.chromeUtils import get_chrome_driver
-from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD, BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_MENTIONS
+from backend.utils.constants import (
+    BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD, 
+    BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_MENTIONS, 
+    BKMS_XPATH_CONFIG, BKMS_ACCESS_TYPE
+)
 from backend.utils.sendNotifications import send_notifications
 
 def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
@@ -56,7 +60,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{week_number}]').click()
    time.sleep(2)
 
-   # --- Select Specific Sabha Group (K1/K2/S1/S2) ---
+   # --- Select Specific Sabha Group (Saturday K1/K2 or Sunday K1/K2) ---
    sabha_row_map = {
       "saturday k1": 1,
       "saturday k2": 2,
@@ -65,8 +69,12 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    }
    row_number = sabha_row_map.get(day.lower())
    if row_number:
-      driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row_number}]/td[9]/div/span[2]/a').click()
-      print(f"Selected {day.title()}")
+      xpath = (BKMS_XPATH_CONFIG["PATHS"]["REGIONAL_ADMIN_XPATH"](row_number) 
+            if BKMS_ACCESS_TYPE == "RegionalAdmin"
+            else BKMS_XPATH_CONFIG["PATHS"]["LOCAL_ADMIN_XPATH"](row_number))
+    
+      driver.find_element(By.XPATH, xpath).click()
+      print(f"Selected {day.title()} using {BKMS_ACCESS_TYPE} access")
    else:
       print("Error: Invalid Sabha group entered!")
       return

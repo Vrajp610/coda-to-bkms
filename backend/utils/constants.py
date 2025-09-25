@@ -5,6 +5,9 @@ BKMS_REPORT_ATTENDANCE_URL = "https://bk.na.baps.org/admin/reports/reportweeksab
 BKMS_ID = os.getenv("BKMS_ID")
 BKMS_EMAIL = os.getenv("BKMS_EMAIL")
 BKMS_PASSWORD = os.getenv("BKMS_PASSWORD")
+MAIN_GROUP_TOKEN = os.getenv('MAIN_GROUP_TELEGRAM_TOKEN')
+MAIN_GROUP_CHAT_ID = os.getenv('MAIN_GROUP_TELEGRAM_CHAT_ID')
+BKMS_ACCESS_TYPE = os.getenv("BKMS_ACCESS_TYPE", "LocalAdmin")
 SABHA_ROW_MAP = {
     "saturday k1": 1,
     "saturday k2": 2,
@@ -45,5 +48,9 @@ TELEGRAM_GROUP_MENTIONS = {
     "sunday k1":   "@mananedison @SharadVP",
     "sunday k2":   "@isthatdhrooo @ParthVinod",
 }
-MAIN_GROUP_TOKEN = os.getenv('MAIN_GROUP_TELEGRAM_TOKEN')
-MAIN_GROUP_CHAT_ID = os.getenv('MAIN_GROUP_TELEGRAM_CHAT_ID')
+BKMS_XPATH_CONFIG = {
+    "PATHS": {
+        "REGIONAL_ADMIN_XPATH": lambda row: f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row}]/td[9]/div/span[2]/a',
+        "LOCAL_ADMIN_XPATH": lambda row: f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row}]/td[9]/div/span/a'
+    }
+}

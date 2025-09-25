@@ -1,7 +1,7 @@
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
 import sys
 import types
+from unittest.mock import patch, AsyncMock, MagicMock
 
 @pytest.fixture(autouse=True)
 def reload_telegramUtils():
