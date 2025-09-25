@@ -35,7 +35,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
    print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(60)
+   time.sleep(10)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
 
@@ -83,6 +83,17 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
       print("Saved attendance successfully!")
       time.sleep(2)
+
+      # --- Logout of BKMS ---
+      driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
+      time.sleep(1)
+      driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/ul/li[2]/div[2]/a').click()
+      print("Logged out of BKMS")
+
+      # --- Close Chrome ---
+      time.sleep(1)
+      driver.quit()
+      print("Closed Chrome")
 
       # --- Send Telegram Success Notification ---
       sunday_date = get_this_week_sunday(date_string)
@@ -193,6 +204,17 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    print("Saved attendance successfully!")
    time.sleep(5)
 
+   # --- Logout of BKMS ---
+   driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
+   time.sleep(1)
+   driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/ul/li[2]/div[2]/a').click()
+   print("Logged out of BKMS")
+   
+   # --- Close Chrome ---
+   time.sleep(1)   
+   driver.quit()
+   print("Closed Chrome")
+   
    # --- Send Telegram Success Notification ---
    sunday_date = get_this_week_sunday(date_string)
    base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"

@@ -15,10 +15,15 @@ def test_get_chrome_driver(mock_options, mock_chrome_service, mock_chrome):
     driver = chromeUtils.get_chrome_driver()
 
     mock_options.assert_called_once()
-    assert mock_options_instance.add_experimental_option.call_count == 2
+    assert mock_options_instance.add_experimental_option.call_count == 3
     mock_options_instance.add_experimental_option.assert_has_calls([
         call('excludeSwitches', ['enable-logging']),
-        call('detach', True)
+        call('detach', True),
+        call('prefs', {
+            'credentials_enable_service': False,
+            'profile.password_manager_enabled': False,
+            'profile.password_manager_leak_detection': False
+        })
     ], any_order=True)
     mock_chrome_service.assert_called_once()
     mock_chrome.assert_called_once_with(service=mock_service_instance, options=mock_options_instance)
