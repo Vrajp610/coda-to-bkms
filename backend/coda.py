@@ -1,26 +1,29 @@
 import pandas as pd
 from codaio import Coda
 from datetime import datetime
-from backend.utils.postgresConn import get_config_value
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Get Coda API Key from environment
-api_key = get_config_value("CODA_API_KEY")
+api_key = os.getenv("CODA_API_KEY")
 if not api_key:
-    raise EnvironmentError("CODA_API_KEY is not set in database.")
+    raise EnvironmentError("CODA_API_KEY is not set in environment variables.")
 
 # Initialize Coda client
 coda = Coda(api_key=api_key)
 
 #Coda Doc ID
-doc_id = get_config_value('CODA_DOC_ID')
+doc_id = os.getenv('CODA_DOC_ID')
 
 attendance = []
 
 #Table IDs
-saturday_k1 = get_config_value("SATURDAY_K1_TABLE_ID")
-saturday_k2 = get_config_value("SATURDAY_K2_TABLE_ID")
-sunday_k1 = get_config_value("SUNDAY_K1_TABLE_ID")
-sunday_k2 = get_config_value("SUNDAY_K2_TABLE_ID")
+saturday_k1 = os.getenv("SATURDAY_K1_TABLE_ID")
+saturday_k2 = os.getenv("SATURDAY_K2_TABLE_ID")
+sunday_k1 = os.getenv("SUNDAY_K1_TABLE_ID")
+sunday_k2 = os.getenv("SUNDAY_K2_TABLE_ID")
 
 def convert_date(date_str):
     current_year = datetime.now().year

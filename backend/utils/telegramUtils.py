@@ -1,4 +1,8 @@
-from backend.utils.postgresConn import get_config_value
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 async def send_telegram_message(message: str, token: str = None, chat_id: str = None) -> bool:
     """Send a message to a Telegram chat.
@@ -7,8 +11,8 @@ async def send_telegram_message(message: str, token: str = None, chat_id: str = 
     """
     from telegram import Bot
 
-    token = token or get_config_value("MAIN_GROUP_TELEGRAM_TOKEN")
-    chat_id = chat_id or get_config_value("MAIN_GROUP_TELEGRAM_CHAT_ID")
+    token = token or os.getenv("MAIN_GROUP_TELEGRAM_TOKEN")
+    chat_id = chat_id or os.getenv("MAIN_GROUP_TELEGRAM_CHAT_ID")
 
     if not token or not chat_id:
         raise ValueError("Telegram TOKEN or CHAT_ID is not set in environment variables or arguments.")
