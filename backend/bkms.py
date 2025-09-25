@@ -196,9 +196,8 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Send Telegram Success Notification ---
    sunday_date = get_this_week_sunday(date_string)
    base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
-   mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
-   telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
-   
+   telegram_message = base_msg
+
    # Send notifications to both groups
    send_notifications(telegram_message, day)
    print(f"Telegram notification sent: {telegram_message}")
