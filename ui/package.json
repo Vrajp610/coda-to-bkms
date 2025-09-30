@@ -16,7 +16,7 @@
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
     "animate.css": "^4.1.1",
-    "axios": "^0.27.2",
+    "axios": "^0.30.2",
     "date-fns": "^3.6.0",
     "react": "^19.1.0",
     "react-datepicker": "^8.3.0",
