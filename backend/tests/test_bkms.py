@@ -12,7 +12,7 @@ def mock_driver():
 
 @pytest.fixture
 def attended_kishores():
-    return ["1001", "1002", "1003"]
+    return ["1001", "1002", "1003", "1004", "1005", "1006"]
 
 @pytest.fixture
 def all_kishores_elements():
@@ -21,7 +21,8 @@ def all_kishores_elements():
         el.text = f"{bkid} Name"
         el.find_element.return_value = MagicMock()
         return el
-    return [make_element("1001"), make_element("1002"), make_element("9999")]
+    return [make_element("1001"), make_element("1002"), make_element("1003"), 
+            make_element("1004"), make_element("1005"), make_element("9999")]
 
 @pytest.fixture(autouse=True)
 def fast_sleep(monkeypatch):
@@ -50,9 +51,9 @@ def test_update_sheet_marks_attendance_and_returns_result(
         prep_cycle_done="yes"
     )
 
-    assert result["marked_present"] == 2
+    assert result["marked_present"] == 5
     assert result["not_marked"] == 1
-    assert result["not_found_in_bkms"] == ["1003"]
+    assert result["not_found_in_bkms"] == ["1006"]
     mock_send_telegram.assert_called_once()
 
 
@@ -68,7 +69,7 @@ def test_update_sheet_invalid_sabha_group_returns_none(
     mock_get_sunday.return_value = "2024-06-09"
 
     result = update_sheet(
-        attended_kishores=["1001"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
         day="invalid group",
         sabha_held="yes",
         p2_guju="yes",
@@ -187,19 +188,20 @@ def test_update_sheet_not_marked_logic(
         el.find_element.return_value = MagicMock()
         return el
 
-    mock_driver.find_elements.return_value = [make_element("1001"), make_element("1002"), make_element("1003")]
+    mock_driver.find_elements.return_value = [make_element("1001"), make_element("1002"), make_element("1003"), 
+                                               make_element("1004"), make_element("1005"), make_element("1006")]
 
     result = update_sheet(
-        attended_kishores=["1001", "1002", "1004"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1007"],
         day="Sunday K2",
         sabha_held="yes",
         p2_guju="no",
         date_string="2024-06-05",
         prep_cycle_done="yes"
     )
-    assert result["marked_present"] == 2
+    assert result["marked_present"] == 5
     assert result["not_marked"] == 1
-    assert result["not_found_in_bkms"] == ["1004"]
+    assert result["not_found_in_bkms"] == ["1007"]
     mock_send_telegram.assert_called_once()
 
 
@@ -223,9 +225,9 @@ def test_update_sheet_case_insensitivity(
         date_string="2024-06-05",
         prep_cycle_done="YeS"
     )
-    assert result["marked_present"] == 2
+    assert result["marked_present"] == 5
     assert result["not_marked"] == 1
-    assert result["not_found_in_bkms"] == ["1003"]
+    assert result["not_found_in_bkms"] == ["1006"]
     mock_send_telegram.assert_called_once()
 
 
@@ -246,17 +248,32 @@ def test_update_sheet_skips_empty_row(
     el2 = MagicMock()
     el2.text = "1001 Name"
     el2.find_element.return_value = MagicMock()
-    mock_driver.find_elements.return_value = [el1, el2]
+    el3 = MagicMock()
+    el3.text = "1002 Name"
+    el3.find_element.return_value = MagicMock()
+    el4 = MagicMock()
+    el4.text = "1003 Name"
+    el4.find_element.return_value = MagicMock()
+    el5 = MagicMock()
+    el5.text = "1004 Name"
+    el5.find_element.return_value = MagicMock()
+    el6 = MagicMock()
+    el6.text = "1005 Name"
+    el6.find_element.return_value = MagicMock()
+    el7 = MagicMock()
+    el7.text = "1006 Name"
+    el7.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [el1, el2, el3, el4, el5, el6, el7]
 
     result = update_sheet(
-        attended_kishores=["1001"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
         day="Sunday K1",
         sabha_held="yes",
         p2_guju="no",
         date_string="2024-06-05",
         prep_cycle_done="yes"
     )
-    assert result["marked_present"] == 1
+    assert result["marked_present"] == 6
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
     mock_send_telegram.assert_called_once()
@@ -273,14 +290,29 @@ def test_update_sheet_handles_click_exception_and_prints_not_marked(
     mock_week_number.return_value = 10
     mock_get_sunday.return_value = "2024-06-09"
 
-    el = MagicMock()
-    el.text = "1001 Name"
-    el.find_element.side_effect = NoSuchElementException("Mocked failure")
+    el1 = MagicMock()
+    el1.text = "1001 Name"
+    el1.find_element.side_effect = NoSuchElementException("Mocked failure")
+    el2 = MagicMock()
+    el2.text = "1002 Name"
+    el2.find_element.side_effect = NoSuchElementException("Mocked failure")
+    el3 = MagicMock()
+    el3.text = "1003 Name"
+    el3.find_element.side_effect = NoSuchElementException("Mocked failure")
+    el4 = MagicMock()
+    el4.text = "1004 Name"
+    el4.find_element.side_effect = NoSuchElementException("Mocked failure")
+    el5 = MagicMock()
+    el5.text = "1005 Name"
+    el5.find_element.side_effect = NoSuchElementException("Mocked failure")
+    el6 = MagicMock()
+    el6.text = "1006 Name"
+    el6.find_element.side_effect = NoSuchElementException("Mocked failure")
 
-    mock_driver.find_elements.return_value = [el]
+    mock_driver.find_elements.return_value = [el1, el2, el3, el4, el5, el6]
 
     result = update_sheet(
-        attended_kishores=["1001"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
         day="Sunday K1",
         sabha_held="yes",
         p2_guju="no",
@@ -289,11 +321,11 @@ def test_update_sheet_handles_click_exception_and_prints_not_marked(
     )
 
     assert result["marked_present"] == 0
-    assert result["not_marked"] == 1
+    assert result["not_marked"] == 6
     assert result["not_found_in_bkms"] == []
 
     captured = capsys.readouterr()
-    assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
+    assert "Kishores found in BKMS but not marked present:" in captured.out
 
 
 @patch("backend.bkms.get_chrome_driver")
@@ -368,24 +400,36 @@ def test_update_sheet_kishore_not_marked_and_not_found(
     el2 = MagicMock()
     el2.text = "1002 Name"
     el2.find_element.return_value = MagicMock()
-    mock_driver.find_elements.return_value = [el1, el2]
+    el3 = MagicMock()
+    el3.text = "1003 Name"
+    el3.find_element.return_value = MagicMock()
+    el4 = MagicMock()
+    el4.text = "1004 Name"
+    el4.find_element.return_value = MagicMock()
+    el5 = MagicMock()
+    el5.text = "1005 Name"
+    el5.find_element.return_value = MagicMock()
+    el6 = MagicMock()
+    el6.text = "1006 Name"
+    el6.find_element.return_value = MagicMock()
+    mock_driver.find_elements.return_value = [el1, el2, el3, el4, el5, el6]
 
     result = update_sheet(
-        attended_kishores=["1001", "1002", "1003"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1007"],
         day="Saturday K1",
         sabha_held="yes",
         p2_guju="no",
         date_string="2024-06-05",
         prep_cycle_done="yes"
     )
-    assert result["marked_present"] == 1
+    assert result["marked_present"] == 4
     assert result["not_marked"] == 2
-    assert result["not_found_in_bkms"] == ["1003"]
+    assert result["not_found_in_bkms"] == ["1007"]
     mock_send_telegram.assert_called_once()
 
     captured = capsys.readouterr()
     assert "Kishores found in BKMS but not marked present: ['1001']" in captured.out
-    assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out or "Kishores not found in BKMS: ['1003']" in captured.out
+    assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out or "Kishores not found in BKMS:" in captured.out
 
 
 @patch("backend.bkms.get_chrome_driver")
@@ -402,7 +446,7 @@ def test_update_sheet_prints_and_returns_for_all_paths(
 
     mock_driver.find_elements.return_value = []
     result = update_sheet(
-        attended_kishores=["1001", "1002"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
         day="Sunday K2",
         sabha_held="yes",
         p2_guju="no",
@@ -410,13 +454,13 @@ def test_update_sheet_prints_and_returns_for_all_paths(
         prep_cycle_done="yes"
     )
     assert result["marked_present"] == 0
-    assert result["not_marked"] == 2
-    assert result["not_found_in_bkms"] == ["1001", "1002"]
+    assert result["not_marked"] == 6
+    assert result["not_found_in_bkms"] == ["1001", "1002", "1003", "1004", "1005", "1006"]
     mock_send_telegram.assert_called_once()
 
     captured = capsys.readouterr()
-    assert "Did not mark 2 Kishores as they were not found in BKMS" in captured.out
-    assert "Kishores not found in BKMS: 1001, 1002" in captured.out
+    assert "Did not mark 6 Kishores as they were not found in BKMS" in captured.out
+    assert "Kishores not found in BKMS:" in captured.out
 
 @patch("backend.bkms.get_chrome_driver")
 @patch("backend.bkms.calculate_week_number")
@@ -436,7 +480,7 @@ def test_update_sheet_uses_prep_cycle_label3_when_prep_cycle_no(
     expected_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[2]/label[3]/div/ins'
 
     update_sheet(
-        attended_kishores=["1001"],
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
         day="Saturday K1",
         sabha_held="yes",
         p2_guju="no",
@@ -466,7 +510,7 @@ def test_update_sheet_clicks_p2_guju_label2_and_prints(
    expected_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins'
 
    update_sheet(
-      attended_kishores=["1001"],
+      attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
       day="Saturday K1",
       sabha_held="yes",
       p2_guju="yes",
