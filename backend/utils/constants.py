@@ -50,7 +50,7 @@ TELEGRAM_GROUP_MENTIONS = {
 }
 BKMS_XPATH_CONFIG = {
     "PATHS": {
-        "REGIONAL_ADMIN_XPATH": lambda row: f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row}]/td[9]/div/span[2]/a',
-        "LOCAL_ADMIN_XPATH": lambda row: f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row}]/td[9]/div/span/a'
+        "REGIONAL_XPATH": lambda row: f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row}]/td[9]/div/span[2]/a',
+        "LOCAL_XPATH": lambda row: f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{row}]/td[9]/div/span/a'
     }
 }

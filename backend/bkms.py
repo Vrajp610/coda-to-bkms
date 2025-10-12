@@ -11,7 +11,7 @@ from backend.utils.sendNotifications import send_notifications
 
 def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
    # If sabha was held but Coda attendance is empty, notify and abort BEFORE opening Chromium
-   if sabha_held.lower() == "yes" and (not attended_kishores or len(attended_kishores) == 0):
+   if sabha_held.lower() == "yes" and (not attended_kishores or len(attended_kishores) <= 5):
       sunday_date = get_this_week_sunday(date_string)
       base_msg = f"{day.title()} attendance ({sunday_date}) is not marked in Coda. Please update Coda so BKMS can be updated. ❌"
       mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
@@ -69,9 +69,9 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    }
    row_number = sabha_row_map.get(day.lower())
    if row_number:
-      xpath = (BKMS_XPATH_CONFIG["PATHS"]["REGIONAL_ADMIN_XPATH"](row_number) 
-            if BKMS_ACCESS_TYPE == "RegionalAdmin"
-            else BKMS_XPATH_CONFIG["PATHS"]["LOCAL_ADMIN_XPATH"](row_number))
+      xpath = (BKMS_XPATH_CONFIG["PATHS"]["REGIONAL_XPATH"](row_number) 
+            if BKMS_ACCESS_TYPE == "Regional"
+            else BKMS_XPATH_CONFIG["PATHS"]["LOCAL_XPATH"](row_number))
     
       driver.find_element(By.XPATH, xpath).click()
       print(f"Selected {day.title()} using {BKMS_ACCESS_TYPE} access")
