@@ -40,7 +40,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
    print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(20)
+   time.sleep(60)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
 
