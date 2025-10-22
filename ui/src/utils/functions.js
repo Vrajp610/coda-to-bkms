@@ -49,6 +49,7 @@ export const filterValidSundays = (date) => {
  * @param {Function} params.setMarkedPresent - Function to set marked present count.
  * @param {Function} params.setNotMarked - Function to set not marked count.
  * @param {Function} params.setNotFoundInBkms - Function to set not found in BKMS count.
+ * @param {Function} params.setSabhaHeldResult - Function to set sabha held result.
  * @param {Function} params.setLoading - Function to set loading state.
  */
 export async function runAttendanceBot({
@@ -61,6 +62,7 @@ export async function runAttendanceBot({
   setMarkedPresent,
   setNotMarked,
   setNotFoundInBkms,
+  setSabhaHeldResult,
   setLoading,
 }) {
   if (
@@ -81,6 +83,7 @@ export async function runAttendanceBot({
   setMarkedPresent(null);
   setNotMarked(null);
   setNotFoundInBkms(null);
+  setSabhaHeldResult(null);
   try {
     const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -98,6 +101,8 @@ export async function runAttendanceBot({
       setNotMarked(response.data.not_marked);
     if (response.data.not_found_in_bkms !== undefined)
       setNotFoundInBkms(response.data.not_found_in_bkms);
+    if (response.data.sabha_held !== undefined)
+      setSabhaHeldResult(response.data.sabha_held);
   } catch (error) {
     setStatus(CONSTANTS.SOMETHING_WENT_WRONG);
   }

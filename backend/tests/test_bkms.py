@@ -54,6 +54,7 @@ def test_update_sheet_marks_attendance_and_returns_result(
     assert result["marked_present"] == 5
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1006"]
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
 
@@ -102,6 +103,7 @@ def test_update_sheet_handles_no_attended_kishores(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == False
     mock_send_telegram.assert_called_once()
 
 
@@ -135,6 +137,7 @@ def test_update_sheet_marks_all_absent(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == False
     mock_send_telegram.assert_called_once()
 
 
@@ -168,6 +171,7 @@ def test_update_sheet_p2_guju_yes_and_prep_cycle_no(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == False
     mock_send_telegram.assert_called_once()
 
 
@@ -202,6 +206,7 @@ def test_update_sheet_not_marked_logic(
     assert result["marked_present"] == 5
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1007"]
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
 
@@ -228,6 +233,7 @@ def test_update_sheet_case_insensitivity(
     assert result["marked_present"] == 5
     assert result["not_marked"] == 1
     assert result["not_found_in_bkms"] == ["1006"]
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
 
@@ -276,6 +282,7 @@ def test_update_sheet_skips_empty_row(
     assert result["marked_present"] == 6
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
 
@@ -323,6 +330,7 @@ def test_update_sheet_handles_click_exception_and_prints_not_marked(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 6
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == True
 
     captured = capsys.readouterr()
     assert "Kishores found in BKMS but not marked present:" in captured.out
@@ -352,6 +360,7 @@ def test_update_sheet_all_checklist_clicks_and_p2_guju_yes(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
 
@@ -379,6 +388,7 @@ def test_update_sheet_all_checklist_clicks_and_p2_guju_no(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 0
     assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
 
@@ -425,6 +435,7 @@ def test_update_sheet_kishore_not_marked_and_not_found(
     assert result["marked_present"] == 4
     assert result["not_marked"] == 2
     assert result["not_found_in_bkms"] == ["1007"]
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
     captured = capsys.readouterr()
@@ -456,6 +467,7 @@ def test_update_sheet_prints_and_returns_for_all_paths(
     assert result["marked_present"] == 0
     assert result["not_marked"] == 6
     assert result["not_found_in_bkms"] == ["1001", "1002", "1003", "1004", "1005", "1006"]
+    assert result["sabha_held"] == True
     mock_send_telegram.assert_called_once()
 
     captured = capsys.readouterr()

@@ -25,6 +25,7 @@ import { CONSTANTS } from "../../utils/CONSTANTS";
  * @param {Array} props.markedPresent - List of members marked present.
  * @param {Array} props.notMarked - List of members not marked.
  * @param {Array} props.notFoundInBkms - List of members not found in BKMS.
+ * @param {boolean} props.sabhaHeldResult - Indicates if sabha was actually held (from backend).
  * @param {boolean} props.signInOpen - Indicates if the sign-in modal is open.
  * @param {Function} props.setSignInOpen - Function to update the sign-in modal state.
  * @param {Function} props.handleSignInSuccess - Function to handle successful sign-in.
@@ -46,6 +47,7 @@ const AttendanceForm = ({
   markedPresent,
   notMarked,
   notFoundInBkms,
+  sabhaHeldResult,
   signInOpen,
   setSignInOpen,
   handleSignInSuccess,
@@ -129,6 +131,7 @@ const AttendanceForm = ({
         markedPresent={markedPresent}
         notMarked={notMarked}
         notFoundInBkms={notFoundInBkms}
+        sabhaHeldResult={sabhaHeldResult}
         styles={styles}
         CONSTANTS={CONSTANTS}
       />

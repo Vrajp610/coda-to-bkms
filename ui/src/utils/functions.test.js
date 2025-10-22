@@ -68,6 +68,7 @@ describe("runAttendanceBot", () => {
     const mockSetMarkedPresent = jest.fn();
     const mockSetNotMarked = jest.fn();
     const mockSetNotFoundInBkms = jest.fn();
+    const mockSetSabhaHeldResult = jest.fn();
     const mockSetLoading = jest.fn();
 
     beforeEach(() => {
@@ -90,6 +91,7 @@ describe("runAttendanceBot", () => {
         setMarkedPresent: mockSetMarkedPresent,
         setNotMarked: mockSetNotMarked,
         setNotFoundInBkms: mockSetNotFoundInBkms,
+        setSabhaHeldResult: mockSetSabhaHeldResult,
         setLoading: mockSetLoading,
     };
 
@@ -117,6 +119,7 @@ describe("runAttendanceBot", () => {
                 marked_present: ["A"],
                 not_marked: ["B"],
                 not_found_in_bkms: ["C"],
+                sabha_held: true,
             },
         });
 
@@ -127,6 +130,7 @@ describe("runAttendanceBot", () => {
         expect(mockSetMarkedPresent).toHaveBeenCalledWith(["A"]);
         expect(mockSetNotMarked).toHaveBeenCalledWith(["B"]);
         expect(mockSetNotFoundInBkms).toHaveBeenCalledWith(["C"]);
+        expect(mockSetSabhaHeldResult).toHaveBeenCalledWith(true);
         expect(mockSetLoading).toHaveBeenLastCalledWith(false);
     });
 

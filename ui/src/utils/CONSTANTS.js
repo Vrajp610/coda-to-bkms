@@ -27,4 +27,5 @@ export const CONSTANTS = {
   PASSWORD: "Password",
   EMAIL: "Email",
   CODA_ATTENDANCE_MISSING: "Coda attendance is currently missing. Please ensure it’s filled out before proceeding further.",
+  SABHA_NOT_HELD: "Sabha was not held. Attendance marked accordingly in BKMS.",
 };

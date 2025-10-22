@@ -34,7 +34,8 @@ def run_bot(input_data: BotInput):
             "message": f"{count} Kishores found in Coda",
             "marked_present": result["marked_present"],
             "not_marked": result["not_marked"],
-            "not_found_in_bkms": result["not_found_in_bkms"]
+            "not_found_in_bkms": result["not_found_in_bkms"],
+            "sabha_held": result["sabha_held"]
         }
     except Exception as e:
         return {"error": str(e)}

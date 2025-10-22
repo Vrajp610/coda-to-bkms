@@ -23,7 +23,8 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       return {
          "marked_present": 0,
          "not_marked": 0,
-         "not_found_in_bkms": []
+         "not_found_in_bkms": [],
+         "sabha_held": True
       }
 
    # --- Open Chrome and Navigate to BKMS login ---
@@ -39,7 +40,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
    print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(60)
+   time.sleep(20)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
 
@@ -90,7 +91,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       # --- Save Changes Immediately ---
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
       print("Saved attendance successfully!")
-      time.sleep(2)
+      time.sleep(5)
 
       # --- Logout of BKMS ---
       driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
@@ -116,7 +117,8 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       return {
          "marked_present": 0,
          "not_marked": 0,
-         "not_found_in_bkms": []
+         "not_found_in_bkms": [],
+         "sabha_held": False
       }
 
    # --- Sabha WAS held, continue with full checklist ---
@@ -236,5 +238,6 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    return {
       "marked_present": len(updated_kishores),
       "not_marked": len(attended_kishores) - len(updated_kishores),
-      "not_found_in_bkms": not_found_in_bkms
+      "not_found_in_bkms": not_found_in_bkms,
+      "sabha_held": True
    }

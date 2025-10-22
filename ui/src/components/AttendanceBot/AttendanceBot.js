@@ -19,6 +19,7 @@ const AttendanceBot = () => {
   const [markedPresent, setMarkedPresent] = useState(null);
   const [notMarked, setNotMarked] = useState(null);
   const [notFoundInBkms, setNotFoundInBkms] = useState(null);
+  const [sabhaHeldResult, setSabhaHeldResult] = useState(null);
   const [signInOpen, setSignInOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
 
@@ -33,6 +34,7 @@ const AttendanceBot = () => {
       setMarkedPresent,
       setNotMarked,
       setNotFoundInBkms,
+      setSabhaHeldResult,
       setLoading,
     });
 
@@ -56,6 +58,7 @@ const AttendanceBot = () => {
         markedPresent={markedPresent}
         notMarked={notMarked}
         notFoundInBkms={notFoundInBkms}
+        sabhaHeldResult={sabhaHeldResult}
         signInOpen={signInOpen}
         setSignInOpen={setSignInOpen}
         handleSignInSuccess={() => handleSignInSuccessHelper(setSignedIn, setSignInOpen, runBot)}

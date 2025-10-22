@@ -21,7 +21,8 @@ def test_run_bot_success(bot_input):
     update_result = {
         "marked_present": ["A"],
         "not_marked": ["B"],
-        "not_found_in_bkms": []
+        "not_found_in_bkms": [],
+        "sabha_held": "Yes"
     }
     with patch("backend.index.format_data", return_value=(attendance, count)), \
          patch("backend.index.update_sheet", return_value=update_result):
