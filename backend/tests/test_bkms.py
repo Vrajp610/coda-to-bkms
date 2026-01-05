@@ -535,3 +535,181 @@ def test_update_sheet_clicks_p2_guju_label2_and_prints(
 
    captured = capsys.readouterr()
    assert "Presentation 2 was in Gujarati" in captured.out
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_early_abort_empty_attendance_sabha_held(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver
+):
+    mock_get_driver.return_value = MagicMock()
+    mock_get_sunday.return_value = "2024-06-09"
+
+    result = update_sheet(
+        attended_kishores=[],
+        day="Saturday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 0
+    assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == True
+    mock_send_telegram.assert_called_once()
+    mock_get_driver.assert_not_called()
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_early_abort_exactly_5_kishores_sabha_held(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver
+):
+    mock_get_driver.return_value = MagicMock()
+    mock_get_sunday.return_value = "2024-06-09"
+
+    result = update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005"],
+        day="Sunday K2",
+        sabha_held="yes",
+        p2_guju="yes",
+        date_string="2024-06-05",
+        prep_cycle_done="no"
+    )
+
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 0
+    assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == True
+    mock_send_telegram.assert_called_once()
+    mock_get_driver.assert_not_called()
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_early_abort_6_kishores_proceeds(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
+):
+    mock_get_driver.return_value = mock_driver
+    mock_get_sunday.return_value = "2024-06-09"
+    mock_week_number.return_value = 5
+    mock_driver.find_elements.return_value = []
+
+    result = update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
+        day="Saturday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    assert result["marked_present"] == 0
+    mock_get_driver.assert_called_once()
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_sabha_not_held_early_exit(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
+):
+    mock_get_driver.return_value = mock_driver
+    mock_get_sunday.return_value = "2024-06-09"
+    mock_week_number.return_value = 3
+
+    result = update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
+        day="Sunday K1",
+        sabha_held="no",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    assert result["marked_present"] == 0
+    assert result["not_marked"] == 0
+    assert result["not_found_in_bkms"] == []
+    assert result["sabha_held"] == False
+    mock_send_telegram.assert_called_once()
+    mock_driver.quit.assert_called_once()
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_login_flow(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
+):
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 2
+    mock_get_sunday.return_value = "2024-06-09"
+    mock_driver.find_elements.return_value = []
+    from selenium.webdriver.common.by import By
+
+    update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
+        day="Saturday K2",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes"
+    )
+
+    calls = mock_driver.find_element.call_args_list
+    assert any(call[0] == (By.ID, "user_id") for call in calls), "Login user_id not found"
+    assert any(call[0] == (By.ID, "email") for call in calls), "Login email not found"
+    assert any(call[0] == (By.ID, "password") for call in calls), "Login password not found"
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_handles_option_text_exception(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, monkeypatch
+):
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 5
+    mock_get_sunday.return_value = "2025-12-21"
+
+    monkeypatch.setattr('backend.coda.convert_date', lambda s: '2025-12-21T00:00:00.000-08:00')
+
+    class BrokenOpt:
+        @property
+        def text(self):
+            raise Exception("Broken option")
+        def click(self):
+            pass
+
+    opt1 = MagicMock()
+    opt1.text = '2023'
+    opt1.click = MagicMock()
+    opt2 = BrokenOpt()
+    opt3 = MagicMock()
+    opt3.text = '2025 - Some label'
+    opt3.click = MagicMock()
+
+    mock_driver.find_elements.return_value = [opt1, opt2, opt3]
+
+    result = update_sheet(
+        attended_kishores=[],
+        day="Sunday K1",
+        sabha_held="no",
+        p2_guju="no",
+        date_string="December 21",
+        prep_cycle_done="no"
+    )
+
+    opt3.click.assert_called_once()
+    opt2.click()
+

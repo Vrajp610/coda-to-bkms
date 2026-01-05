@@ -40,7 +40,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
    print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(60)
+   time.sleep(20)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
 
@@ -52,7 +52,32 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    print("Selecting Sabha Wing and Year")
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]').click()  # Kishore
    time.sleep(1)
-   driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]').click()  # 2025
+
+   # --- Dynamically select the year based on the chosen date ---
+   try:
+      # Import here to avoid any potential import-time cycles
+      from backend.coda import convert_date
+      year = int(convert_date(date_string).split("T")[0].split("-")[0])
+   except Exception:
+      # Fallback to current year if parsing fails
+      from datetime import datetime as _dt
+      year = _dt.now().year
+
+   year_select_xpath = '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select'
+   year_options = driver.find_elements(By.XPATH, f"{year_select_xpath}/option")
+   selected = False
+   for opt in year_options:
+      try:
+         if opt.text.strip().startswith(str(year)):
+            opt.click()
+            selected = True
+            break
+      except Exception:
+         continue
+
+   # If the exact year option was not found, pick the last option as a safe fallback
+   if not selected and year_options:
+      year_options[-1].click()
    time.sleep(1)
 
    # --- Select Week based on Entered Date ---

@@ -28,6 +28,30 @@ def test_convert_date_formats_correctly(mock_coda, mock_getenv, patch_external_m
     expected = f"{year}-03-15T00:00:00.000-08:00"
     assert coda_mod.convert_date(date_str) == expected
 
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_convert_date_cross_year_picks_closest_year(mock_coda, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+    
+    class FixedDatetime:
+        @classmethod
+        def now(cls):
+            from datetime import datetime as real_datetime
+            return real_datetime(2026, 1, 4)
+
+        @staticmethod
+        def strptime(date_string, fmt):
+            from datetime import datetime as real_datetime
+            return real_datetime.strptime(date_string, fmt)
+
+    monkeypatch.setattr(coda_mod, 'datetime', FixedDatetime)
+    result = coda_mod.convert_date("December 21")
+    assert result.startswith("2025-12-21")
+
 @patch("os.getenv")
 @patch("codaio.Coda")
 def test_convert_date_invalid_input_raises(mock_coda, mock_getenv, patch_external_modules):

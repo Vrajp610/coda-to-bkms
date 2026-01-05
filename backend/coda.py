@@ -26,12 +26,28 @@ sunday_k1 = os.getenv("SUNDAY_K1_TABLE_ID")
 sunday_k2 = os.getenv("SUNDAY_K2_TABLE_ID")
 
 def convert_date(date_str):
-    current_year = datetime.now().year
+    """Convert a 'Month day' string into a Coda timestamp string selecting the
+    year that results in a date closest to today (handles cross-year cases).
+    """
+    today = datetime.now().date()
 
-    full_date_str = f"{current_year} {date_str}"
-    full_date = datetime.strptime(full_date_str, "%Y %B %d")
-    formatted_date = full_date.strftime("%Y-%m-%dT%H:%M:%S.000-08:00")
+    # Try current year, previous year and next year and pick closest to today
+    candidate_years = [today.year, today.year - 1, today.year + 1]
+    candidates = []
+    for y in candidate_years:
+        full_date_str = f"{y} {date_str}"
+        try:
+            d = datetime.strptime(full_date_str, "%Y %B %d").date()
+            candidates.append(d)
+        except ValueError:
+            # If the format doesn't parse (invalid month/day), bubble up error
+            raise
 
+    # Choose candidate with minimal distance to today
+    chosen = min(candidates, key=lambda d: abs((d - today).days))
+
+    # Return in the expected Coda timestamp format
+    formatted_date = chosen.strftime("%Y-%m-%dT%H:%M:%S.000-08:00")
     return formatted_date
 
 def get_attendance(table: str, date: str):
