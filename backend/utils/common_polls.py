@@ -1,3 +1,4 @@
+# backend/common_polls.py
 import os
 import re
 import requests
@@ -60,8 +61,9 @@ def build_questions_using_sunday_date() -> List[str]:
     sunday = next_weekday(6)  # Sunday
     suffix = f"({format_date(sunday)})"
     return [
-        f"Was P2 in Guju? {suffix}",
-        f"Was 2 week prep cycle utilized? {suffix}",
+        f"Was Sabha Held? {suffix}",
+        f"Was Presentation 2 in Gujarati? {suffix}",
+        f"Was 2 Week Prep Cycle Done? {suffix}",
     ]
 
 
@@ -84,10 +86,11 @@ def send_poll(token: str, chat_id: str, question: str) -> None:
         raise RuntimeError(f"Telegram API error for chat_id={chat_id}: {data}")
 
 
-def send_polls_to_targets(targets: List[TelegramTarget], **kwargs) -> None:
+def send_polls_to_targets(targets: List[TelegramTarget], *, for_prefix: str) -> None:
+    # for_prefix kept for compatibility with runner scripts; date always uses upcoming Sunday.
     questions = build_questions_using_sunday_date()
 
     for t in targets:
         for q in questions:
             send_poll(t.token, t.chat_id, q)
-        print(f"Sent 2 polls to {t.name} (chat_id={t.chat_id})")
+        print(f"Sent {len(questions)} polls to {t.name} (chat_id={t.chat_id})")

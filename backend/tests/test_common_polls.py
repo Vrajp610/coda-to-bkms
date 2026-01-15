@@ -130,9 +130,10 @@ class TestBuildQuestionsUsingSundayDate:
 			sunday = date(2026, 1, 18)
 			mock_next.return_value = sunday
 			questions = build_questions_using_sunday_date()
-			assert len(questions) == 2
-			assert "Was P2 in Guju?" in questions[0]
-			assert "Was 2 week prep cycle utilized?" in questions[1]
+			assert len(questions) == 3
+			assert "Was Sabha Held?" in questions[0]
+			assert "Was Presentation 2 in Gujarati?" in questions[1]
+			assert "Was 2 Week Prep Cycle Done?" in questions[2]
 			assert "(Jan 18, 2026)" in questions[0]
 
 
@@ -174,16 +175,16 @@ class TestSendPollsToTargets:
 	@patch("backend.utils.common_polls.send_poll")
 	@patch("backend.utils.common_polls.build_questions_using_sunday_date")
 	def test_send_polls_to_targets(self, mock_questions, mock_send):
-		mock_questions.return_value = ["Q1?", "Q2?"]
+		mock_questions.return_value = ["Q1?", "Q2?", "Q3?"]
 		targets = [
 			TelegramTarget(name="TARGET1", token="token1", chat_id="chat1"),
 			TelegramTarget(name="TARGET2", token="token2", chat_id="chat2"),
 		]
 		
 		with patch("builtins.print") as mock_print:
-			send_polls_to_targets(targets)
+			send_polls_to_targets(targets, for_prefix="TEST")
 		
-		assert mock_send.call_count == 4  # 2 targets * 2 questions
+		assert mock_send.call_count == 6  # 2 targets * 3 questions
 		assert mock_print.call_count == 2
 
 	@patch("backend.utils.common_polls.send_poll")
@@ -192,6 +193,6 @@ class TestSendPollsToTargets:
 		mock_questions.return_value = ["Q1?"]
 		targets = [TelegramTarget(name="TARGET1", token="token1", chat_id="chat1")]
 		
-		send_polls_to_targets(targets)
+		send_polls_to_targets(targets, for_prefix="TEST")
 		
 		mock_send.assert_called_once_with("token1", "chat1", "Q1?")
