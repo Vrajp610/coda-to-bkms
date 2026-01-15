@@ -1,0 +1,26 @@
+name: Sunday Telegram Polls
+
+on:
+  schedule:
+    - cron: "0 18 * * 0"  # 1:00 PM EST (UTC-5) => 18:00 UTC
+  workflow_dispatch:
+
+jobs:
+  send_sun_polls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install requests
+
+      - name: Send SUN polls
+        run: python3 backend/send_sun_polls.py
+        env:
+          SUN_K1_TELEGRAM_TOKEN: ${{ secrets.SUN_K1_TELEGRAM_TOKEN }}
+          SUN_K1_TELEGRAM_CHAT_ID: ${{ secrets.SUN_K1_TELEGRAM_CHAT_ID }}
+          SUN_K2_TELEGRAM_TOKEN: ${{ secrets.SUN_K2_TELEGRAM_TOKEN }}
+          SUN_K2_TELEGRAM_CHAT_ID: ${{ secrets.SUN_K2_TELEGRAM_CHAT_ID }}

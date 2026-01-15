@@ -1,0 +1,26 @@
+name: Saturday Telegram Polls
+
+on:
+  schedule:
+    - cron: "0 19 * * 6"  # 2:00 PM EST (UTC-5) => 19:00 UTC
+  workflow_dispatch:
+
+jobs:
+  send_sat_polls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install requests
+
+      - name: Send SAT polls
+        run: python3 backend/send_sat_polls.py
+        env:
+          SAT_K1_TELEGRAM_TOKEN: ${{ secrets.SAT_K1_TELEGRAM_TOKEN }}
+          SAT_K1_TELEGRAM_CHAT_ID: ${{ secrets.SAT_K1_TELEGRAM_CHAT_ID }}
+          SAT_K2_TELEGRAM_TOKEN: ${{ secrets.SAT_K2_TELEGRAM_TOKEN }}
+          SAT_K2_TELEGRAM_CHAT_ID: ${{ secrets.SAT_K2_TELEGRAM_CHAT_ID }}
