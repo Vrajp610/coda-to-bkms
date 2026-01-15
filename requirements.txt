@@ -13,3 +13,8 @@ httpx
 selenium
 pytest-asyncio
 psycopg2-binary
+typing
+dataclasses
+requests
+os
+re
