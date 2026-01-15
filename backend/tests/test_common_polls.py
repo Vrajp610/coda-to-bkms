@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import os
 from datetime import date
-from backend.common_polls import (
+from backend.utils.common_polls import (
 	TelegramTarget,
 	build_targets_from_env,
 	next_weekday,
@@ -102,7 +102,7 @@ class TestNextWeekday:
 		assert result == date(2026, 1, 26)
 
 	def test_next_weekday_today(self):
-		with patch("backend.common_polls.date") as mock_date:
+		with patch("backend.utils.common_polls.date") as mock_date:
 			mock_date.today.return_value = date(2026, 1, 19)
 			result = next_weekday(0)
 			assert result == date(2026, 1, 19)
@@ -126,7 +126,7 @@ class TestFormatDate:
 
 class TestBuildQuestionsUsingSundayDate:
 	def test_build_questions_format(self):
-		with patch("backend.common_polls.next_weekday") as mock_next:
+		with patch("backend.utils.common_polls.next_weekday") as mock_next:
 			sunday = date(2026, 1, 18)
 			mock_next.return_value = sunday
 			questions = build_questions_using_sunday_date()
@@ -137,7 +137,7 @@ class TestBuildQuestionsUsingSundayDate:
 
 
 class TestSendPoll:
-	@patch("backend.common_polls.requests.post")
+	@patch("backend.utils.common_polls.requests.post")
 	def test_send_poll_success(self, mock_post):
 		mock_response = MagicMock()
 		mock_response.json.return_value = {"ok": True, "result": {"poll_id": "123"}}
@@ -153,14 +153,14 @@ class TestSendPoll:
 		assert kwargs["json"]["options"] == ["Yes", "No"]
 		assert kwargs["timeout"] == 25
 
-	@patch("backend.common_polls.requests.post")
+	@patch("backend.utils.common_polls.requests.post")
 	def test_send_poll_http_error(self, mock_post):
 		mock_post.return_value.raise_for_status.side_effect = Exception("HTTP Error")
 		
 		with pytest.raises(Exception):
 			send_poll("token123", "chat456", "Test question?")
 
-	@patch("backend.common_polls.requests.post")
+	@patch("backend.utils.common_polls.requests.post")
 	def test_send_poll_telegram_error(self, mock_post):
 		mock_response = MagicMock()
 		mock_response.json.return_value = {"ok": False, "description": "Bad request"}
@@ -171,8 +171,8 @@ class TestSendPoll:
 
 
 class TestSendPollsToTargets:
-	@patch("backend.common_polls.send_poll")
-	@patch("backend.common_polls.build_questions_using_sunday_date")
+	@patch("backend.utils.common_polls.send_poll")
+	@patch("backend.utils.common_polls.build_questions_using_sunday_date")
 	def test_send_polls_to_targets(self, mock_questions, mock_send):
 		mock_questions.return_value = ["Q1?", "Q2?"]
 		targets = [
@@ -186,8 +186,8 @@ class TestSendPollsToTargets:
 		assert mock_send.call_count == 4  # 2 targets * 2 questions
 		assert mock_print.call_count == 2
 
-	@patch("backend.common_polls.send_poll")
-	@patch("backend.common_polls.build_questions_using_sunday_date")
+	@patch("backend.utils.common_polls.send_poll")
+	@patch("backend.utils.common_polls.build_questions_using_sunday_date")
 	def test_send_polls_to_targets_single(self, mock_questions, mock_send):
 		mock_questions.return_value = ["Q1?"]
 		targets = [TelegramTarget(name="TARGET1", token="token1", chat_id="chat1")]

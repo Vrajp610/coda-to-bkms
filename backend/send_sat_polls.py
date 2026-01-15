@@ -1,4 +1,4 @@
-from backend.common_polls import build_targets_from_env, send_polls_to_targets
+from backend.utils.common_polls import build_targets_from_env, send_polls_to_targets
 
 def main() -> None:
     prefix = "SAT_"
