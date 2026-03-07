@@ -72,6 +72,35 @@ def test_run_bot_format_data_raises(bot_input):
         assert "error" in data
         assert "Format error" in data["error"]
 
+def test_run_user_update_stream_success():
+    with patch("backend.index.update_users") as mock_update:
+        def fake_update(user_ids, log_callback=None):
+            log_callback("starting")
+            log_callback("done")
+        mock_update.side_effect = fake_update
+        response = client.post("/run-user-update-stream", json={"user_ids": ["123", "456"]})
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+        body = response.text
+        assert "data: starting" in body
+        assert "data: done" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_user_update_stream_exception():
+    with patch("backend.index.update_users", side_effect=Exception("boom")):
+        response = client.post("/run-user-update-stream", json={"user_ids": ["123"]})
+        assert response.status_code == 200
+        body = response.text
+        assert "ERROR: boom" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_user_update_stream_invalid_input():
+    response = client.post("/run-user-update-stream", json={"wrong_field": []})
+    assert response.status_code == 422
+
+
 def test_cors_headers(bot_input):
     attendance = [{"name": "A"}]
     count = 1

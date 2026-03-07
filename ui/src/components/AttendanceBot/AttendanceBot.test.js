@@ -5,7 +5,7 @@ import * as functions from "../../utils/functions";
 
 jest.mock("./AttendanceBot.module.css", () => ({
   container: "container",
-  title: "title"
+  title: "title",
 }));
 
 let lastAttendanceFormProps = {};
@@ -22,8 +22,7 @@ jest.mock("../../utils/CONSTANTS", () => ({
     SOMETHING_WENT_WRONG: "Something went wrong!",
     LONG: "long",
     NUMERIC: "numeric",
-    LOCAL_URL: "http://localhost:8000"
-  }
+  },
 }));
 
 beforeAll(() => {
@@ -42,79 +41,44 @@ describe("AttendanceBot", () => {
     expect(screen.getByTestId("attendance-form")).toBeInTheDocument();
   });
 
-  it("passes all required props to AttendanceForm", () => {
+  it("passes required props to AttendanceForm", () => {
     render(<AttendanceBot />);
     [
-      "date",
-      "setDate",
-      "group",
-      "setGroup",
-      "sabhaHeld",
-      "setSabhaHeld",
-      "p2Guju",
-      "setP2Guju",
-      "prepCycleDone",
-      "setPrepCycleDone",
-      "status",
-      "loading",
+      "date", "setDate",
+      "group", "setGroup",
+      "sabhaHeld", "setSabhaHeld",
+      "p2Guju", "setP2Guju",
+      "prepCycleDone", "setPrepCycleDone",
+      "status", "loading",
       "runBot",
-      "markedPresent",
-      "notMarked",
-      "notFoundInBkms",
-      "signInOpen",
-      "setSignInOpen",
-      "handleSignInSuccess"
+      "markedPresent", "notMarked", "notFoundInBkms", "sabhaHeldResult",
     ].forEach((prop) => {
       expect(lastAttendanceFormProps).toHaveProperty(prop);
     });
-  });
-
-  it("opens sign-in modal if not signed in and runBot is called", async () => {
-    render(<AttendanceBot />);
-    expect(lastAttendanceFormProps.signInOpen).toBe(false);
-    await act(async () => {
-      lastAttendanceFormProps.runBot();
-    });
-    expect(lastAttendanceFormProps.signInOpen).toBe(true);
-  });
-
-  it("sets signedIn to true and closes modal on handleSignInSuccess", async () => {
-    render(<AttendanceBot />);
-    await act(async () => {
-      lastAttendanceFormProps.runBot();
-    });
-    expect(lastAttendanceFormProps.signInOpen).toBe(true);
-    await act(async () => {
-      lastAttendanceFormProps.handleSignInSuccess();
-    });
-    expect(lastAttendanceFormProps.signInOpen).toBe(false);
-  });
-
-  it("calls runAttendanceBot with correct arguments when signed in", async () => {
-    const runAttendanceBotMock = jest.spyOn(functions, "runAttendanceBot").mockResolvedValue();
-    render(<AttendanceBot />);
-    await act(async () => {
-      lastAttendanceFormProps.handleSignInSuccess();
-    });
-    await act(async () => {
-      lastAttendanceFormProps.runBot();
-    });
-    expect(runAttendanceBotMock).toHaveBeenCalled();
   });
 
   it("handles state changes for all fields", async () => {
     render(<AttendanceBot />);
     await act(async () => {
       lastAttendanceFormProps.setDate("2024-06-09");
-      lastAttendanceFormProps.setGroup("K1");
+      lastAttendanceFormProps.setGroup("Saturday K1");
       lastAttendanceFormProps.setSabhaHeld("Yes");
       lastAttendanceFormProps.setP2Guju("Yes");
       lastAttendanceFormProps.setPrepCycleDone("Yes");
     });
     expect(lastAttendanceFormProps.date).toBe("2024-06-09");
-    expect(lastAttendanceFormProps.group).toBe("K1");
+    expect(lastAttendanceFormProps.group).toBe("Saturday K1");
     expect(lastAttendanceFormProps.sabhaHeld).toBe("Yes");
     expect(lastAttendanceFormProps.p2Guju).toBe("Yes");
     expect(lastAttendanceFormProps.prepCycleDone).toBe("Yes");
+  });
+
+  it("calls runAttendanceBot when runBot prop is invoked", async () => {
+    const spy = jest.spyOn(functions, "runAttendanceBot").mockResolvedValue();
+    render(<AttendanceBot />);
+    await act(async () => {
+      lastAttendanceFormProps.runBot();
+    });
+    expect(spy).toHaveBeenCalled();
   });
 });

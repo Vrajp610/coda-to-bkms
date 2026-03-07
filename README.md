@@ -1,124 +1,217 @@
-# Coda -> BKMS Attendance Automation Bot
+# Coda → BKMS Attendance Automation
 
-This project automates the process of syncing attendance from a **Coda-based roster** to the **BKMS (BAPS Kishore Management System)** website using a full-stack solution with **React**, **FastAPI**, **Selenium**, and **Coda API**.
+This project automates attendance tracking for BAPS Kishore sabhas. It pulls attendance data from a **Coda-based roster** and syncs it to the **BKMS (BAPS Kishore Management System)** portal — eliminating all manual entry.
 
-## 🔍 Overview
+The UI has two tabs, each running a separate bot:
 
-- 🧠 **Purpose:** Eliminate manual entry by pulling attendance data from Coda, determining who attended a sabha, and auto-filling the BKMS form with the correct kishores marked.
-- 🔄 **Flow:** 
-  1. User selects sabha group, date (restricted to recent Sundays), and setup options.
-  2. Bot fetches attendance from Coda for the selected sabha and date.
-  3. Bot opens BKMS and automates the submission of attendance using Selenium.  
-     > ⚠️ **CAPTCHA Notice:** After login, a CAPTCHA **must be solved manually within 60 seconds**, or the submission will fail.
-  4. Telegram notification confirms successful submission.
-
-## 🧱 Tech Stack
-
-- **Frontend:** React
-- **Backend:** FastAPI
-- **Automation:** Selenium WebDriver (Chrome)
-- **Data:** Coda API, Pandas
-- **Messaging:** Telegram Bot
-
-## 🚀 Running Locally
-
-1. Clone the repo
-2. Install frontend and backend dependencies
-3. Run backend: `PYTHONPATH=. uvicorn backend.index:app --reload` (make sure you're not in backend folder)
-4. Run frontend: `npm install && npm start` (make sure you're in the UI folder)
-5. Open: `http://localhost:3000`
-
-Ensure you have the correct `.env` variables set for **Backend**:
-- `MAIN_GROUP_TELEGRAM_TOKEN`
-- `MAIN_GROUP_TELEGRAM_CHAT_ID`
-- `SAT_K1_TELEGRAM_TOKEN`
-- `SAT_K1_TELEGRAM_CHAT_ID`
-- `SAT_K2_TELEGRAM_TOKEN`
-- `SAT_K2_TELEGRAM_CHAT_ID`
-- `SUN_K1_TELEGRAM_TOKEN`
-- `SUN_K1_TELEGRAM_CHAT_ID`
-- `SUN_K2_TELEGRAM_TOKEN`
-- `SUN_K2_TELEGRAM_CHAT_ID`
-- `CODA_API_KEY`
-- `BKMS_ID`
-- `BKMS_EMAIL`
-- `BKMS_PASSWORD`
-- `SATURDAY_K1_TABLE_ID`
-- `SATURDAY_K2_TABLE_ID`
-- `SUNDAY_K1_TABLE_ID`
-- `SUNDAY_K2_TABLE_ID`
-- `CODA_DOC_ID`
-
-Ensure you have the correct `.env` variables set for **Frontend**:
-- `REACT_APP_VALID_EMAIL`
-- `REACT_APP_VALID_PASSWORD`
-- `REACT_APP_API_URL`
-
-#### ***Please reach out to Vraj regarding the `.env` variables for backend and frontend***
-
-## ✅ Collaboration Guidelines
-
-- **Branching:**  
-  All branches **must start with `feature/`**, e.g.:
-  - `feature/add-datepicker-validation`
-  - `feature/improve-telegram-alert`
-
-- **Testing Requirements:**  
-  All changes must be tested **locally** and confirmed to work before submitting a pull request.
-  - Add a **screenshot or short video** showing your feature in action.
-  - To test **BACKEND CODE** run this command: `export $(cat backend/.env | xargs) && coverage run -m pytest backend/tests`
-    - To run **BACKEND CODE** report, run this command: `coverage report`
-  - To test **FRONTEND CODE** and get the report, run this command: `npm run test:ci`
-
-- **Date Selection for Testing:**  
-  Use the **closest recent Sunday** you attended sabha for the most accurate and working test scenario. Data from that date should exist in Coda for your group.
-
-- **Pull Request Template:**  
-  Please include:
-  - A brief summary of your changes
-  - A screenshot/video of your feature working
-  - Any edge cases or limitations to be aware of
-  - Screenshot of 100% coverage for frontend and backend code!!!
+| Tab | Bot | What it does |
+|-----|-----|--------------|
+| **Attendance Bot** | `bkms.py` | Reads Coda attendance and marks it in BKMS |
+| **User Update Bot** | `bkms_user_update.py` | Bulk-updates user profiles in BKMS (e.g. Saturday Sabha checkbox) |
 
 ---
 
-# Project Setup Instructions
+## Tech Stack
 
-## Prerequisites
+- **Frontend:** React + MUI (dark theme)
+- **Backend:** FastAPI + Uvicorn
+- **Automation:** Selenium WebDriver (Chrome)
+- **Data:** Coda API, Pandas
+- **Messaging:** Telegram Bot API
 
-- Make sure you are in the project root directory before running any commands.
+---
 
-## For macOS/Linux
+## Running Locally
 
-1. Open your terminal and navigate to the project directory:
-   ```sh
-   cd /path/to/your/project
-   ```
-2. Run the install script:
-   ```sh
-   ./install_dependencies.sh
-   ```
-   If you see this error:
-   ```
-   zsh: permission denied: ./install_dependencies.sh
-   ```
-   Run the following command to make the script executable, then try again:
-   ```sh
-   chmod +x install_dependencies.sh
-   ./install_dependencies.sh
-   ```
+### 1. Install dependencies
 
-## For Windows
+**macOS / Linux**
+```sh
+chmod +x install_dependencies.sh
+./install_dependencies.sh
+```
 
-1. Open Command Prompt and navigate to the project directory:
-   ```bat
-   cd path\to\your\project
-   ```
-2. Run the install script:
-   ```bat
-   install_dependencies.bat
-   ```
+**Windows**
+```bat
+install_dependencies.bat
+```
 
-This will automatically install all required dependencies for both the Backend and Frontend.
+### 2. Configure environment variables
 
-👋 Feel free to contribute! Reach out with any questions before diving in.
+Copy and fill in both `.env` files (see [Environment Variables](#environment-variables) below).
+
+### 3. Start the backend
+
+Run from the **project root** (not inside `backend/`):
+
+```sh
+PYTHONPATH=. uvicorn backend.index:app --reload --port 8002
+```
+
+The API will be available at **`http://localhost:8002`**.
+
+### 4. Start the frontend
+
+```sh
+cd ui
+npm start
+```
+
+Open **`http://localhost:3000`** in your browser.
+
+---
+
+## Using the App
+
+### Attendance Bot tab
+
+1. Select the **date** — choose from the 4 pre-computed Sundays (2 weeks ago, last week, this Sunday, next Sunday).
+2. Select the **sabha group** — Saturday K1, Saturday K2, Sunday K1, or Sunday K2.
+3. Answer **Was Sabha Held?** If Yes, answer the two follow-up questions.
+4. Click **Run Bot**.
+5. A Chrome window opens and auto-fills your BKMS credentials. **Solve the CAPTCHA within 20 seconds** (a countdown timer is shown). Do NOT click Sign In yourself — the bot does it after the countdown.
+6. The bot marks attendance in BKMS and a Telegram notification is sent on success.
+
+### User Update Bot tab
+
+1. Paste **User IDs** (one per line) into the text area.
+2. Click **Run Bot**.
+3. A Chrome window opens and auto-fills BKMS credentials. **Solve the CAPTCHA within 20 seconds**.
+4. The bot searches each user ID, opens their profile, ticks the Saturday Sabha checkbox (if not already ticked), and saves.
+5. Real-time logs stream into the page as each user is processed.
+6. Known validation errors (missing student type, missing parent email) are handled automatically. Any unknown error halts the bot and is shown in the log.
+
+---
+
+## Environment Variables
+
+### Backend — `backend/.env`
+
+```env
+# Telegram — main notification group
+MAIN_GROUP_TELEGRAM_TOKEN=
+MAIN_GROUP_TELEGRAM_CHAT_ID=
+
+# Telegram — per-group channels (used by scheduled poll workflows)
+SAT_K1_TELEGRAM_TOKEN=
+SAT_K1_TELEGRAM_CHAT_ID=
+SAT_K2_TELEGRAM_TOKEN=
+SAT_K2_TELEGRAM_CHAT_ID=
+SUN_K1_TELEGRAM_TOKEN=
+SUN_K1_TELEGRAM_CHAT_ID=
+SUN_K2_TELEGRAM_TOKEN=
+SUN_K2_TELEGRAM_CHAT_ID=
+
+# Coda API
+CODA_API_KEY=
+CODA_DOC_ID=
+
+# Coda table IDs (one per sabha group)
+SATURDAY_K1_TABLE_ID=
+SATURDAY_K2_TABLE_ID=
+SUNDAY_K1_TABLE_ID=
+SUNDAY_K2_TABLE_ID=
+
+# BKMS login credentials
+BKMS_ID=
+BKMS_EMAIL=
+BKMS_PASSWORD=
+BKMS_ACCESS_TYPE=Regional
+```
+
+### Frontend — `ui/.env`
+
+```env
+REACT_APP_API_URL=http://localhost:8002
+REACT_APP_VALID_EMAIL=
+REACT_APP_VALID_PASSWORD=
+```
+
+> **Contact Vraj for the actual values of all `.env` variables.**
+
+---
+
+## Running Tests
+
+### Backend — 100% coverage required
+
+```sh
+# From project root
+CODA_API_KEY=test python3 -m pytest --cov=backend --cov-report=term-missing -q
+```
+
+### Frontend — 100% coverage required
+
+```sh
+cd ui
+npm run test:ci
+```
+
+---
+
+## Scheduled Telegram Polls
+
+Two GitHub Actions workflows send weekly Telegram polls to each sabha group asking kishores to mark their own attendance:
+
+| Workflow | Schedule | Prefix |
+|----------|----------|--------|
+| `sat_polls.yml` | Every Saturday | `SAT_` |
+| `sun_polls.yml` | Every Sunday | `SUN_` |
+
+These run automatically in CI. The relevant Telegram tokens/chat IDs are stored as GitHub repository secrets matching the `SAT_*` / `SUN_*` env var names above.
+
+---
+
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/run-bot` | Run the Attendance Bot for a given group/date |
+| `POST` | `/run-user-update-stream` | Stream real-time logs from the User Update Bot (SSE) |
+
+---
+
+## Collaboration Guidelines
+
+- **Branching:** All branches must start with `feature/`, e.g. `feature/improve-telegram-alert`.
+- **Testing:** All changes must be tested locally before opening a PR.
+- **Pull Request checklist:**
+  - Brief summary of changes
+  - Screenshot or short video of the feature working
+  - Screenshot showing **100% coverage** for both backend and frontend
+
+---
+
+## Project Setup Reference
+
+### macOS / Linux — quick start
+
+```sh
+cd /path/to/coda-to-bkms
+
+# Install everything
+chmod +x install_dependencies.sh && ./install_dependencies.sh
+
+# Terminal 1 — backend (port 8002)
+PYTHONPATH=. uvicorn backend.index:app --reload --port 8002
+
+# Terminal 2 — frontend
+cd ui && npm start
+```
+
+### Windows — quick start
+
+```bat
+cd path\to\coda-to-bkms
+install_dependencies.bat
+
+:: Terminal 1 — backend (port 8002)
+set PYTHONPATH=.
+uvicorn backend.index:app --reload --port 8002
+
+:: Terminal 2 — frontend
+cd ui
+npm start
+```
+
+Open **`http://localhost:3000`** once both servers are running.

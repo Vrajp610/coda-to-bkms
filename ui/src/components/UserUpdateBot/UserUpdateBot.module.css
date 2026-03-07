@@ -1,0 +1,125 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  margin-bottom: 24px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.5px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  padding: 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 380px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+  font-size: 15px;
+  font-family: 'Courier New', Courier, monospace;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.textarea:focus {
+  border-color: #c2622a;
+}
+
+.textarea::placeholder {
+  color: #475569;
+}
+
+.textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.countdown {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c2622a;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  letter-spacing: 0.3px;
+}
+
+.logBox {
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+.logBox::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logBox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.logBox::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+.logLine {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.logHeader {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  color: #38bdf8;
+  font-weight: 700;
+  white-space: pre-wrap;
+}
+
+.logError {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  color: #f87171;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

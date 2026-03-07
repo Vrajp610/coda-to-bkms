@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { runAttendanceBot, handleRunBotHelper, handleSignInSuccessHelper } from "../../utils/functions";
+import { runAttendanceBot } from "../../utils/functions";
 import { CONSTANTS } from "../../utils/CONSTANTS";
 import AttendanceForm from "../AttendanceForm/AttendanceForm";
 import styles from "./AttendanceBot.module.css";
@@ -20,8 +20,6 @@ const AttendanceBot = () => {
   const [notMarked, setNotMarked] = useState(null);
   const [notFoundInBkms, setNotFoundInBkms] = useState(null);
   const [sabhaHeldResult, setSabhaHeldResult] = useState(null);
-  const [signInOpen, setSignInOpen] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
 
   const runBot = () =>
     runAttendanceBot({
@@ -54,14 +52,11 @@ const AttendanceBot = () => {
         setPrepCycleDone={setPrepCycleDone}
         status={status}
         loading={loading}
-        runBot={() => handleRunBotHelper(signedIn, setSignInOpen, runBot)}
+        runBot={runBot}
         markedPresent={markedPresent}
         notMarked={notMarked}
         notFoundInBkms={notFoundInBkms}
         sabhaHeldResult={sabhaHeldResult}
-        signInOpen={signInOpen}
-        setSignInOpen={setSignInOpen}
-        handleSignInSuccess={() => handleSignInSuccessHelper(setSignedIn, setSignInOpen, runBot)}
       />
     </div>
   );

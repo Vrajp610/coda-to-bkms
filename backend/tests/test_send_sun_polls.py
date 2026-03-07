@@ -15,3 +15,13 @@ class TestSendSunPolls:
         mock_build_targets.assert_called_once_with("SUN_")
 
         mock_send_polls.assert_called_once_with(mock_targets, for_prefix="SUN_")
+
+    def test_main_block(self):
+        import sys
+        import runpy
+        sys.modules.pop("backend.send_sun_polls", None)
+        with patch("backend.utils.common_polls.build_targets_from_env", return_value=[]) as mock_build, \
+             patch("backend.utils.common_polls.send_polls_to_targets") as mock_send:
+            runpy.run_module("backend.send_sun_polls", run_name="__main__", alter_sys=True)
+        mock_build.assert_called_once_with("SUN_")
+        mock_send.assert_called_once_with([], for_prefix="SUN_")

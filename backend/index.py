@@ -1,8 +1,12 @@
+import queue
+import threading
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from backend.coda import format_data
 from backend.bkms import update_sheet
+from backend.bkms_user_update import update_users
 
 app = FastAPI()
 
@@ -39,3 +43,34 @@ def run_bot(input_data: BotInput):
         }
     except Exception as e:
         return {"error": str(e)}
+
+class UserUpdateInput(BaseModel):
+    user_ids: list[str]
+
+@app.post("/run-user-update-stream")
+def run_user_update_stream(input_data: UserUpdateInput):
+    log_queue = queue.Queue()
+
+    def log(msg):
+        log_queue.put(msg)
+
+    def run():
+        try:
+            update_users(input_data.user_ids, log_callback=log)
+        except Exception as e:
+            log_queue.put(f"ERROR: {e}")
+        finally:
+            log_queue.put(None)  # sentinel
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+
+    def event_stream():
+        while True:
+            msg = log_queue.get()
+            if msg is None:
+                yield "data: __DONE__\n\n"
+                break
+            yield f"data: {msg}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

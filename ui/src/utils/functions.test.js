@@ -1,4 +1,4 @@
-import { filterValidSundays, runAttendanceBot } from "./functions";
+import { filterValidSundays, runAttendanceBot, handleRunBotHelper, handleSignInSuccessHelper } from "./functions";
 import { CONSTANTS } from "./CONSTANTS";
 import axios from "axios";
 
@@ -158,5 +158,35 @@ describe("runAttendanceBot", () => {
         await runAttendanceBot(baseParams);
         expect(axios.post).toHaveBeenCalled();
         axios.default = originalDefault;
+    });
+});
+
+describe("handleRunBotHelper", () => {
+    it("calls setSignInOpen(true) when not signed in", () => {
+        const setSignInOpen = jest.fn();
+        const runBot = jest.fn();
+        handleRunBotHelper(false, setSignInOpen, runBot);
+        expect(setSignInOpen).toHaveBeenCalledWith(true);
+        expect(runBot).not.toHaveBeenCalled();
+    });
+
+    it("calls runBot when already signed in", () => {
+        const setSignInOpen = jest.fn();
+        const runBot = jest.fn();
+        handleRunBotHelper(true, setSignInOpen, runBot);
+        expect(runBot).toHaveBeenCalled();
+        expect(setSignInOpen).not.toHaveBeenCalled();
+    });
+});
+
+describe("handleSignInSuccessHelper", () => {
+    it("sets signedIn to true, closes modal, and calls runBot", () => {
+        const setSignedIn = jest.fn();
+        const setSignInOpen = jest.fn();
+        const runBot = jest.fn();
+        handleSignInSuccessHelper(setSignedIn, setSignInOpen, runBot);
+        expect(setSignedIn).toHaveBeenCalledWith(true);
+        expect(setSignInOpen).toHaveBeenCalledWith(false);
+        expect(runBot).toHaveBeenCalled();
     });
 });

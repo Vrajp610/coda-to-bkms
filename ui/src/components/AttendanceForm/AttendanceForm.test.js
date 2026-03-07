@@ -1,294 +1,250 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import AttendanceForm from "./AttendanceForm";
 
-const { filterValidSundays } = require("../../utils/functions");
-
 jest.mock("./AttendanceForm.module.css", () => ({
-    form: "form",
-    input: "input"
+  form: "form",
+  sectionLabel: "sectionLabel",
+  dateGrid: "dateGrid",
+  dateTile: "dateTile",
+  dateTileActive: "dateTileActive",
+  dateLabel: "dateLabel",
+  dateValue: "dateValue",
+  groupGrid: "groupGrid",
+  groupTile: "groupTile",
+  groupTileActive: "groupTileActive",
+  groupDay: "groupDay",
+  groupSub: "groupSub",
+  toggle: "toggle",
+  toggleBtn: "toggleBtn",
+  toggleBtnActive: "toggleBtnActive",
 }));
-jest.mock("../../utils/functions", () => ({
-    filterValidSundays: jest.fn(() => true)
-}));
-jest.mock("../SelectField/SelectField", () => (props) => (
-    <select
-        aria-label={props.ariaLabel}
-        value={props.value}
-        onChange={props.onChange}
-        data-testid={props.ariaLabel}
-    >
-        <option value="">{props.placeholder}</option>
-        {props.options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-                {opt.label}
-            </option>
-        ))}
-    </select>
-));
-jest.mock("../Button/Button", () => (props) => (
-    <button onClick={props.onClick} disabled={props.disabled}>
-        {props.children}
-    </button>
-));
-jest.mock("../AttendanceAlerts/AttendanceAlerts", () => () => <div data-testid="attendance-alerts" />);
-jest.mock("@mui/x-date-pickers/DatePicker", () => ({
-    __esModule: true,
-    DatePicker: ({ label, value, onChange, shouldDisableDate }) => {
-        if (shouldDisableDate) {
-            shouldDisableDate("2024-06-09");
-        }
-        return (
-            <input
-                aria-label={label}
-                type="date"
-                value={value || ""}
-                onChange={(e) => onChange(e.target.value)}
-                data-testid="date-picker"
-            />
-        );
-    },
-}));
-jest.mock("@mui/x-date-pickers/LocalizationProvider", () => ({
-    LocalizationProvider: ({ children }) => <div>{children}</div>,
-}));
-jest.mock("@mui/x-date-pickers/AdapterDateFns", () => ({}));
 
-const CONSTANTS = {
-    SELECT_A_VALID_SUNDAY: "Select a valid Sunday",
-    SELECT_GROUP: "Select Group", 
-    WAS_SABHA_HELD: "Was Sabha Held?",
-    WAS_P2_IN_GUJU: "Was P2 in Guju?",
-    PREP_CYCLE_DONE: "2 Week Prep Cycle Done?",
-    YES: "Yes",
-    NO: "No",
+jest.mock("../../utils/CONSTANTS", () => ({
+  CONSTANTS: {
     SATURDAY_K1: "Saturday K1",
     SATURDAY_K2: "Saturday K2",
     SUNDAY_K1: "Sunday K1",
     SUNDAY_K2: "Sunday K2",
+    YES: "Yes",
+    NO: "No",
     RUN_BOT: "Run Bot",
     RUNNING: "Running...",
-};
+  },
+}));
+
+jest.mock("../Button/Button", () => (props) => (
+  <button onClick={props.onClick} disabled={props.disabled}>
+    {props.children}
+  </button>
+));
+
+jest.mock("../AttendanceAlerts/AttendanceAlerts", () => () => (
+  <div data-testid="attendance-alerts" />
+));
 
 const defaultProps = {
-    date: "",
-    setDate: jest.fn(),
-    group: "",
-    setGroup: jest.fn(),
-    sabhaHeld: "",
-    setSabhaHeld: jest.fn(),
-    p2Guju: "",
-    setP2Guju: jest.fn(),
-    prepCycleDone: "",
-    setPrepCycleDone: jest.fn(),
-    status: "",
-    loading: false,
-    runBot: jest.fn(),
-    markedPresent: [],
-    notMarked: [],
-    notFoundInBkms: [],
-    CONSTANTS,
+  date: null,
+  setDate: jest.fn(),
+  group: "",
+  setGroup: jest.fn(),
+  sabhaHeld: "",
+  setSabhaHeld: jest.fn(),
+  p2Guju: "",
+  setP2Guju: jest.fn(),
+  prepCycleDone: "",
+  setPrepCycleDone: jest.fn(),
+  status: "",
+  loading: false,
+  runBot: jest.fn(),
+  markedPresent: null,
+  notMarked: null,
+  notFoundInBkms: null,
+  sabhaHeldResult: null,
 };
 
 describe("AttendanceForm", () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
+  beforeEach(() => jest.clearAllMocks());
 
-    it("renders all main fields", () => {
-        render(<AttendanceForm {...defaultProps} />);
-        expect(screen.getByLabelText(CONSTANTS.SELECT_A_VALID_SUNDAY)).toBeInTheDocument();
-        expect(screen.getByTestId(CONSTANTS.SELECT_GROUP)).toBeInTheDocument();
-        expect(screen.getByTestId(CONSTANTS.WAS_SABHA_HELD)).toBeInTheDocument();
-        expect(screen.getByText(CONSTANTS.RUN_BOT)).toBeInTheDocument();
-        expect(screen.getByTestId("attendance-alerts")).toBeInTheDocument();
-    });
+  it("renders 4 date tiles", () => {
+    render(<AttendanceForm {...defaultProps} />);
+    expect(screen.getByText("2 Weeks Ago")).toBeInTheDocument();
+    expect(screen.getByText("Last Week")).toBeInTheDocument();
+    expect(screen.getByText("This Sunday")).toBeInTheDocument();
+    expect(screen.getByText("Next Sunday")).toBeInTheDocument();
+  });
 
-    it("disables Run Bot button if required fields are missing", () => {
-        render(<AttendanceForm {...defaultProps} />);
-        expect(screen.getByText(CONSTANTS.RUN_BOT)).toBeDisabled();
-    });
+  it("calls setDate when a date tile is clicked", () => {
+    const setDate = jest.fn();
+    render(<AttendanceForm {...defaultProps} setDate={setDate} />);
+    fireEvent.click(screen.getByText("This Sunday").closest("button"));
+    expect(setDate).toHaveBeenCalledWith(expect.any(Date));
+  });
 
-    it("enables Run Bot button when all required fields are filled and sabhaHeld is NO", () => {
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                date="2024-06-09"
-                group={CONSTANTS.SATURDAY_K1}
-                sabhaHeld={CONSTANTS.NO}
-            />
-        );
-        expect(screen.getByText(CONSTANTS.RUN_BOT)).not.toBeDisabled();
-    });
+  it("applies dateTileActive class to the matching date tile", () => {
+    const today = new Date();
+    const currentSunday = new Date(today);
+    currentSunday.setDate(today.getDate() - today.getDay());
+    render(<AttendanceForm {...defaultProps} date={currentSunday} />);
+    const btn = screen.getByText("This Sunday").closest("button");
+    expect(btn.className).toContain("dateTileActive");
+  });
 
-    it("shows extra fields when sabhaHeld is YES", () => {
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                sabhaHeld={CONSTANTS.YES}
-            />
-        );
-        expect(screen.getByTestId(CONSTANTS.WAS_P2_IN_GUJU)).toBeInTheDocument();
-        expect(screen.getByTestId(CONSTANTS.PREP_CYCLE_DONE)).toBeInTheDocument();
-    });
+  it("does not apply dateTileActive when date is null", () => {
+    render(<AttendanceForm {...defaultProps} date={null} />);
+    const btn = screen.getByText("This Sunday").closest("button");
+    expect(btn.className).not.toContain("dateTileActive");
+  });
 
-    it("disables Run Bot button if sabhaHeld is YES but extra fields are missing", () => {
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                date="2024-06-09"
-                group={CONSTANTS.SATURDAY_K1}
-                sabhaHeld={CONSTANTS.YES}
-                p2Guju=""
-                prepCycleDone=""
-            />
-        );
-        expect(screen.getByText(CONSTANTS.RUN_BOT)).toBeDisabled();
-    });
+  it("renders 4 group tiles", () => {
+    render(<AttendanceForm {...defaultProps} />);
+    expect(screen.getAllByText("Saturday")).toHaveLength(2);
+    expect(screen.getAllByText("Sunday")).toHaveLength(2);
+    expect(screen.getAllByText("K1")).toHaveLength(2);
+    expect(screen.getAllByText("K2")).toHaveLength(2);
+  });
 
-    it("enables Run Bot button if all fields are filled and sabhaHeld is YES", () => {
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                date="2024-06-09"
-                group={CONSTANTS.SATURDAY_K1}
-                sabhaHeld={CONSTANTS.YES}
-                p2Guju={CONSTANTS.NO}
-                prepCycleDone={CONSTANTS.YES}
-            />
-        );
-        expect(screen.getByText(CONSTANTS.RUN_BOT)).not.toBeDisabled();
-    });
+  it("calls setGroup when a group tile is clicked", () => {
+    const setGroup = jest.fn();
+    render(<AttendanceForm {...defaultProps} setGroup={setGroup} />);
+    fireEvent.click(screen.getAllByText("K1")[0].closest("button"));
+    expect(setGroup).toHaveBeenCalledWith("Saturday K1");
+  });
 
-    it("calls runBot when Run Bot button is clicked", () => {
-        const runBot = jest.fn();
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                date="2024-06-09"
-                group={CONSTANTS.SATURDAY_K1}
-                sabhaHeld={CONSTANTS.NO}
-                runBot={runBot}
-            />
-        );
-        fireEvent.click(screen.getByText(CONSTANTS.RUN_BOT));
-        expect(runBot).toHaveBeenCalled();
-    });
+  it("applies groupTileActive class to the selected group tile", () => {
+    render(<AttendanceForm {...defaultProps} group="Saturday K1" />);
+    const btn = screen.getAllByText("K1")[0].closest("button");
+    expect(btn.className).toContain("groupTileActive");
+  });
 
-    it("shows loading state on button when loading is true", () => {
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                loading={true}
-                date="2024-06-09"
-                group={CONSTANTS.SATURDAY_K1}
-                sabhaHeld={CONSTANTS.NO}
-            />
-        );
-        expect(screen.getByText(CONSTANTS.RUNNING)).toBeInTheDocument();
-        expect(screen.getByText(CONSTANTS.RUNNING)).toBeDisabled();
-    });
+  it("does not apply groupTileActive to unselected group tile", () => {
+    render(<AttendanceForm {...defaultProps} group="" />);
+    const btn = screen.getAllByText("K1")[0].closest("button");
+    expect(btn.className).not.toContain("groupTileActive");
+  });
 
-    it("calls setDate when date is changed", () => {
-        const setDate = jest.fn();
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                setDate={setDate}
-            />
-        );
-        fireEvent.change(screen.getByLabelText(CONSTANTS.SELECT_A_VALID_SUNDAY), {
-            target: { value: "2024-06-09" }
-        });
-        expect(setDate).toHaveBeenCalledWith("2024-06-09");
-    });
+  it("renders Yes/No toggle buttons", () => {
+    render(<AttendanceForm {...defaultProps} />);
+    expect(screen.getAllByText("Yes").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("No").length).toBeGreaterThanOrEqual(1);
+  });
 
-    it("calls setGroup when group is changed", () => {
-        const setGroup = jest.fn();
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                setGroup={setGroup}
-            />
-        );
-        fireEvent.change(screen.getByTestId(CONSTANTS.SELECT_GROUP), {
-            target: { value: CONSTANTS.SATURDAY_K2 }
-        });
-        expect(setGroup).toHaveBeenCalled();
-    });
+  it("calls setSabhaHeld when a toggle is clicked", () => {
+    const setSabhaHeld = jest.fn();
+    render(<AttendanceForm {...defaultProps} setSabhaHeld={setSabhaHeld} />);
+    fireEvent.click(screen.getAllByText("Yes")[0]);
+    expect(setSabhaHeld).toHaveBeenCalledWith("Yes");
+  });
 
-    it("calls setSabhaHeld when sabhaHeld is changed", () => {
-        const setSabhaHeld = jest.fn();
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                setSabhaHeld={setSabhaHeld}
-            />
-        );
-        fireEvent.change(screen.getByTestId(CONSTANTS.WAS_SABHA_HELD), {
-            target: { value: CONSTANTS.YES }
-        });
-        expect(setSabhaHeld).toHaveBeenCalled();
-    });
+  it("applies toggleBtnActive to the selected toggle option", () => {
+    render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" />);
+    expect(screen.getAllByText("Yes")[0].className).toContain("toggleBtnActive");
+  });
 
-    it("calls setP2Guju and setPrepCycleDone when those fields are changed", () => {
-        const setP2Guju = jest.fn();
-        const setPrepCycleDone = jest.fn();
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                sabhaHeld={CONSTANTS.YES}
-                setP2Guju={setP2Guju}
-                setPrepCycleDone={setPrepCycleDone}
-            />
-        );
-        fireEvent.change(screen.getByTestId(CONSTANTS.WAS_P2_IN_GUJU), {
-            target: { value: CONSTANTS.NO }
-        });
-        fireEvent.change(screen.getByTestId(CONSTANTS.PREP_CYCLE_DONE), {
-            target: { value: CONSTANTS.YES }
-        });
-        expect(setP2Guju).toHaveBeenCalled();
-        expect(setPrepCycleDone).toHaveBeenCalled();
-    });
+  it("does not apply toggleBtnActive to the unselected toggle option", () => {
+    render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" />);
+    expect(screen.getAllByText("No")[0].className).not.toContain("toggleBtnActive");
+  });
 
-    it("calls filterValidSundays with the correct date in shouldDisableDate", () => {
-        render(<AttendanceForm {...defaultProps} />);
-        const testDate = "2024-06-09";
-        expect(filterValidSundays).toHaveBeenCalledWith(testDate);
-    });
+  it("shows extra fields when sabhaHeld is Yes", () => {
+    render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" />);
+    expect(screen.getByText("Was P2 in Guju?")).toBeInTheDocument();
+    expect(screen.getByText("2 Week Prep Cycle Done?")).toBeInTheDocument();
+  });
 
-    it("should disable dates where filterValidSundays returns false", () => {
-        const { filterValidSundays } = require("../../utils/functions");
-        filterValidSundays.mockImplementation((date) => date !== "2024-06-09");
-        render(<AttendanceForm {...defaultProps} />);
-        const shouldDisable = (date) => !filterValidSundays(date);
-        expect(shouldDisable("2024-06-09")).toBe(true);
-        expect(shouldDisable("2024-06-16")).toBe(false);
-    });
+  it("hides extra fields when sabhaHeld is not Yes", () => {
+    render(<AttendanceForm {...defaultProps} sabhaHeld="" />);
+    expect(screen.queryByText("Was P2 in Guju?")).not.toBeInTheDocument();
+  });
 
-    it("calls setSignInOpen(false) when SignInModal onClose is triggered", () => {
-        const setSignInOpen = jest.fn();
-        render(
-            <AttendanceForm
-                {...defaultProps}
-                signInOpen={true}
-                setSignInOpen={setSignInOpen}
-            />
-        );
-        jest.resetModules();
-        const SignInModal = ({ open, onClose }) => {
-            if (open) onClose();
-            return null;
-        };
-        jest.doMock("../SignInModal/SignInModal", () => SignInModal);
-        const AttendanceFormReloaded = require("./AttendanceForm").default;
-        render(
-            <AttendanceFormReloaded
-                {...defaultProps}
-                signInOpen={true}
-                setSignInOpen={setSignInOpen}
-            />
-        );
-        expect(setSignInOpen).toHaveBeenCalledWith(false);
-    });
+  it("calls setP2Guju when its toggle is clicked", () => {
+    const setP2Guju = jest.fn();
+    render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" setP2Guju={setP2Guju} />);
+    fireEvent.click(screen.getAllByText("No")[1]);
+    expect(setP2Guju).toHaveBeenCalledWith("No");
+  });
+
+  it("calls setPrepCycleDone when its toggle is clicked", () => {
+    const setPrepCycleDone = jest.fn();
+    render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" setPrepCycleDone={setPrepCycleDone} />);
+    fireEvent.click(screen.getAllByText("Yes")[2]);
+    expect(setPrepCycleDone).toHaveBeenCalledWith("Yes");
+  });
+
+  it("disables Run Bot when no fields filled", () => {
+    render(<AttendanceForm {...defaultProps} />);
+    expect(screen.getByText("Run Bot")).toBeDisabled();
+  });
+
+  it("enables Run Bot when date, group, sabhaHeld=No are filled", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+      />
+    );
+    expect(screen.getByText("Run Bot")).not.toBeDisabled();
+  });
+
+  it("disables Run Bot when sabhaHeld=Yes but extra fields missing", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="Yes"
+        p2Guju=""
+        prepCycleDone=""
+      />
+    );
+    expect(screen.getByText("Run Bot")).toBeDisabled();
+  });
+
+  it("enables Run Bot when all fields including sabhaHeld=Yes extras are filled", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="Yes"
+        p2Guju="Yes"
+        prepCycleDone="Yes"
+      />
+    );
+    expect(screen.getByText("Run Bot")).not.toBeDisabled();
+  });
+
+  it("shows Running... and disables button when loading", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+        loading={true}
+      />
+    );
+    expect(screen.getByText("Running...")).toBeDisabled();
+  });
+
+  it("calls runBot when the button is clicked", () => {
+    const runBot = jest.fn();
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+        runBot={runBot}
+      />
+    );
+    fireEvent.click(screen.getByText("Run Bot"));
+    expect(runBot).toHaveBeenCalled();
+  });
+
+  it("renders AttendanceAlerts", () => {
+    render(<AttendanceForm {...defaultProps} />);
+    expect(screen.getByTestId("attendance-alerts")).toBeInTheDocument();
+  });
 });

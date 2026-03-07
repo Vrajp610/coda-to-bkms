@@ -23,8 +23,8 @@ def test_sabha_row_map_keys_and_values():
     expected = {
         "saturday k1": 1,
         "saturday k2": 2,
-        "sunday k1": 3,
-        "sunday k2": 4,
+        "sunday k1": 1,
+        "sunday k2": 2,
     }
     assert constants.SABHA_ROW_MAP == expected
 
@@ -39,6 +39,8 @@ def test_sabha_row_map_values_are_int():
 def test_xpaths_keys():
     expected_keys = {
         "sabha_wing",
+        "sabha_center_saturday",
+        "sabha_center_sunday",
         "year",
         "week",
         "sabha_group",
@@ -51,9 +53,11 @@ def test_xpaths_keys():
 
 def test_xpaths_values():
     assert constants.XPATHS["sabha_wing"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]'
+    assert constants.XPATHS["sabha_center_saturday"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[13]'
+    assert constants.XPATHS["sabha_center_sunday"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[14]'
     assert constants.XPATHS["year"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]'
     assert constants.XPATHS["week"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{}]'
-    assert constants.XPATHS["sabha_group"] == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span/a'
+    assert constants.XPATHS["sabha_group"] == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span[2]/a'
     assert constants.XPATHS["sabha_held_yes"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins'
     assert constants.XPATHS["sabha_held_no"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins'
     assert constants.XPATHS["mark_absent"] == '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a'
@@ -66,8 +70,8 @@ def test_xpath_week_format():
 
 def test_xpath_sabha_group_format():
     sabha_group_xpath = constants.XPATHS["sabha_group"]
-    assert sabha_group_xpath.format(2) == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[2]/td[9]/div/span/a'
-    assert sabha_group_xpath.format(4) == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[4]/td[9]/div/span/a'
+    assert sabha_group_xpath.format(1) == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[1]/td[9]/div/span[2]/a'
+    assert sabha_group_xpath.format(2) == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[2]/td[9]/div/span[2]/a'
 
 def test_xpaths_all_are_strings():
     for value in constants.XPATHS.values():
@@ -76,6 +80,8 @@ def test_xpaths_all_are_strings():
 def test_no_extra_keys_in_xpaths():
     allowed_keys = {
         "sabha_wing",
+        "sabha_center_saturday",
+        "sabha_center_sunday",
         "year",
         "week",
         "sabha_group",
