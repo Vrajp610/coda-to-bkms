@@ -127,6 +127,8 @@ REACT_APP_VALID_EMAIL=
 REACT_APP_VALID_PASSWORD=
 ```
 
+> Both the **Attendance Bot** and **User Update Bot** tabs are always enabled. No additional env vars are needed to unlock them.
+
 > **Contact Vraj for the actual values of all `.env` variables.**
 
 ---

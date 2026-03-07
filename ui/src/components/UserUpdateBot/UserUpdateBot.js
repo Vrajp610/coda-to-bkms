@@ -83,32 +83,38 @@ const UserUpdateBot = () => {
     });
   };
 
+  const enabled = process.env.REACT_APP_SHOW_USER_UPDATE_BOT === "true";
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>User Update Bot</h1>
-      <div className={styles.card}>
-        <label className={styles.label}>User IDs (one per line)</label>
+      <p className={styles.description}>
+        Marks kishores as Saturday Sabha members in BKMS. Paste their User IDs below — the bot will open each profile and tick the Saturday Sabha checkbox automatically.
+      </p>
+      <div className={styles.card} aria-busy={running}>
+        <label htmlFor="user-ids" className={styles.label}>User IDs (one per line)</label>
         <textarea
+          id="user-ids"
           className={styles.textarea}
           value={rawInput}
           onChange={(e) => setRawInput(e.target.value)}
           placeholder={"19477\n19478\n63040"}
           rows={6}
-          disabled={running}
+          disabled={running || !enabled}
         />
 
-        <Button onClick={runBot} disabled={running} variant="contained">
+        <Button onClick={runBot} disabled={running || !enabled} variant="contained">
           {running ? "Running..." : "Run Bot"}
         </Button>
 
         {running && countdown !== null && (
-          <div className={styles.countdown}>
+          <div role="status" aria-live="polite" className={styles.countdown}>
             Waiting for login — {countdown}s remaining
           </div>
         )}
 
         {(logs.length > 0 || running) && (
-          <div className={styles.logBox}>
+          <div role="log" aria-live="polite" aria-label="Bot output log" className={styles.logBox}>
             {logs.map((line, i) => (
               <div
                 key={i}

@@ -9,22 +9,31 @@ jest.mock("./components/UserUpdateBot/UserUpdateBot", () => () => (
 ));
 
 describe("App", () => {
-  it("renders the AttendanceBot tab by default", () => {
-    render(<App />);
-    expect(screen.getByTestId("attendance-bot")).toBeInTheDocument();
-    expect(screen.queryByTestId("user-update-bot")).not.toBeInTheDocument();
-  });
-
-  it("renders both tab labels", () => {
+  it("renders the Attendance Bot tab and content by default", () => {
     render(<App />);
     expect(screen.getByText("Attendance Bot")).toBeInTheDocument();
-    expect(screen.getByText("User Update Bot")).toBeInTheDocument();
+    expect(screen.getByTestId("attendance-bot")).toBeInTheDocument();
   });
 
-  it("switches to UserUpdateBot when the User Update Bot tab is clicked", () => {
+  it("shows the User Update Bot tab and it is enabled", () => {
     render(<App />);
-    fireEvent.click(screen.getByText("User Update Bot"));
+    const tab = screen.getByRole("tab", { name: "User Update Bot" });
+    expect(tab).toBeInTheDocument();
+    expect(tab).not.toBeDisabled();
+  });
+
+  it("switches to UserUpdateBot when the tab is clicked", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("tab", { name: "User Update Bot" }));
     expect(screen.queryByTestId("attendance-bot")).not.toBeInTheDocument();
     expect(screen.getByTestId("user-update-bot")).toBeInTheDocument();
+  });
+
+  it("switches back to AttendanceBot when Attendance Bot tab is clicked", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("tab", { name: "User Update Bot" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Attendance Bot" }));
+    expect(screen.getByTestId("attendance-bot")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-update-bot")).not.toBeInTheDocument();
   });
 });

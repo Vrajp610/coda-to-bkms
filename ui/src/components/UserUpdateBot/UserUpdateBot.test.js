@@ -4,6 +4,7 @@ import UserUpdateBot from "./UserUpdateBot";
 jest.mock("./UserUpdateBot.module.css", () => ({
   container: "container",
   title: "title",
+  description: "description",
   card: "card",
   label: "label",
   textarea: "textarea",
@@ -47,19 +48,95 @@ beforeEach(() => {
   global.fetch = jest.fn();
   window.alert = jest.fn();
   process.env.REACT_APP_API_URL = "http://test";
+  process.env.REACT_APP_SHOW_USER_UPDATE_BOT = "true";
 });
 
 afterEach(() => {
   jest.clearAllMocks();
+  delete process.env.REACT_APP_SHOW_USER_UPDATE_BOT;
 });
 
 describe("UserUpdateBot", () => {
-  it("renders the title, textarea, and button", () => {
+  it("renders the title, description, textarea, and button", () => {
     render(<UserUpdateBot />);
     expect(screen.getByText("User Update Bot")).toBeInTheDocument();
+    expect(screen.getByText(/Marks kishores as Saturday Sabha members/)).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.getByTestId("run-btn")).toBeInTheDocument();
     expect(screen.getByText("Run Bot")).toBeInTheDocument();
+  });
+
+  it("label is programmatically associated with the textarea", () => {
+    render(<UserUpdateBot />);
+    expect(screen.getByLabelText(/user ids/i)).toBeInTheDocument();
+  });
+
+  it("countdown has role=status and aria-live=polite", async () => {
+    let resolveHold;
+    const hold = new Promise((res) => { resolveHold = res; });
+    fetch.mockResolvedValue({
+      body: {
+        getReader: () => ({
+          read: jest.fn()
+            .mockResolvedValueOnce({ done: false, value: encoder.encode("data: __COUNTDOWN__5\n") })
+            .mockReturnValue(hold),
+        }),
+      },
+    });
+    render(<UserUpdateBot />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "12345" } });
+    act(() => { fireEvent.click(screen.getByTestId("run-btn")); });
+    await waitFor(() => {
+      const countdown = screen.getByRole("status");
+      expect(countdown).toBeInTheDocument();
+      expect(countdown).toHaveAttribute("aria-live", "polite");
+    });
+    await act(async () => { resolveHold({ done: true }); });
+  });
+
+  it("log box has role=log and aria-live=polite", async () => {
+    fetch.mockResolvedValue(makeStream("data: hello\n", "data: __DONE__\n"));
+    render(<UserUpdateBot />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "12345" } });
+    await act(async () => { fireEvent.click(screen.getByTestId("run-btn")); });
+    await waitFor(() => {
+      const log = screen.getByRole("log");
+      expect(log).toBeInTheDocument();
+      expect(log).toHaveAttribute("aria-live", "polite");
+    });
+  });
+
+  it("card has aria-busy=true while running and aria-busy=false when idle", async () => {
+    let resolveHold;
+    const hold = new Promise((res) => { resolveHold = res; });
+    fetch.mockResolvedValue({
+      body: {
+        getReader: () => ({
+          read: jest.fn().mockReturnValue(hold),
+        }),
+      },
+    });
+    render(<UserUpdateBot />);
+    const card = screen.getByRole("textbox").closest("[aria-busy]");
+    expect(card).toHaveAttribute("aria-busy", "false");
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "12345" } });
+    act(() => { fireEvent.click(screen.getByTestId("run-btn")); });
+    await waitFor(() => expect(card).toHaveAttribute("aria-busy", "true"));
+    await act(async () => { resolveHold({ done: true }); });
+    await waitFor(() => expect(card).toHaveAttribute("aria-busy", "false"));
+  });
+
+  it("disables the button and textarea when feature flag is off", () => {
+    delete process.env.REACT_APP_SHOW_USER_UPDATE_BOT;
+    render(<UserUpdateBot />);
+    expect(screen.getByTestId("run-btn")).toBeDisabled();
+    expect(screen.getByRole("textbox")).toBeDisabled();
+  });
+
+  it("enables the button and textarea when feature flag is on", () => {
+    render(<UserUpdateBot />);
+    expect(screen.getByTestId("run-btn")).not.toBeDisabled();
+    expect(screen.getByRole("textbox")).not.toBeDisabled();
   });
 
   it("updates textarea value on change", () => {

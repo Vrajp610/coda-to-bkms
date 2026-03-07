@@ -2,35 +2,39 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .title {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   font-size: 32px;
   font-weight: 700;
-  color: #f1f5f9;
+  color: #cbd5e1;
   letter-spacing: -0.5px;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
-  padding: 32px;
+  padding: 28px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  width: 380px;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .textarea {
@@ -122,4 +126,23 @@
   color: #f87171;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.description {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 400px) {
+  .title {
+    font-size: 26px;
+  }
+
+  .card {
+    padding: 20px;
+  }
 }
