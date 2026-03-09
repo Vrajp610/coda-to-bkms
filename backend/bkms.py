@@ -9,7 +9,12 @@ from backend.utils.constants import (
 )
 from backend.utils.sendNotifications import send_notifications
 
-def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str):
+def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str, log_callback=None):
+   def log(msg):
+      print(msg)
+      if log_callback:
+         log_callback(msg)
+
    # If sabha was held but Coda attendance is empty, notify and abort BEFORE opening Chromium
    if sabha_held.lower() == "yes" and (not attended_kishores or len(attended_kishores) <= 5):
       sunday_date = get_this_week_sunday(date_string)
@@ -19,7 +24,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       
       # Send notifications to both groups
       send_notifications(telegram_message, day)
-      print(f"Telegram notification sent: {telegram_message}")
+      log(f"Telegram notification sent: {telegram_message}")
       return {
          "marked_present": 0,
          "not_marked": 0,
@@ -32,24 +37,27 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    driver.get(BKMS_LOGIN_URL)
 
    # --- Perform Login ---
-   print("Logging into BKMS...")
+   log("Logging into BKMS...")
    time.sleep(1)
    driver.find_element(By.ID, "user_id").send_keys(BKMS_ID)
    time.sleep(0.5)
    driver.find_element(By.ID, "email").send_keys(BKMS_EMAIL)
    time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
-   print("Please solve CAPTCHA manually (60 seconds). DO NOT CLICK SIGN IN AFTER SOLVING!")
-   time.sleep(20)
+   log("Please solve the CAPTCHA. You have 20 seconds. DO NOT click Sign In after solving!")
+   for remaining in range(20, 0, -1):
+      log(f"__COUNTDOWN__{remaining}")
+      time.sleep(1)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
    time.sleep(2)
+   log("Logged in. Resuming automation.")
 
    # --- Go to Report Attendance Page ---
    driver.get(BKMS_REPORT_ATTENDANCE_URL)
    time.sleep(2)
 
    # --- Select Sabha Wing ---
-   print("Selecting Sabha Wing and Center")
+   log("Selecting Sabha Wing and Center")
    driver.find_element(By.XPATH, XPATHS["sabha_wing"]).click()  # Kishore
    time.sleep(1)
 
@@ -89,7 +97,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    # --- Select Week based on Entered Date ---
    week_number = calculate_week_number(date_string)
-   print(f"Selecting Week {week_number - 1} for {date_string}")
+   log(f"Selecting Week {week_number - 1} for {date_string}")
    driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{week_number}]').click()
    time.sleep(2)
 
@@ -103,9 +111,9 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    row_number = sabha_row_map.get(day.lower())
    if row_number:
       driver.find_element(By.XPATH, BKMS_XPATH_CONFIG["PATHS"]["REGIONAL_XPATH"](row_number)).click()
-      print(f"Selected {day.title()}")
+      log(f"Selected {day.title()}")
    else:
-      print("Error: Invalid Sabha group entered!")
+      log("Error: Invalid Sabha group entered!")
       return
 
    time.sleep(3)
@@ -113,34 +121,34 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Sabha WAS NOT held ---
    if sabha_held.lower() == "no":
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins').click()
-      print("Marked: Sabha Not Held")
+      log("Marked: Sabha Not Held")
       time.sleep(2)
 
       # --- Save Changes Immediately ---
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
-      print("Saved attendance successfully!")
+      log("Saved attendance successfully!")
       time.sleep(5)
 
       # --- Logout of BKMS ---
       driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
       time.sleep(1)
       driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/ul/li[2]/div[2]/a').click()
-      print("Logged out of BKMS")
+      log("Logged out of BKMS")
 
       # --- Close Chrome ---
       time.sleep(1)
       driver.quit()
-      print("Closed Chrome")
+      log("Closed Chrome")
 
       # --- Send Telegram Success Notification ---
       sunday_date = get_this_week_sunday(date_string)
       base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅ as Sabha not held!"
       mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
       telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
-      
+
       # Send notifications to both groups
       send_notifications(telegram_message, day)
-      print(f"Telegram notification sent: {telegram_message}")
+      log(f"Telegram notification sent: {telegram_message}")
 
       return {
          "marked_present": 0,
@@ -151,11 +159,11 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    # --- Sabha WAS held, continue with full checklist ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins').click()
-   print("Marked: Sabha Held")
+   log("Marked: Sabha Held")
    time.sleep(1)
 
    # --- Sabha Setup Checklist (Done / Not Done) ---
-   print("Filling Meeting And Preparations Section in BKMS")
+   log("Filling Meeting And Preparations Section in BKMS")
    
    # Karyakar Meeting - Done
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[1]/label[2]/div/ins').click()
@@ -176,7 +184,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/div/div[5]/label[3]/div/ins').click()
 
    # --- Content Checklist (Sabha Activities) ---
-   print("Filling Syllabus Usage Section in BKMS")
+   log("Filling Syllabus Usage Section in BKMS")
    content_xpaths = [
       (1, 2),  # Bapa's Ashirwad - Done
       (2, 2),  # Dhoon & Prarthana - Done
@@ -190,17 +198,17 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Presentation 2 Language (Gujarati or not) ---
    if p2_guju.lower() == "yes":
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[2]/div/ins').click()
-      print("Presentation 2 was in Gujarati")
+      log("Presentation 2 was in Gujarati")
    else:
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[6]/label[3]/div/ins').click()
-      print("Presentation 2 was NOT in Gujarati")
+      log("Presentation 2 was NOT in Gujarati")
 
    # --- Sabha Goshti Marked Not Done ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div/div[7]/label[3]/div/ins').click()
 
    # --- Mark all Kishores Absent initially ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a').click()
-   print("All Kishores initially marked Absent")
+   log("All Kishores initially marked Absent")
    time.sleep(2)
 
    # --- Update Attendance: Mark Present Kishores ---
@@ -227,32 +235,34 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # Find kishores that are present in the BKMS but not marked as present (should be empty unless logic above changes)
    not_marked = [kid for kid in attended_kishores if kid in table_bkids and kid not in updated_kishores]
    if not_marked:
-      print(f"Kishores found in BKMS but not marked present: {not_marked}")
+      log(f"Kishores found in BKMS but not marked present: {not_marked}")
+      log(f"__NOT_MARKED__{'|'.join(str(k) for k in not_marked)}")
 
-   print(f"Successfully marked {len(updated_kishores)} Kishores as Present")
+   log(f"Successfully marked {len(updated_kishores)} Kishores as Present")
 
    # Find kishores from attended_kishores that are not present in BKMS at all
    not_found_in_bkms = [kid for kid in attended_kishores if kid not in table_bkids]
    if not_found_in_bkms:
-      print(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
-   print(f"Kishores not found in BKMS: {', '.join(str(kid) for kid in not_found_in_bkms)}")
+      log(f"Did not mark {len(attended_kishores) - len(updated_kishores)} Kishores as they were not found in BKMS")
+      log(f"__NOT_FOUND__{'|'.join(str(k) for k in not_found_in_bkms)}")
+   log(f"Kishores not found in BKMS: {', '.join(str(kid) for kid in not_found_in_bkms)}")
 
    # --- Save Changes ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
-   print("Saved attendance successfully!")
+   log("Saved attendance successfully!")
    time.sleep(5)
 
    # --- Logout of BKMS ---
    driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
    time.sleep(1)
    driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/ul/li[2]/div[2]/a').click()
-   print("Logged out of BKMS")
-   
+   log("Logged out of BKMS")
+
    # --- Close Chrome ---
-   time.sleep(1)   
+   time.sleep(1)
    driver.quit()
-   print("Closed Chrome")
-   
+   log("Closed Chrome")
+
    # --- Send Telegram Success Notification ---
    sunday_date = get_this_week_sunday(date_string)
    base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
@@ -260,7 +270,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    # Send notifications to both groups
    send_notifications(telegram_message, day)
-   print(f"Telegram notification sent: {telegram_message}")
+   log(f"Telegram notification sent: {telegram_message}")
 
    # --- Return attendance marking results ---
    return {

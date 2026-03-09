@@ -1,19 +1,19 @@
+import os
 import time
+from datetime import datetime
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from backend.utils.chromeUtils import get_chrome_driver
-from backend.utils.constants import BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD
-
-BKMS_BASE_URL = "https://bk.na.baps.org/"
-BKMS_USER_LIST_URL = "https://bk.na.baps.org/admin/user/userlist"
-
-SEARCH_FIELD_XPATH  = '/html/body/div[2]/div/section[2]/div[1]/form/div/div[3]/div[1]/input'
-SEARCH_BUTTON_XPATH = '/html/body/div[2]/div/section[2]/div[1]/form/div/div[5]/div[2]/input'
-RESULT_ROWS_XPATH   = '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr'
-CHECKBOX_XPATH      = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[1]/div[4]/div[2]/div/label/div/input'
-SAVE_BUTTON_XPATH   = '/html/body/div[2]/div/section[2]/div/form/div[1]/input[4]'
-CONFIRM_DIALOG_XPATH = '/html/body/div[3]/div/div[6]/button[1]'
+from backend.utils.constants import (
+    BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD,
+    BKMS_USER_LIST_URL,
+    SEARCH_FIELD_XPATH, SEARCH_BUTTON_XPATH, RESULT_ROWS_XPATH,
+    CHECKBOX_XPATH, SAVE_BUTTON_XPATH, CONFIRM_DIALOG_XPATH,
+    CANCEL_BUTTON_XPATH, PARENT_TAB_XPATH,
+    FATHER_FIRST_NAME_XPATH, FATHER_LAST_NAME_XPATH, FATHER_EMAIL_XPATH,
+    MOTHER_FIRST_NAME_XPATH, MOTHER_LAST_NAME_XPATH, MOTHER_EMAIL_XPATH,
+)
 
 
 def update_users(user_ids: list, log_callback=None):
@@ -23,7 +23,12 @@ def update_users(user_ids: list, log_callback=None):
             log_callback(msg)
 
     def has_error(driver, text):
-        elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{text}')]")
+        # Use double quotes in XPath when the text itself contains a single quote
+        if "'" in text:
+            xpath = f'//*[contains(text(), "{text}")]'
+        else:
+            xpath = f"//*[contains(text(), '{text}')]"
+        elements = driver.find_elements(By.XPATH, xpath)
         return any(el.is_displayed() for el in elements)
 
     def save_and_confirm(driver):
@@ -36,6 +41,13 @@ def update_users(user_ids: list, log_callback=None):
             time.sleep(2)
         except Exception:
             pass
+
+    def fill_field(driver, xpath, value):
+        field = driver.find_element(By.XPATH, xpath)
+        field.clear()
+        field.send_keys(value)
+
+    error_records = {}  # user_id -> list of error strings
 
     driver = get_chrome_driver()
     wait = WebDriverWait(driver, 15)
@@ -115,6 +127,20 @@ def update_users(user_ids: list, log_callback=None):
 
         log(f"  Found User ID {user_id} at row {matched_row_index}.")
 
+        # --- Pre-check: skip if the Saturday Sabha checkbox is already marked ---
+        pre_check_xpath = (
+            f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody'
+            f'/tr[{matched_row_index}]/td[11]/div'
+        )
+        try:
+            check_div = driver.find_element(By.XPATH, pre_check_xpath)
+            classes = check_div.get_attribute("class") or ""
+            if "checked" in classes:
+                log(f"  User {user_id} is already marked in list view — skipping.")
+                continue
+        except Exception:
+            pass  # If the pre-check fails, proceed with the normal flow
+
         # --- Click the user detail link (opens new tab) ---
         user_link_xpath = (
             f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody'
@@ -178,50 +204,123 @@ def update_users(user_ids: list, log_callback=None):
         halt = False
         try:
             needs_retry = False
+            user_errors = []
+            skipped = False
 
-            if has_error(driver, "Please Select Student Type"):
-                log(f"  Student type missing for {user_id}, selecting Commuter...")
-                driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/ul/li[5]/a').click()
+            # --- Address error: cancel, log, and move on ---
+            if has_error(driver, "Please Enter Address"):
+                user_errors.append("Please Enter Address.")
+                log(f"  Address missing for {user_id}, cancelling and logging.")
+                driver.find_element(By.XPATH, CANCEL_BUTTON_XPATH).click()
                 time.sleep(1)
-                driver.execute_script("$('input[name=\"student_type\"]').first().iCheck('check');")
-                time.sleep(0.5)
-                needs_retry = True
+                error_records[user_id] = user_errors
+                skipped = True
 
-            father_error = has_error(driver, "Please Enter Father")
-            mother_error = has_error(driver, "Please Enter Mother")
-            if father_error or mother_error:
-                driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/ul/li[2]/a').click()
-                time.sleep(1)
-                if father_error:
-                    log(f"  Father email missing for {user_id}, filling in...")
-                    father_field = driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[2]/div[1]/input')
-                    father_field.clear()
-                    father_field.send_keys("dad@gmail.com")
-                    needs_retry = True
-                if mother_error:
-                    log(f"  Mother email missing for {user_id}, filling in...")
-                    mother_field = driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[2]/div[1]/input')
-                    mother_field.clear()
-                    mother_field.send_keys("mom@gmail.com")
+            if not skipped:
+                if has_error(driver, "Please Select Student Type"):
+                    log(f"  Student type missing for {user_id}, selecting Commuter...")
+                    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/ul/li[5]/a').click()
+                    time.sleep(1)
+                    driver.execute_script("$('input[name=\"student_type\"]').first().iCheck('check');")
+                    time.sleep(0.5)
                     needs_retry = True
 
-            if needs_retry:
-                save_and_confirm(driver)
+                # --- Father/Mother name and email errors ---
+                father_first_error  = has_error(driver, "Please Enter Father First Name")
+                father_last_error   = has_error(driver, "Please Enter Father Last Name")
+                father_email_error  = has_error(driver, "Please Enter Father Email")
+                mother_first_error  = has_error(driver, "Please Enter Mother First Name")
+                mother_last_error   = has_error(driver, "Please Enter Mother Last Name")
+                mother_email_error  = (has_error(driver, "Please Enter Mother Email") or
+                                       has_error(driver, "Please Enter Mother's Email"))
 
-            # Check for any remaining unknown errors
-            known_errors = ["Please Select Student Type", "Please Enter Father", "Please Enter Mother"]
-            unknown_errors = [
-                el.text.strip()
-                for el in driver.find_elements(By.XPATH, "//*[contains(text(), 'Please')]")
-                if el.is_displayed() and el.text.strip()
-                and not any(k in el.text for k in known_errors)
-            ]
-            if unknown_errors:
-                log(f"  UNKNOWN ERROR(S) for {user_id}: {unknown_errors}")
-                log("  Stopping program — add handling for these errors and rerun.")
-                halt = True
-            else:
-                log(f"  Saved successfully for {user_id}.")
+                any_father = father_first_error or father_last_error or father_email_error
+                any_mother = mother_first_error or mother_last_error or mother_email_error
+
+                if any_father or any_mother:
+                    driver.find_element(By.XPATH, PARENT_TAB_XPATH).click()
+                    time.sleep(1)
+
+                    if father_first_error:
+                        user_errors.append("Please Enter Father First Name.")
+                        log(f"  Father first name missing for {user_id}, filling in 'Dad'...")
+                        fill_field(driver, FATHER_FIRST_NAME_XPATH, "Dad")
+                        needs_retry = True
+                    if father_last_error:
+                        user_errors.append("Please Enter Father Last Name.")
+                        log(f"  Father last name missing for {user_id}, filling in 'dad'...")
+                        fill_field(driver, FATHER_LAST_NAME_XPATH, "dad")
+                        needs_retry = True
+                    if father_email_error:
+                        user_errors.append("Please Enter Father Email.")
+                        log(f"  Father email missing for {user_id}, filling in...")
+                        fill_field(driver, FATHER_EMAIL_XPATH, "dad@gmail.com")
+                        needs_retry = True
+                    if mother_first_error:
+                        user_errors.append("Please Enter Mother First Name.")
+                        log(f"  Mother first name missing for {user_id}, filling in 'mom'...")
+                        fill_field(driver, MOTHER_FIRST_NAME_XPATH, "mom")
+                        needs_retry = True
+                    if mother_last_error:
+                        user_errors.append("Please Enter Mother Last Name.")
+                        log(f"  Mother last name missing for {user_id}, filling in 'mom'...")
+                        fill_field(driver, MOTHER_LAST_NAME_XPATH, "mom")
+                        needs_retry = True
+                    if mother_email_error:
+                        user_errors.append("Please Enter Mother Email.")
+                        log(f"  Mother email missing for {user_id}, filling in...")
+                        fill_field(driver, MOTHER_EMAIL_XPATH, "mom@gmail.com")
+                        needs_retry = True
+
+                if needs_retry:
+                    save_and_confirm(driver)
+
+                # --- Verify Saturday Sabha checkbox is still ticked after all saves ---
+                try:
+                    final_checkbox = driver.find_element(By.XPATH, CHECKBOX_XPATH)
+                    if not final_checkbox.is_selected():
+                        log(f"  WARNING: Saturday Sabha checkbox not ticked for {user_id} after save — re-ticking...")
+                        driver.execute_script("""
+                            var input = document.getElementById('is_saturday_sabha');
+                            var container = input.closest('.icheckbox_square-blue');
+                            input.checked = true;
+                            if (container) {
+                                container.setAttribute('aria-checked', 'true');
+                                container.classList.add('checked');
+                            }
+                            $(input).trigger('ifChecked');
+                            $(input).trigger('change');
+                        """)
+                        time.sleep(0.5)
+                        save_and_confirm(driver)
+                        user_errors.append("Saturday Sabha checkbox not ticked after save — re-ticked.")
+                        log(f"  Saturday Sabha re-ticked and saved for {user_id}.")
+                except Exception:
+                    pass
+
+                if user_errors:
+                    error_records[user_id] = user_errors
+
+                # Check for any remaining unknown errors
+                known_errors = [
+                    "Please Select Student Type",
+                    "Please Enter Father First Name", "Please Enter Father Last Name", "Please Enter Father Email",
+                    "Please Enter Mother First Name", "Please Enter Mother Last Name",
+                    "Please Enter Mother Email", "Please Enter Mother's Email",
+                    "Please Enter Address",
+                ]
+                unknown_errors = [
+                    el.text.strip()
+                    for el in driver.find_elements(By.XPATH, "//*[contains(text(), 'Please')]")
+                    if el.is_displayed() and el.text.strip()
+                    and not any(k in el.text for k in known_errors)
+                ]
+                if unknown_errors:
+                    log(f"  UNKNOWN ERROR(S) for {user_id}: {unknown_errors}")
+                    log("  Stopping program — add handling for these errors and rerun.")
+                    halt = True
+                else:
+                    log(f"  Saved successfully for {user_id}.")
 
         except Exception as e:
             log(f"  ERROR: Post-save check failed for {user_id}: {e}")
@@ -235,6 +334,17 @@ def update_users(user_ids: list, log_callback=None):
             break
 
     log("All user IDs processed.")
+
+    if error_records:
+        log_dir = os.path.join("logs", "user_update")
+        os.makedirs(log_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        error_path = os.path.join(log_dir, f"errors_{timestamp}.log")
+        with open(error_path, "w") as f:
+            for uid, errors in error_records.items():
+                f.write(f"{uid}: {', '.join(errors)}\n")
+        log(f"Errors written to {error_path}")
+
     driver.quit()
 
 

@@ -49,9 +49,8 @@ describe("AttendanceBot", () => {
       "sabhaHeld", "setSabhaHeld",
       "p2Guju", "setP2Guju",
       "prepCycleDone", "setPrepCycleDone",
-      "status", "loading",
-      "runBot",
-      "markedPresent", "notMarked", "notFoundInBkms", "sabhaHeldResult",
+      "loading", "runBot",
+      "logs", "countdown",
     ].forEach((prop) => {
       expect(lastAttendanceFormProps).toHaveProperty(prop);
     });

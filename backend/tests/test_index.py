@@ -72,6 +72,78 @@ def test_run_bot_format_data_raises(bot_input):
         assert "error" in data
         assert "Format error" in data["error"]
 
+def test_run_bot_stream_success(bot_input):
+    attendance = [{"name": "A"}, {"name": "B"}]
+    count = 2
+    with patch("backend.index.format_data", return_value=(attendance, count)), \
+         patch("backend.index.update_sheet") as mock_update_sheet, \
+         patch("backend.index.write_run_log") as mock_write_log:
+        def fake_update(*args, log_callback=None, **kwargs):
+            log_callback("Marked A as present")
+            log_callback("Marked B as present")
+        mock_update_sheet.side_effect = fake_update
+
+        response = client.post("/run-bot-stream", json=bot_input)
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+        body = response.text
+        assert "data: 2 Kishores found in Coda" in body
+        assert "data: Marked A as present" in body
+        assert "data: Marked B as present" in body
+        assert "data: __DONE__" in body
+        mock_write_log.assert_called_once()
+
+
+def test_run_bot_stream_format_data_returns_str(bot_input):
+    with patch("backend.index.format_data", return_value=("No data found", 0)), \
+         patch("backend.index.write_run_log"):
+        response = client.post("/run-bot-stream", json=bot_input)
+        assert response.status_code == 200
+        body = response.text
+        assert "data: No data found" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_bot_stream_update_sheet_raises(bot_input):
+    attendance = [{"name": "A"}]
+    count = 1
+    with patch("backend.index.format_data", return_value=(attendance, count)), \
+         patch("backend.index.update_sheet", side_effect=Exception("crash")), \
+         patch("backend.index.write_run_log"):
+        response = client.post("/run-bot-stream", json=bot_input)
+        assert response.status_code == 200
+        body = response.text
+        assert "ERROR: crash" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_bot_stream_countdown_messages_pass_through_but_not_logged(bot_input):
+    attendance = [{"name": "A"}]
+    count = 1
+    with patch("backend.index.format_data", return_value=(attendance, count)), \
+         patch("backend.index.update_sheet") as mock_update_sheet, \
+         patch("backend.index.write_run_log") as mock_write_log:
+        def fake_update(*args, log_callback=None, **kwargs):
+            log_callback("__COUNTDOWN__15")
+            log_callback("real log line")
+        mock_update_sheet.side_effect = fake_update
+
+        response = client.post("/run-bot-stream", json=bot_input)
+        body = response.text
+        assert "data: __COUNTDOWN__15" in body
+
+        # __COUNTDOWN__ messages should not be written to the log file
+        call_args = mock_write_log.call_args
+        lines_written = call_args[0][0]
+        assert "__COUNTDOWN__15" not in lines_written
+        assert "real log line" in lines_written
+
+
+def test_run_bot_stream_invalid_input():
+    response = client.post("/run-bot-stream", json={"date": "2024-06-01", "sabhaHeld": "Yes"})
+    assert response.status_code == 422
+
+
 def test_run_user_update_stream_success():
     with patch("backend.index.update_users") as mock_update:
         def fake_update(user_ids, log_callback=None):

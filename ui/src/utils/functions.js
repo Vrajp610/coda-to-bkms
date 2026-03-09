@@ -1,4 +1,3 @@
-import * as axios from "axios";
 import { CONSTANTS } from "./CONSTANTS";
 
 /**
@@ -58,12 +57,11 @@ export async function runAttendanceBot({
   sabhaHeld,
   p2Guju,
   prepCycleDone,
-  setStatus,
-  setMarkedPresent,
-  setNotMarked,
-  setNotFoundInBkms,
-  setSabhaHeldResult,
+  setLogs,
+  setCountdown,
   setLoading,
+  setNotMarked,
+  setNotFound,
 }) {
   if (
     !date ||
@@ -78,35 +76,54 @@ export async function runAttendanceBot({
   const options = { month: CONSTANTS.LONG, day: CONSTANTS.NUMERIC };
   const formattedDate = date.toLocaleDateString("en-US", options);
 
+  setLogs([]);
+  setCountdown(null);
   setLoading(true);
-  setStatus("");
-  setMarkedPresent(null);
-  setNotMarked(null);
-  setNotFoundInBkms(null);
-  setSabhaHeldResult(null);
+
   try {
     const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-    const response = await axios.post(`${API_BASE_URL}/run-bot`, {
-      date: formattedDate,
-      group,
-      sabhaHeld,
-      p2Guju,
-      prepCycleDone,
+    const response = await fetch(`${API_BASE_URL}/run-bot-stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: formattedDate, group, sabhaHeld, p2Guju, prepCycleDone }),
     });
-    setStatus(response.data.message || response.data.error);
-    if (response.data.marked_present !== undefined)
-      setMarkedPresent(response.data.marked_present);
-    if (response.data.not_marked !== undefined)
-      setNotMarked(response.data.not_marked);
-    if (response.data.not_found_in_bkms !== undefined)
-      setNotFoundInBkms(response.data.not_found_in_bkms);
-    if (response.data.sabha_held !== undefined)
-      setSabhaHeldResult(response.data.sabha_held);
-  } catch (error) {
-    setStatus(CONSTANTS.SOMETHING_WENT_WRONG);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const msg = line.slice(6);
+
+        if (msg === "__DONE__") {
+          setLoading(false);
+          setCountdown(null);
+          return;
+        }
+
+        if (msg.startsWith("__COUNTDOWN__")) {
+          setCountdown(parseInt(msg.replace("__COUNTDOWN__", ""), 10));
+        } else {
+          setCountdown(null);
+          setLogs((prev) => [...prev, msg]);
+        }
+      }
+    }
+  } catch (err) {
+    setLogs((prev) => [...prev, `Connection error: ${err.message}`]);
   }
+
   setLoading(false);
+  setCountdown(null);
 }
 
 /** * Handles the run bot action based on the signed-in state.

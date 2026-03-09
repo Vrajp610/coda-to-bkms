@@ -8,6 +8,25 @@ BKMS_PASSWORD = os.getenv("BKMS_PASSWORD")
 MAIN_GROUP_TOKEN = os.getenv('MAIN_GROUP_TELEGRAM_TOKEN')
 MAIN_GROUP_CHAT_ID = os.getenv('MAIN_GROUP_TELEGRAM_CHAT_ID')
 BKMS_ACCESS_TYPE = os.getenv("BKMS_ACCESS_TYPE", "LocalAdmin")
+
+BKMS_BASE_URL = "https://bk.na.baps.org/"
+BKMS_USER_LIST_URL = "https://bk.na.baps.org/admin/user/userlist"
+
+SEARCH_FIELD_XPATH      = '/html/body/div[2]/div/section[2]/div[1]/form/div/div[3]/div[1]/input'
+SEARCH_BUTTON_XPATH     = '/html/body/div[2]/div/section[2]/div[1]/form/div/div[5]/div[2]/input'
+RESULT_ROWS_XPATH       = '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr'
+CHECKBOX_XPATH          = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[1]/div[4]/div[2]/div/label/div/input'
+SAVE_BUTTON_XPATH       = '/html/body/div[2]/div/section[2]/div/form/div[1]/input[4]'
+CONFIRM_DIALOG_XPATH    = '/html/body/div[3]/div/div[6]/button[1]'
+CANCEL_BUTTON_XPATH     = '/html/body/div[2]/div/section[2]/div/form/div[1]/a'
+PARENT_TAB_XPATH        = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/ul/li[2]/a'
+FATHER_FIRST_NAME_XPATH = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[1]/div[1]/input'
+FATHER_LAST_NAME_XPATH  = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[1]/div[2]/input'
+FATHER_EMAIL_XPATH      = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[2]/div[1]/input'
+MOTHER_FIRST_NAME_XPATH = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[1]/div[1]/input'
+MOTHER_LAST_NAME_XPATH  = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[1]/div[2]/input'
+MOTHER_EMAIL_XPATH      = '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[2]/div[1]/input'
+
 SABHA_ROW_MAP = {
     "saturday k1": 1,
     "saturday k2": 2,

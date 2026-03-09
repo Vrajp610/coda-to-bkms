@@ -17,6 +17,11 @@ jest.mock("./AttendanceForm.module.css", () => ({
   toggle: "toggle",
   toggleBtn: "toggleBtn",
   toggleBtnActive: "toggleBtnActive",
+  countdown: "countdown",
+  logBox: "logBox",
+  logLine: "logLine",
+  logHeader: "logHeader",
+  logError: "logError",
 }));
 
 jest.mock("../../utils/CONSTANTS", () => ({
@@ -38,10 +43,6 @@ jest.mock("../Button/Button", () => (props) => (
   </button>
 ));
 
-jest.mock("../AttendanceAlerts/AttendanceAlerts", () => () => (
-  <div data-testid="attendance-alerts" />
-));
-
 const defaultProps = {
   date: null,
   setDate: jest.fn(),
@@ -53,17 +54,17 @@ const defaultProps = {
   setP2Guju: jest.fn(),
   prepCycleDone: "",
   setPrepCycleDone: jest.fn(),
-  status: "",
   loading: false,
   runBot: jest.fn(),
-  markedPresent: null,
-  notMarked: null,
-  notFoundInBkms: null,
-  sabhaHeldResult: null,
+  logs: [],
+  countdown: null,
 };
 
 describe("AttendanceForm", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  });
 
   it("renders 4 date tiles", () => {
     render(<AttendanceForm {...defaultProps} />);
@@ -243,8 +244,97 @@ describe("AttendanceForm", () => {
     expect(runBot).toHaveBeenCalled();
   });
 
-  it("renders AttendanceAlerts", () => {
-    render(<AttendanceForm {...defaultProps} />);
-    expect(screen.getByTestId("attendance-alerts")).toBeInTheDocument();
+  it("renders log lines when logs are provided", () => {
+    render(<AttendanceForm {...defaultProps} logs={["Step 1 done", "Step 2 done"]} />);
+    expect(screen.getByText("Step 1 done")).toBeInTheDocument();
+    expect(screen.getByText("Step 2 done")).toBeInTheDocument();
+  });
+
+  it("applies logError class to log lines containing ERROR", () => {
+    render(<AttendanceForm {...defaultProps} logs={["ERROR: something went wrong"]} />);
+    const line = screen.getByText("ERROR: something went wrong");
+    expect(line.className).toContain("logError");
+  });
+
+  it("applies logHeader class to log lines starting with ---", () => {
+    render(<AttendanceForm {...defaultProps} logs={["--- Section Header ---"]} />);
+    const line = screen.getByText("--- Section Header ---");
+    expect(line.className).toContain("logHeader");
+  });
+
+  it("does not render log box when logs are empty and not loading", () => {
+    render(<AttendanceForm {...defaultProps} logs={[]} loading={false} />);
+    expect(screen.queryByRole("log")).not.toBeInTheDocument();
+  });
+
+  it("renders log box when loading even with no logs", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+        loading={true}
+        logs={[]}
+      />
+    );
+    expect(screen.getByRole("log")).toBeInTheDocument();
+  });
+
+  it("shows '...' loading indicator when loading and countdown is null", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+        loading={true}
+        logs={[]}
+        countdown={null}
+      />
+    );
+    expect(screen.getByText("...")).toBeInTheDocument();
+  });
+
+  it("shows countdown when loading and countdown is set", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+        loading={true}
+        countdown={15}
+      />
+    );
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByText(/15s remaining/)).toBeInTheDocument();
+  });
+
+  it("does not show countdown when not loading", () => {
+    render(<AttendanceForm {...defaultProps} countdown={15} loading={false} />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("log box has correct aria attributes", () => {
+    render(<AttendanceForm {...defaultProps} logs={["hello"]} />);
+    const logBox = screen.getByRole("log");
+    expect(logBox).toHaveAttribute("aria-live", "polite");
+    expect(logBox).toHaveAttribute("aria-label", "Bot output log");
+  });
+
+  it("countdown has correct aria attributes", () => {
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        loading={true}
+        countdown={10}
+        date={new Date()}
+        group="Saturday K1"
+        sabhaHeld="No"
+      />
+    );
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-live", "polite");
   });
 });

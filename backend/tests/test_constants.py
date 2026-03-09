@@ -102,6 +102,105 @@ def test_constants_module_has_expected_attributes():
         "BKMS_EMAIL",
         "BKMS_PASSWORD",
         "SABHA_ROW_MAP",
-        "XPATHS"
+        "XPATHS",
+        "BKMS_BASE_URL",
+        "BKMS_USER_LIST_URL",
+        "SEARCH_FIELD_XPATH",
+        "SEARCH_BUTTON_XPATH",
+        "RESULT_ROWS_XPATH",
+        "CHECKBOX_XPATH",
+        "SAVE_BUTTON_XPATH",
+        "CONFIRM_DIALOG_XPATH",
+        "CANCEL_BUTTON_XPATH",
+        "PARENT_TAB_XPATH",
+        "FATHER_FIRST_NAME_XPATH",
+        "FATHER_LAST_NAME_XPATH",
+        "FATHER_EMAIL_XPATH",
+        "MOTHER_FIRST_NAME_XPATH",
+        "MOTHER_LAST_NAME_XPATH",
+        "MOTHER_EMAIL_XPATH",
     ]:
         assert attr in attrs
+
+
+# ──────────────────────────────────────────────
+# New constants: BKMS_BASE_URL and BKMS_USER_LIST_URL
+# ──────────────────────────────────────────────
+
+def test_bkms_base_url():
+    assert constants.BKMS_BASE_URL == "https://bk.na.baps.org/"
+
+def test_bkms_user_list_url():
+    assert constants.BKMS_USER_LIST_URL == "https://bk.na.baps.org/admin/user/userlist"
+
+
+# ──────────────────────────────────────────────
+# Individual XPATH constant value tests
+# ──────────────────────────────────────────────
+
+def test_search_field_xpath():
+    assert constants.SEARCH_FIELD_XPATH == '/html/body/div[2]/div/section[2]/div[1]/form/div/div[3]/div[1]/input'
+
+def test_search_button_xpath():
+    assert constants.SEARCH_BUTTON_XPATH == '/html/body/div[2]/div/section[2]/div[1]/form/div/div[5]/div[2]/input'
+
+def test_result_rows_xpath():
+    assert constants.RESULT_ROWS_XPATH == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr'
+
+def test_checkbox_xpath():
+    assert constants.CHECKBOX_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[1]/div[4]/div[2]/div/label/div/input'
+
+def test_save_button_xpath():
+    assert constants.SAVE_BUTTON_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[1]/input[4]'
+
+def test_confirm_dialog_xpath():
+    assert constants.CONFIRM_DIALOG_XPATH == '/html/body/div[3]/div/div[6]/button[1]'
+
+def test_cancel_button_xpath():
+    assert constants.CANCEL_BUTTON_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[1]/a'
+
+def test_parent_tab_xpath():
+    assert constants.PARENT_TAB_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/ul/li[2]/a'
+
+def test_father_first_name_xpath():
+    assert constants.FATHER_FIRST_NAME_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[1]/div[1]/input'
+
+def test_father_last_name_xpath():
+    assert constants.FATHER_LAST_NAME_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[1]/div[2]/input'
+
+def test_father_email_xpath():
+    assert constants.FATHER_EMAIL_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[1]/div[2]/div/div[2]/div[1]/input'
+
+def test_mother_first_name_xpath():
+    assert constants.MOTHER_FIRST_NAME_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[1]/div[1]/input'
+
+def test_mother_last_name_xpath():
+    assert constants.MOTHER_LAST_NAME_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[1]/div[2]/input'
+
+def test_mother_email_xpath():
+    assert constants.MOTHER_EMAIL_XPATH == '/html/body/div[2]/div/section[2]/div/form/div[3]/div[1]/div/div[3]/div[2]/div[2]/div/div[2]/div[1]/input'
+
+
+# ──────────────────────────────────────────────
+# All new XPATH constants are strings
+# ──────────────────────────────────────────────
+
+def test_all_new_xpath_constants_are_strings():
+    xpath_attrs = [
+        "SEARCH_FIELD_XPATH",
+        "SEARCH_BUTTON_XPATH",
+        "RESULT_ROWS_XPATH",
+        "CHECKBOX_XPATH",
+        "SAVE_BUTTON_XPATH",
+        "CONFIRM_DIALOG_XPATH",
+        "CANCEL_BUTTON_XPATH",
+        "PARENT_TAB_XPATH",
+        "FATHER_FIRST_NAME_XPATH",
+        "FATHER_LAST_NAME_XPATH",
+        "FATHER_EMAIL_XPATH",
+        "MOTHER_FIRST_NAME_XPATH",
+        "MOTHER_LAST_NAME_XPATH",
+        "MOTHER_EMAIL_XPATH",
+    ]
+    for attr in xpath_attrs:
+        assert isinstance(getattr(constants, attr), str), f"{attr} should be a string"

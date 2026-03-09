@@ -1,5 +1,5 @@
+import { useRef, useEffect } from "react";
 import Button from "../Button/Button";
-import AttendanceAlerts from "../AttendanceAlerts/AttendanceAlerts";
 import styles from "./AttendanceForm.module.css";
 import { CONSTANTS } from "../../utils/CONSTANTS";
 
@@ -50,10 +50,15 @@ const AttendanceForm = ({
   sabhaHeld, setSabhaHeld,
   p2Guju, setP2Guju,
   prepCycleDone, setPrepCycleDone,
-  status, loading, runBot,
-  markedPresent, notMarked, notFoundInBkms, sabhaHeldResult,
+  loading, runBot,
+  logs, countdown,
 }) => {
   const sundays = getValidSundays();
+  const logEndRef = useRef(null);
+
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
 
   return (
     <div className={styles.form}>
@@ -118,15 +123,34 @@ const AttendanceForm = ({
         {loading ? CONSTANTS.RUNNING : CONSTANTS.RUN_BOT}
       </Button>
 
-      <AttendanceAlerts
-        status={status}
-        markedPresent={markedPresent}
-        notMarked={notMarked}
-        notFoundInBkms={notFoundInBkms}
-        sabhaHeldResult={sabhaHeldResult}
-        styles={styles}
-        CONSTANTS={CONSTANTS}
-      />
+      {loading && countdown !== null && (
+        <div role="status" aria-live="polite" className={styles.countdown}>
+          Waiting for login — {countdown}s remaining
+        </div>
+      )}
+
+      {(logs.length > 0 || loading) && (
+        <div role="log" aria-live="polite" aria-label="Bot output log" className={styles.logBox}>
+          {logs.map((line, i) => (
+            <div
+              key={i}
+              className={
+                line.includes("ERROR")
+                  ? styles.logError
+                  : line.startsWith("---")
+                  ? styles.logHeader
+                  : styles.logLine
+              }
+            >
+              {line}
+            </div>
+          ))}
+          {loading && countdown === null && (
+            <div className={styles.logLine}>...</div>
+          )}
+          <div ref={logEndRef} />
+        </div>
+      )}
     </div>
   );
 };

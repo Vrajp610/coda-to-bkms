@@ -675,6 +675,60 @@ def test_update_sheet_login_flow(
 @patch("backend.bkms.calculate_week_number")
 @patch("backend.bkms.get_this_week_sunday")
 @patch("backend.bkms.send_notifications")
+def test_update_sheet_log_callback_is_called(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
+):
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 5
+    mock_get_sunday.return_value = "2024-06-09"
+    mock_driver.find_elements.return_value = []
+
+    received = []
+    update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
+        day="Saturday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes",
+        log_callback=received.append,
+    )
+
+    assert len(received) > 0
+    assert any(isinstance(msg, str) for msg in received)
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
+def test_update_sheet_log_callback_receives_countdown_messages(
+    mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver
+):
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 5
+    mock_get_sunday.return_value = "2024-06-09"
+    mock_driver.find_elements.return_value = []
+
+    received = []
+    update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
+        day="Saturday K1",
+        sabha_held="yes",
+        p2_guju="no",
+        date_string="2024-06-05",
+        prep_cycle_done="yes",
+        log_callback=received.append,
+    )
+
+    countdown_msgs = [m for m in received if m.startswith("__COUNTDOWN__")]
+    assert len(countdown_msgs) == 20
+
+
+@patch("backend.bkms.get_chrome_driver")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.send_notifications")
 def test_update_sheet_handles_option_text_exception(
     mock_send_telegram, mock_get_sunday, mock_week_number, mock_get_driver, mock_driver, monkeypatch
 ):

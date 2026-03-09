@@ -1,8 +1,23 @@
 import { filterValidSundays, runAttendanceBot, handleRunBotHelper, handleSignInSuccessHelper } from "./functions";
 import { CONSTANTS } from "./CONSTANTS";
-import axios from "axios";
 
-jest.mock("axios");
+const encoder = new TextEncoder();
+
+const makeStream = (...chunks) => {
+  let idx = 0;
+  return {
+    body: {
+      getReader: () => ({
+        read: jest.fn().mockImplementation(() => {
+          if (idx < chunks.length) {
+            return Promise.resolve({ done: false, value: encoder.encode(chunks[idx++]) });
+          }
+          return Promise.resolve({ done: true });
+        }),
+      }),
+    },
+  };
+};
 
 describe("filterValidSundays", () => {
     const RealDate = Date;
@@ -63,22 +78,15 @@ describe("filterValidSundays", () => {
 });
 
 describe("runAttendanceBot", () => {
-    const originalAlert = window.alert;
-    const mockSetStatus = jest.fn();
-    const mockSetMarkedPresent = jest.fn();
-    const mockSetNotMarked = jest.fn();
-    const mockSetNotFoundInBkms = jest.fn();
-    const mockSetSabhaHeldResult = jest.fn();
+    const mockSetLogs = jest.fn();
+    const mockSetCountdown = jest.fn();
     const mockSetLoading = jest.fn();
 
     beforeEach(() => {
         jest.clearAllMocks();
+        global.fetch = jest.fn();
         window.alert = jest.fn();
-        process.env.REACT_APP_API_URL = "";
-    });
-
-    afterAll(() => {
-        window.alert = originalAlert;
+        process.env.REACT_APP_API_URL = "http://test";
     });
 
     const baseParams = {
@@ -87,77 +95,100 @@ describe("runAttendanceBot", () => {
         sabhaHeld: CONSTANTS.YES,
         p2Guju: "yes",
         prepCycleDone: "yes",
-        setStatus: mockSetStatus,
-        setMarkedPresent: mockSetMarkedPresent,
-        setNotMarked: mockSetNotMarked,
-        setNotFoundInBkms: mockSetNotFoundInBkms,
-        setSabhaHeldResult: mockSetSabhaHeldResult,
+        setLogs: mockSetLogs,
+        setCountdown: mockSetCountdown,
         setLoading: mockSetLoading,
     };
 
     it("alerts and returns if required fields are missing", async () => {
-        await runAttendanceBot({
-            ...baseParams,
-            date: null,
-        });
+        await runAttendanceBot({ ...baseParams, date: null });
         expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
-        expect(mockSetLoading).not.toHaveBeenCalledWith(true);
+        expect(mockSetLoading).not.toHaveBeenCalled();
     });
 
-    it("alerts and returns if sabhaHeld is YES but p2Guju or prepCycleDone is missing", async () => {
-        await runAttendanceBot({
-            ...baseParams,
-            p2Guju: null,
-        });
+    it("alerts if sabhaHeld is YES but p2Guju is missing", async () => {
+        await runAttendanceBot({ ...baseParams, p2Guju: null });
         expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
     });
 
-    it("calls API and sets state correctly on success", async () => {
-        axios.post.mockResolvedValue({
-            data: {
-                message: "Success",
-                marked_present: ["A"],
-                not_marked: ["B"],
-                not_found_in_bkms: ["C"],
-                sabha_held: true,
-            },
-        });
-
+    it("calls fetch with correct URL, method, headers, and body", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
         await runAttendanceBot(baseParams);
-
-        expect(mockSetLoading).toHaveBeenCalledWith(true);
-        expect(mockSetStatus).toHaveBeenCalledWith("Success");
-        expect(mockSetMarkedPresent).toHaveBeenCalledWith(["A"]);
-        expect(mockSetNotMarked).toHaveBeenCalledWith(["B"]);
-        expect(mockSetNotFoundInBkms).toHaveBeenCalledWith(["C"]);
-        expect(mockSetSabhaHeldResult).toHaveBeenCalledWith(true);
-        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
-    });
-
-    it("sets error status on API failure", async () => {
-        axios.post.mockRejectedValue(new Error("fail"));
-        await runAttendanceBot(baseParams);
-        expect(mockSetStatus).toHaveBeenCalledWith(CONSTANTS.SOMETHING_WENT_WRONG);
-        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
-    });
-
-    it("uses REACT_APP_API_URL if set", async () => {
-        process.env.REACT_APP_API_URL = "http://test.com";
-        axios.post.mockResolvedValue({ data: {} });
-        await runAttendanceBot(baseParams);
-        expect(axios.post).toHaveBeenCalledWith(
-            "http://test.com/run-bot",
-            expect.any(Object)
+        expect(fetch).toHaveBeenCalledWith(
+            "http://test/run-bot-stream",
+            expect.objectContaining({
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            })
         );
     });
 
-    it("falls back to axios when axios.default is undefined", async () => {
-        const originalDefault = axios.default;
-        delete axios.default;
-        axios.post.mockResolvedValue({ data: {} });
+    it("sets loading=true then false on success", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
         await runAttendanceBot(baseParams);
-        expect(axios.post).toHaveBeenCalled();
-        axios.default = originalDefault;
+        expect(mockSetLoading).toHaveBeenCalledWith(true);
+        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+    });
+
+    it("streams log messages into setLogs", async () => {
+        fetch.mockResolvedValue(makeStream("data: hello\n", "data: world\n", "data: __DONE__\n"));
+        await runAttendanceBot(baseParams);
+        expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it("setLogs callback appends message to previous logs", async () => {
+        const accumulated = [];
+        const execSetLogs = jest.fn().mockImplementation((fn) => {
+            if (typeof fn === "function") accumulated.push(...fn([]));
+        });
+        fetch.mockResolvedValue(makeStream("data: hello\n", "data: __DONE__\n"));
+        await runAttendanceBot({ ...baseParams, setLogs: execSetLogs });
+        expect(accumulated).toContain("hello");
+    });
+
+    it("connection error callback appends error message to logs", async () => {
+        const accumulated = [];
+        const execSetLogs = jest.fn().mockImplementation((fn) => {
+            if (typeof fn === "function") accumulated.push(...fn([]));
+        });
+        fetch.mockRejectedValue(new Error("Network Error"));
+        await runAttendanceBot({ ...baseParams, setLogs: execSetLogs });
+        expect(accumulated.some((l) => l.includes("Connection error"))).toBe(true);
+    });
+
+    it("handles __COUNTDOWN__ messages via setCountdown", async () => {
+        fetch.mockResolvedValue(makeStream("data: __COUNTDOWN__10\n", "data: __DONE__\n"));
+        await runAttendanceBot(baseParams);
+        expect(mockSetCountdown).toHaveBeenCalledWith(10);
+    });
+
+    it("sets loading=false and logs connection error on fetch failure", async () => {
+        fetch.mockRejectedValue(new Error("Network Error"));
+        await runAttendanceBot(baseParams);
+        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+        expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it("sets loading=false when stream ends without __DONE__", async () => {
+        fetch.mockResolvedValue(makeStream("data: partial\n"));
+        await runAttendanceBot(baseParams);
+        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+    });
+
+    it("skips lines that do not start with 'data: '", async () => {
+        fetch.mockResolvedValue(makeStream("ignore this line\ndata: hello\ndata: __DONE__\n"));
+        await runAttendanceBot(baseParams);
+        expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it("uses REACT_APP_API_URL when set", async () => {
+        process.env.REACT_APP_API_URL = "http://custom.com";
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runAttendanceBot(baseParams);
+        expect(fetch).toHaveBeenCalledWith(
+            "http://custom.com/run-bot-stream",
+            expect.any(Object)
+        );
     });
 });
 

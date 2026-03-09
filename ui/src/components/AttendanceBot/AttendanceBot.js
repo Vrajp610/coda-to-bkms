@@ -14,12 +14,9 @@ const AttendanceBot = () => {
   const [sabhaHeld, setSabhaHeld] = useState("");
   const [p2Guju, setP2Guju] = useState("");
   const [prepCycleDone, setPrepCycleDone] = useState("");
-  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [markedPresent, setMarkedPresent] = useState(null);
-  const [notMarked, setNotMarked] = useState(null);
-  const [notFoundInBkms, setNotFoundInBkms] = useState(null);
-  const [sabhaHeldResult, setSabhaHeldResult] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [countdown, setCountdown] = useState(null);
 
   const runBot = () =>
     runAttendanceBot({
@@ -28,11 +25,8 @@ const AttendanceBot = () => {
       sabhaHeld,
       p2Guju,
       prepCycleDone,
-      setStatus,
-      setMarkedPresent,
-      setNotMarked,
-      setNotFoundInBkms,
-      setSabhaHeldResult,
+      setLogs,
+      setCountdown,
       setLoading,
     });
 
@@ -50,13 +44,10 @@ const AttendanceBot = () => {
         setP2Guju={setP2Guju}
         prepCycleDone={prepCycleDone}
         setPrepCycleDone={setPrepCycleDone}
-        status={status}
         loading={loading}
         runBot={runBot}
-        markedPresent={markedPresent}
-        notMarked={notMarked}
-        notFoundInBkms={notFoundInBkms}
-        sabhaHeldResult={sabhaHeldResult}
+        logs={logs}
+        countdown={countdown}
       />
     </div>
   );
