@@ -28,4 +28,8 @@ export const CONSTANTS = {
   EMAIL: "Email",
   CODA_ATTENDANCE_MISSING: "Coda attendance is currently missing. Please ensure it’s filled out before proceeding further.",
   SABHA_NOT_HELD: "Sabha was not held. Attendance marked accordingly in BKMS.",
+  GOSHTHI_BOT: "BKMS Goshthi Bot",
+  WAS_GOSHTHI_HELD: "Was Goshthi Held?",
+  WAS_HANGOUT: "Was this a Hangout?",
+  WAS_WORKSHOP: "Was a Karyakar Workshop Held?",
 };

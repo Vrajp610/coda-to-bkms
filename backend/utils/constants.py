@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BKMS_LOGIN_URL = "https://bk.na.baps.org/ssologin"
 BKMS_REPORT_ATTENDANCE_URL = "https://bk.na.baps.org/admin/reports/reportweeksabhaattendance"
@@ -11,6 +14,13 @@ BKMS_ACCESS_TYPE = os.getenv("BKMS_ACCESS_TYPE", "LocalAdmin")
 
 BKMS_BASE_URL = "https://bk.na.baps.org/"
 BKMS_USER_LIST_URL = "https://bk.na.baps.org/admin/user/userlist"
+BKMS_GOSHTHI_URL = "https://bk.na.baps.org/admin/reports/karyakargoshthi"
+
+# Goshthi Coda Table IDs (set in .env)
+GOSHTHI_9_10_TABLE_ID        = os.getenv("GOSHTHI_9_10_TABLE_ID")
+GOSHTHI_11_12_TABLE_ID       = os.getenv("GOSHTHI_11_12_TABLE_ID")
+GOSHTHI_COLLEGE_1_2_TABLE_ID = os.getenv("GOSHTHI_COLLEGE_1_2_TABLE_ID")
+GOSHTHI_COLLEGE_3_4_TABLE_ID = os.getenv("GOSHTHI_COLLEGE_3_4_TABLE_ID")
 
 SEARCH_FIELD_XPATH      = '/html/body/div[2]/div/section[2]/div[1]/form/div/div[3]/div[1]/input'
 SEARCH_BUTTON_XPATH     = '/html/body/div[2]/div/section[2]/div[1]/form/div/div[5]/div[2]/input'

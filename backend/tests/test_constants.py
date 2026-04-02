@@ -185,6 +185,86 @@ def test_mother_email_xpath():
 # All new XPATH constants are strings
 # ──────────────────────────────────────────────
 
+# ── New constants added to constants.py ──────────────────────────────────────
+
+def test_bkms_goshthi_url():
+    assert constants.BKMS_GOSHTHI_URL == "https://bk.na.baps.org/admin/reports/karyakargoshthi"
+
+
+def test_bkms_access_type_default_is_local_admin():
+    with patch.dict("os.environ", {}, clear=False):
+        # Without env override, default is "LocalAdmin"
+        import importlib as _il
+        with patch.dict("os.environ", {"BKMS_ACCESS_TYPE": "LocalAdmin"}):
+            _il.reload(constants)
+    assert constants.BKMS_ACCESS_TYPE == "LocalAdmin"
+
+
+def test_bkms_access_type_from_env():
+    with patch.dict("os.environ", {"BKMS_ACCESS_TYPE": "RegionalAdmin"}):
+        importlib.reload(constants)
+    assert constants.BKMS_ACCESS_TYPE == "RegionalAdmin"
+    # restore
+    importlib.reload(constants)
+
+
+def test_goshthi_table_ids_from_env():
+    env = {
+        "GOSHTHI_9_10_TABLE_ID": "t910",
+        "GOSHTHI_11_12_TABLE_ID": "t1112",
+        "GOSHTHI_COLLEGE_1_2_TABLE_ID": "tc12",
+        "GOSHTHI_COLLEGE_3_4_TABLE_ID": "tc34",
+    }
+    with patch.dict("os.environ", env):
+        importlib.reload(constants)
+    assert constants.GOSHTHI_9_10_TABLE_ID == "t910"
+    assert constants.GOSHTHI_11_12_TABLE_ID == "t1112"
+    assert constants.GOSHTHI_COLLEGE_1_2_TABLE_ID == "tc12"
+    assert constants.GOSHTHI_COLLEGE_3_4_TABLE_ID == "tc34"
+    importlib.reload(constants)
+
+
+def test_telegram_group_config_has_all_groups():
+    for group in ["saturday k1", "saturday k2", "sunday k1", "sunday k2"]:
+        assert group in constants.TELEGRAM_GROUP_CONFIG
+        cfg = constants.TELEGRAM_GROUP_CONFIG[group]
+        assert "token" in cfg
+        assert "chat_id" in cfg
+
+
+def test_telegram_group_mentions_has_all_groups():
+    for group in ["saturday k1", "saturday k2", "sunday k1", "sunday k2"]:
+        assert group in constants.TELEGRAM_GROUP_MENTIONS
+        assert isinstance(constants.TELEGRAM_GROUP_MENTIONS[group], str)
+
+
+def test_bkms_xpath_config_structure():
+    assert "PATHS" in constants.BKMS_XPATH_CONFIG
+    paths = constants.BKMS_XPATH_CONFIG["PATHS"]
+    assert "REGIONAL_XPATH" in paths
+    assert "LOCAL_XPATH" in paths
+
+
+def test_bkms_xpath_config_lambdas_return_strings_with_row():
+    regional = constants.BKMS_XPATH_CONFIG["PATHS"]["REGIONAL_XPATH"](3)
+    local = constants.BKMS_XPATH_CONFIG["PATHS"]["LOCAL_XPATH"](3)
+    assert "tr[3]" in regional
+    assert "tr[3]" in local
+    assert isinstance(regional, str)
+    assert isinstance(local, str)
+
+
+def test_main_group_token_and_chat_id_exist():
+    assert hasattr(constants, "MAIN_GROUP_TOKEN")
+    assert hasattr(constants, "MAIN_GROUP_CHAT_ID")
+
+
+def test_constants_has_goshthi_table_id_attributes():
+    for attr in ["GOSHTHI_9_10_TABLE_ID", "GOSHTHI_11_12_TABLE_ID",
+                 "GOSHTHI_COLLEGE_1_2_TABLE_ID", "GOSHTHI_COLLEGE_3_4_TABLE_ID"]:
+        assert hasattr(constants, attr), f"Missing: {attr}"
+
+
 def test_all_new_xpath_constants_are_strings():
     xpath_attrs = [
         "SEARCH_FIELD_XPATH",

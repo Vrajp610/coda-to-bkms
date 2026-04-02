@@ -1,0 +1,160 @@
+.form {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 320px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Month tile grid */
+.monthGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.monthTile {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.monthTile:hover {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+.monthTileActive {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: #c2622a;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.25);
+}
+
+.monthLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.monthTileActive .monthLabel {
+  color: #c2622a;
+}
+
+.monthValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.monthTileActive .monthValue {
+  color: #c2622a;
+}
+
+/* Yes/No toggle */
+.toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.toggleBtn {
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggleBtn:hover {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #cbd5e1;
+}
+
+.toggleBtnActive {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: #c2622a;
+  color: #c2622a;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+}
+
+.countdown {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c2622a;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  letter-spacing: 0.3px;
+}
+
+.logBox {
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+.logBox::-webkit-scrollbar { width: 6px; }
+.logBox::-webkit-scrollbar-track { background: transparent; }
+.logBox::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+.logLine {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.logHeader {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  color: #38bdf8;
+  font-weight: 700;
+  white-space: pre-wrap;
+}
+
+.logError {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  color: #f87171;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

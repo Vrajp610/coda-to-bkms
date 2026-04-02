@@ -1,4 +1,4 @@
-import { filterValidSundays, runAttendanceBot, handleRunBotHelper, handleSignInSuccessHelper } from "./functions";
+import { filterValidSundays, runAttendanceBot, runGoshthiBot, handleRunBotHelper, handleSignInSuccessHelper } from "./functions";
 import { CONSTANTS } from "./CONSTANTS";
 
 const encoder = new TextEncoder();
@@ -190,6 +190,141 @@ describe("runAttendanceBot", () => {
             expect.any(Object)
         );
     });
+});
+
+describe("runGoshthiBot", () => {
+  const mockSetLogs = jest.fn();
+  const mockSetCountdown = jest.fn();
+  const mockSetLoading = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.fetch = jest.fn();
+    window.alert = jest.fn();
+    process.env.REACT_APP_API_URL = "http://test";
+  });
+
+  const baseParams = {
+    selectedMonth: new Date("2026-01-01"),
+    goshthiHeld: CONSTANTS.YES,
+    hangout: "No",
+    workshop: "Yes",
+    setLogs: mockSetLogs,
+    setCountdown: mockSetCountdown,
+    setLoading: mockSetLoading,
+  };
+
+  it("alerts if selectedMonth is missing", async () => {
+    await runGoshthiBot({ ...baseParams, selectedMonth: null });
+    expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+    expect(mockSetLoading).not.toHaveBeenCalled();
+  });
+
+  it("alerts if goshthiHeld is missing", async () => {
+    await runGoshthiBot({ ...baseParams, goshthiHeld: null });
+    expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+  });
+
+  it("alerts if goshthiHeld=Yes but hangout is missing", async () => {
+    await runGoshthiBot({ ...baseParams, hangout: null });
+    expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+  });
+
+  it("alerts if goshthiHeld=Yes but workshop is missing", async () => {
+    await runGoshthiBot({ ...baseParams, workshop: null });
+    expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+  });
+
+  it("does not alert when goshthiHeld=No (hangout and workshop not required)", async () => {
+    fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+    await runGoshthiBot({ ...baseParams, goshthiHeld: "No", hangout: null, workshop: null });
+    expect(window.alert).not.toHaveBeenCalled();
+  });
+
+  it("calls fetch with correct URL, method, and headers", async () => {
+    fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+    await runGoshthiBot(baseParams);
+    expect(fetch).toHaveBeenCalledWith(
+      "http://test/run-goshthi-stream",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+  });
+
+  it("sets loading=true then false on success", async () => {
+    fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+    await runGoshthiBot(baseParams);
+    expect(mockSetLoading).toHaveBeenCalledWith(true);
+    expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+  });
+
+  it("streams log messages into setLogs", async () => {
+    fetch.mockResolvedValue(makeStream("data: hello\n", "data: __DONE__\n"));
+    await runGoshthiBot(baseParams);
+    expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it("setLogs callback appends message to previous logs", async () => {
+    const accumulated = [];
+    const execSetLogs = jest.fn().mockImplementation((fn) => {
+      if (typeof fn === "function") accumulated.push(...fn([]));
+    });
+    fetch.mockResolvedValue(makeStream("data: goshthi msg\n", "data: __DONE__\n"));
+    await runGoshthiBot({ ...baseParams, setLogs: execSetLogs });
+    expect(accumulated).toContain("goshthi msg");
+  });
+
+  it("handles __COUNTDOWN__ via setCountdown", async () => {
+    fetch.mockResolvedValue(makeStream("data: __COUNTDOWN__20\n", "data: __DONE__\n"));
+    await runGoshthiBot(baseParams);
+    expect(mockSetCountdown).toHaveBeenCalledWith(20);
+  });
+
+  it("sets countdown=null after __COUNTDOWN__ clears", async () => {
+    fetch.mockResolvedValue(makeStream(
+      "data: __COUNTDOWN__10\n",
+      "data: regular msg\n",
+      "data: __DONE__\n"
+    ));
+    await runGoshthiBot(baseParams);
+    const nullCalls = mockSetCountdown.mock.calls.filter(([v]) => v === null);
+    expect(nullCalls.length).toBeGreaterThan(0);
+  });
+
+  it("handles connection errors and logs the error", async () => {
+    const accumulated = [];
+    const execSetLogs = jest.fn().mockImplementation((fn) => {
+      if (typeof fn === "function") accumulated.push(...fn([]));
+    });
+    fetch.mockRejectedValue(new Error("Network Error"));
+    await runGoshthiBot({ ...baseParams, setLogs: execSetLogs });
+    expect(accumulated.some((l) => l.includes("Connection error"))).toBe(true);
+    expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+  });
+
+  it("sets loading=false when stream ends without __DONE__", async () => {
+    fetch.mockResolvedValue(makeStream("data: partial\n"));
+    await runGoshthiBot(baseParams);
+    expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+  });
+
+  it("skips lines that do not start with 'data: '", async () => {
+    fetch.mockResolvedValue(makeStream("ignore this\ndata: hello\ndata: __DONE__\n"));
+    await runGoshthiBot(baseParams);
+    expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it("uses REACT_APP_API_URL when set", async () => {
+    process.env.REACT_APP_API_URL = "http://custom.goshthi";
+    fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+    await runGoshthiBot(baseParams);
+    expect(fetch).toHaveBeenCalledWith(
+      "http://custom.goshthi/run-goshthi-stream",
+      expect.any(Object)
+    );
+  });
 });
 
 describe("handleRunBotHelper", () => {

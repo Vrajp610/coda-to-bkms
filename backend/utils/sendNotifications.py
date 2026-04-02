@@ -2,7 +2,13 @@ import asyncio
 from backend.utils.constants import TELEGRAM_GROUP_CONFIG, MAIN_GROUP_TOKEN, MAIN_GROUP_CHAT_ID
 from backend.utils.telegramUtils import send_telegram_message
 
+# Set to False to suppress all Telegram notifications (useful during testing)
+TELEGRAM_ENABLED = True
+
 def send_notifications(message, day=None):
+   if not TELEGRAM_ENABLED:
+      print(f"[TELEGRAM DISABLED] {message}")
+      return
    """Helper function to send notifications to both main and specific groups"""
    # First send to specific group if day is provided
    if day:

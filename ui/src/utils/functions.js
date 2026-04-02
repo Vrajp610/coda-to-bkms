@@ -126,6 +126,76 @@ export async function runAttendanceBot({
   setCountdown(null);
 }
 
+export async function runGoshthiBot({
+  selectedMonth,
+  goshthiHeld,
+  hangout,
+  workshop,
+  setLogs,
+  setCountdown,
+  setLoading,
+}) {
+  if (
+    !selectedMonth || !goshthiHeld ||
+    (goshthiHeld === CONSTANTS.YES && (!hangout || !workshop))
+  ) {
+    window.alert(CONSTANTS.REQUIRED_FIELDS);
+    return;
+  }
+
+  const month = selectedMonth.toLocaleDateString("en-US", { month: "long" });
+  const year = String(selectedMonth.getFullYear());
+
+  setLogs([]);
+  setCountdown(null);
+  setLoading(true);
+
+  try {
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
+    const response = await fetch(`${API_BASE_URL}/run-goshthi-stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ month, year, goshthiHeld, hangout, workshop }),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const msg = line.slice(6);
+
+        if (msg === "__DONE__") {
+          setLoading(false);
+          setCountdown(null);
+          return;
+        }
+
+        if (msg.startsWith("__COUNTDOWN__")) {
+          setCountdown(parseInt(msg.replace("__COUNTDOWN__", ""), 10));
+        } else {
+          setCountdown(null);
+          setLogs((prev) => [...prev, msg]);
+        }
+      }
+    }
+  } catch (err) {
+    setLogs((prev) => [...prev, `Connection error: ${err.message}`]);
+  }
+
+  setLoading(false);
+  setCountdown(null);
+}
+
 /** * Handles the run bot action based on the signed-in state.
  *
  * @param {boolean} signedIn - Whether the user is signed in.

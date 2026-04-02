@@ -199,3 +199,281 @@ def test_env_var_missing_raises(mock_coda, mock_getenv, patch_external_modules, 
     sys.modules.pop("backend.coda", None)
     with pytest.raises(EnvironmentError):
         import backend.coda
+
+
+# ── get_goshthi_attendance ────────────────────────────────────────────────────
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_no_rows(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {"items": []}
+    coda_mod.attendance = []
+    result = coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert result is None
+    assert coda_mod.attendance == []
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_date_col_by_known_name(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {"items": [
+        {"values": {"Month": "2026-01-31T00:00:00.000-05:00", "BKMS ID": 100, "Attended": True}},
+        {"values": {"Month": "2026-02-01T00:00:00.000-05:00", "BKMS ID": 200, "Attended": True}},
+        {"values": {"Month": "2026-01-15T00:00:00.000-05:00", "BKMS ID": 300, "Attended": False}},
+    ]}
+    coda_mod.attendance = []
+    coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert 100 in coda_mod.attendance
+    assert 200 not in coda_mod.attendance
+    assert 300 not in coda_mod.attendance
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_date_col_by_pattern(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    # "CustomDateCol" is NOT a known name; values match M/D/YYYY → pattern detection (lines 69-71)
+    mock_instance.list_rows.return_value = {"items": [
+        {"values": {"CustomDateCol": "1/31/2026", "BKMS ID": 400, "Attended": True}},
+    ]}
+    coda_mod.attendance = []
+    # Pattern detected but ISO filter won't match "1/31/2026" → no attendance added
+    coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert 400 not in coda_mod.attendance
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_no_date_col(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {"items": [
+        {"values": {"SomeCol": "no-date", "BKMS ID": 500, "Attended": True}},
+    ]}
+    coda_mod.attendance = []
+    result = coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert result is None
+    assert coda_mod.attendance == []
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_no_bkms_col(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {"items": [
+        {"values": {"Month": "2026-01-31T00:00:00.000-05:00", "Attended": True}},
+    ]}
+    coda_mod.attendance = []
+    result = coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert result is None
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_no_attended_col(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {"items": [
+        {"values": {"Month": "2026-01-31T00:00:00.000-05:00", "BKMS ID": 600}},
+    ]}
+    coda_mod.attendance = []
+    result = coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert result is None
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_known_name_variants(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    """Each known date-column candidate name triggers detection."""
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+
+    for col_name in ["Weekend", "Date", "Goshthi Date"]:
+        importlib.reload(coda_mod)
+        mock_instance = mock_coda_cls.return_value
+        mock_instance.list_rows.return_value = {"items": [
+            {"values": {col_name: "2026-03-15T00:00:00.000-05:00", "BKMS ID": 700, "Attended": True}},
+        ]}
+        coda_mod.attendance = []
+        coda_mod.get_goshthi_attendance("tbl", 3, "2026")
+        assert 700 in coda_mod.attendance, f"Failed for col_name={col_name}"
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_goshthi_attendance_drops_nulls(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {"items": [
+        {"values": {"Month": "2026-01-15T00:00:00.000-05:00", "BKMS ID": None, "Attended": True}},
+        {"values": {"Month": "2026-01-15T00:00:00.000-05:00", "BKMS ID": 800, "Attended": True}},
+    ]}
+    coda_mod.attendance = []
+    coda_mod.get_goshthi_attendance("tbl", 1, "2026")
+    assert 800 in coda_mod.attendance
+    assert None not in coda_mod.attendance
+
+
+# ── format_goshthi_data ───────────────────────────────────────────────────────
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_invalid_month(mock_coda_cls, mock_getenv, patch_external_modules):
+    mock_getenv.return_value = "dummy"
+    import backend.coda as coda_mod
+    result = coda_mod.format_goshthi_data("NotAMonth", "2026")
+    assert "Invalid month" in result
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_returns_unique_sorted_ids(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "goshthi_9_10", "table1")
+    monkeypatch.setattr(coda_mod, "goshthi_11_12", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_1_2", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_3_4", None)
+
+    def fake_get_goshthi(table, month_int, year, log=print):
+        coda_mod.attendance.extend([500, 200, 500])
+
+    monkeypatch.setattr(coda_mod, "get_goshthi_attendance", fake_get_goshthi)
+
+    result, count = coda_mod.format_goshthi_data("January", "2026")
+    assert result == ["200", "500"]
+    assert count == 2
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_skips_none_tables(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "goshthi_9_10", None)
+    monkeypatch.setattr(coda_mod, "goshthi_11_12", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_1_2", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_3_4", None)
+
+    called = []
+    monkeypatch.setattr(coda_mod, "get_goshthi_attendance", lambda *a, **k: called.append(1))
+
+    result, count = coda_mod.format_goshthi_data("March", "2026")
+    assert called == []
+    assert count == 0
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_exception_returns_error(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "goshthi_9_10", "table1")
+    monkeypatch.setattr(coda_mod, "goshthi_11_12", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_1_2", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_3_4", None)
+    monkeypatch.setattr(coda_mod, "get_goshthi_attendance", lambda *a, **k: (_ for _ in ()).throw(Exception("coda down")))
+
+    result = coda_mod.format_goshthi_data("February", "2026")
+    assert "broken" in result.lower()
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_all_months_valid(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "goshthi_9_10", None)
+    monkeypatch.setattr(coda_mod, "goshthi_11_12", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_1_2", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_3_4", None)
+
+    months = ["January", "February", "March", "April", "May", "June",
+              "July", "August", "September", "October", "November", "December"]
+    for month in months:
+        result = coda_mod.format_goshthi_data(month, "2026")
+        assert isinstance(result, tuple), f"Expected tuple for month={month}, got {result!r}"
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_global_attendance_reset(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    coda_mod.attendance = [999]
+    monkeypatch.setattr(coda_mod, "goshthi_9_10", None)
+    monkeypatch.setattr(coda_mod, "goshthi_11_12", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_1_2", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_3_4", None)
+
+    coda_mod.format_goshthi_data("April", "2026")
+    # attendance must be reset at the start of format_goshthi_data
+    assert 999 not in coda_mod.attendance
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_format_goshthi_data_uses_log_callback(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "goshthi_9_10", None)
+    monkeypatch.setattr(coda_mod, "goshthi_11_12", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_1_2", None)
+    monkeypatch.setattr(coda_mod, "goshthi_college_3_4", None)
+
+    logs = []
+    coda_mod.format_goshthi_data("May", "2026", log_callback=lambda msg: logs.append(msg))
+    assert any("May" in m for m in logs)

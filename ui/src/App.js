@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tabs, Tab, Box, CssBaseline } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import AttendanceBot from "./components/AttendanceBot/AttendanceBot";
+import GoshthiBot from "./components/GoshthiBot/GoshthiBot";
 import UserUpdateBot from "./components/UserUpdateBot/UserUpdateBot";
 
 const darkTheme = createTheme({
@@ -126,11 +127,13 @@ function App() {
           }}
         >
           <Tab label="Attendance Bot" />
+          <Tab label="Goshthi Bot" />
           <Tab label="User Update Bot" />
         </Tabs>
       </Box>
       {tab === 0 && <AttendanceBot />}
-      {tab === 1 && <UserUpdateBot />}
+      {tab === 1 && <GoshthiBot />}
+      {tab === 2 && <UserUpdateBot />}
     </Box>
     </ThemeProvider>
   );

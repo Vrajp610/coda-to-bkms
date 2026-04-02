@@ -4,6 +4,9 @@ import App from "./App";
 jest.mock("./components/AttendanceBot/AttendanceBot", () => () => (
   <div data-testid="attendance-bot" />
 ));
+jest.mock("./components/GoshthiBot/GoshthiBot", () => () => (
+  <div data-testid="goshthi-bot" />
+));
 jest.mock("./components/UserUpdateBot/UserUpdateBot", () => () => (
   <div data-testid="user-update-bot" />
 ));
@@ -20,6 +23,13 @@ describe("App", () => {
     const tab = screen.getByRole("tab", { name: "User Update Bot" });
     expect(tab).toBeInTheDocument();
     expect(tab).not.toBeDisabled();
+  });
+
+  it("switches to GoshthiBot when the Goshthi Bot tab is clicked", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("tab", { name: "Goshthi Bot" }));
+    expect(screen.queryByTestId("attendance-bot")).not.toBeInTheDocument();
+    expect(screen.getByTestId("goshthi-bot")).toBeInTheDocument();
   });
 
   it("switches to UserUpdateBot when the tab is clicked", () => {

@@ -119,6 +119,38 @@ def test_specific_then_main_with_valid_config_and_case_insensitive_day(monkeypat
     ]
 
 
+def test_telegram_disabled_suppresses_all_sends(monkeypatch, capsys):
+    calls = []
+    _install_fixtures(
+        monkeypatch,
+        cfg={"sat": {"token": "SPEC_T", "chat_id": "SPEC_C"}},
+        main_token="MT",
+        main_chat="MC",
+        calls_list=calls,
+    )
+    monkeypatch.setattr(under_test, "TELEGRAM_ENABLED", False)
+    under_test.send_notifications("disabled msg", day="sat")
+    assert calls == []
+    captured = capsys.readouterr()
+    assert "[TELEGRAM DISABLED] disabled msg" in captured.out
+
+
+def test_telegram_disabled_no_day_suppresses_all_sends(monkeypatch, capsys):
+    calls = []
+    _install_fixtures(
+        monkeypatch,
+        cfg={},
+        main_token="MT",
+        main_chat="MC",
+        calls_list=calls,
+    )
+    monkeypatch.setattr(under_test, "TELEGRAM_ENABLED", False)
+    under_test.send_notifications("no day msg")
+    assert calls == []
+    captured = capsys.readouterr()
+    assert "[TELEGRAM DISABLED] no day msg" in captured.out
+
+
 def test_empty_message_still_sends(monkeypatch):
     calls = []
     _install_fixtures(

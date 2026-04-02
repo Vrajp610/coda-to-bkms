@@ -173,6 +173,104 @@ def test_run_user_update_stream_invalid_input():
     assert response.status_code == 422
 
 
+# ── /run-goshthi-stream ───────────────────────────────────────────────────────
+
+@pytest.fixture
+def goshthi_input():
+    return {
+        "month": "January",
+        "year": "2026",
+        "goshthiHeld": "Yes",
+        "hangout": "No",
+        "workshop": "No",
+    }
+
+
+def test_run_goshthi_stream_success(goshthi_input):
+    attendance = ["100", "200"]
+    count = 2
+    with patch("backend.index.format_goshthi_data", return_value=(attendance, count)), \
+         patch("backend.index.update_goshthi") as mock_update, \
+         patch("backend.index.write_run_log") as mock_log:
+        def fake_update(*args, log_callback=None, **kwargs):
+            log_callback("Updating member 100")
+        mock_update.side_effect = fake_update
+
+        response = client.post("/run-goshthi-stream", json=goshthi_input)
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+        body = response.text
+        assert "data: 2 members found in Coda for January 2026" in body
+        assert "data: Updating member 100" in body
+        assert "data: __DONE__" in body
+        mock_log.assert_called_once()
+
+
+def test_run_goshthi_stream_format_data_returns_str(goshthi_input):
+    with patch("backend.index.format_goshthi_data", return_value="Invalid month entered."), \
+         patch("backend.index.write_run_log"):
+        response = client.post("/run-goshthi-stream", json=goshthi_input)
+        assert response.status_code == 200
+        body = response.text
+        assert "data: Invalid month entered." in body
+        assert "data: __DONE__" in body
+
+
+def test_run_goshthi_stream_update_raises(goshthi_input):
+    with patch("backend.index.format_goshthi_data", return_value=(["100"], 1)), \
+         patch("backend.index.update_goshthi", side_effect=Exception("goshthi crash")), \
+         patch("backend.index.write_run_log"):
+        response = client.post("/run-goshthi-stream", json=goshthi_input)
+        assert response.status_code == 200
+        body = response.text
+        assert "ERROR: goshthi crash" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_goshthi_stream_invalid_input():
+    response = client.post("/run-goshthi-stream", json={"month": "January"})
+    assert response.status_code == 422
+
+
+def test_run_goshthi_stream_not_marked_not_found_not_logged(goshthi_input):
+    with patch("backend.index.format_goshthi_data", return_value=(["100"], 1)), \
+         patch("backend.index.update_goshthi") as mock_update, \
+         patch("backend.index.write_run_log") as mock_write_log:
+        def fake_update(*args, log_callback=None, **kwargs):
+            log_callback("__NOT_MARKED__200")
+            log_callback("__NOT_FOUND__300")
+            log_callback("real log line")
+        mock_update.side_effect = fake_update
+
+        response = client.post("/run-goshthi-stream", json=goshthi_input)
+        body = response.text
+        assert "data: __NOT_MARKED__200" in body
+        assert "data: __NOT_FOUND__300" in body
+
+        lines_written = mock_write_log.call_args[0][0]
+        assert "__NOT_MARKED__200" not in lines_written
+        assert "__NOT_FOUND__300" not in lines_written
+        assert "real log line" in lines_written
+
+
+def test_run_goshthi_stream_countdown_not_logged(goshthi_input):
+    with patch("backend.index.format_goshthi_data", return_value=(["100"], 1)), \
+         patch("backend.index.update_goshthi") as mock_update, \
+         patch("backend.index.write_run_log") as mock_write_log:
+        def fake_update(*args, log_callback=None, **kwargs):
+            log_callback("__COUNTDOWN__10")
+            log_callback("real msg")
+        mock_update.side_effect = fake_update
+
+        response = client.post("/run-goshthi-stream", json=goshthi_input)
+        body = response.text
+        assert "data: __COUNTDOWN__10" in body
+
+        lines_written = mock_write_log.call_args[0][0]
+        assert "__COUNTDOWN__10" not in lines_written
+        assert "real msg" in lines_written
+
+
 def test_cors_headers(bot_input):
     attendance = [{"name": "A"}]
     count = 1
