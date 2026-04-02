@@ -51,8 +51,8 @@ def update_goshthi(
     driver.find_element(By.ID, "email").send_keys(BKMS_EMAIL)
     time.sleep(0.5)
     driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
-    log("Please solve the CAPTCHA. You have 20 seconds. DO NOT click Sign In after solving!")
-    for remaining in range(20, 0, -1):
+    log("Please solve the CAPTCHA. You have 60 seconds. DO NOT click Sign In after solving!")
+    for remaining in range(60, 0, -1):
         log(f"__COUNTDOWN__{remaining}")
         time.sleep(1)
     driver.find_element(By.CLASS_NAME, "btn-primary").click()

@@ -101,6 +101,28 @@ class GoshthiInput(BaseModel):
     hangout: str
     workshop: str
 
+@app.post("/run-goshthi")
+def run_goshthi(input_data: GoshthiInput):
+    try:
+        result = format_goshthi_data(input_data.month, input_data.year)
+        if isinstance(result, str):
+            return {"message": result}
+        attendance, count = result
+        outcome = update_goshthi(
+            attendance, input_data.month, input_data.year,
+            input_data.goshthiHeld, input_data.hangout, input_data.workshop,
+        )
+        return {
+            "message": f"{count} members found in Coda for {input_data.month} {input_data.year}",
+            "marked_present": outcome["marked_present"],
+            "not_marked": outcome["not_marked"],
+            "not_found_in_bkms": outcome["not_found_in_bkms"],
+            "goshthi_held": outcome["goshthi_held"],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.post("/run-goshthi-stream")
 def run_goshthi_stream(input_data: GoshthiInput):
     log_queue = queue.Queue()
@@ -143,6 +165,15 @@ def run_goshthi_stream(input_data: GoshthiInput):
             yield f"data: {msg}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/run-user-update")
+def run_user_update(input_data: UserUpdateInput):
+    try:
+        update_users(input_data.user_ids)
+        return {"message": f"Processed {len(input_data.user_ids)} user ID(s)."}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.post("/run-user-update-stream")

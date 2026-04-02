@@ -69,14 +69,14 @@ Open **`http://localhost:3000`** in your browser.
 2. Select the **sabha group** — Saturday K1, Saturday K2, Sunday K1, or Sunday K2.
 3. Answer **Was Sabha Held?** If Yes, answer the two follow-up questions.
 4. Click **Run Bot**.
-5. A Chrome window opens and auto-fills your BKMS credentials. **Solve the CAPTCHA within 20 seconds** (a countdown timer is shown). Do NOT click Sign In yourself — the bot does it after the countdown.
+5. A Chrome window opens and auto-fills your BKMS credentials. **Solve the CAPTCHA within 60 seconds** (a countdown timer is shown). Do NOT click Sign In yourself — the bot does it after the countdown.
 6. The bot marks attendance in BKMS and a Telegram notification is sent on success.
 
 ### User Update Bot tab
 
 1. Paste **User IDs** (one per line) into the text area.
 2. Click **Run Bot**.
-3. A Chrome window opens and auto-fills BKMS credentials. **Solve the CAPTCHA within 20 seconds**.
+3. A Chrome window opens and auto-fills BKMS credentials. **Solve the CAPTCHA within 60 seconds**.
 4. The bot searches each user ID, opens their profile, ticks the Saturday Sabha checkbox (if not already ticked), and saves.
 5. Real-time logs stream into the page as each user is processed.
 6. Known validation errors (missing student type, missing parent email) are handled automatically. Any unknown error halts the bot and is shown in the log.
