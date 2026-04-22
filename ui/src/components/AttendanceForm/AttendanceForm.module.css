@@ -156,6 +156,24 @@
   box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
 }
 
+.numberInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+
+.numberInput:focus {
+  border-color: #c2622a;
+  box-shadow: 0 0 0 1px rgba(194, 98, 42, 0.25);
+}
+
 .countdown {
   text-align: center;
   font-size: 14px;

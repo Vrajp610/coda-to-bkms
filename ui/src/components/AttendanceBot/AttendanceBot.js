@@ -14,6 +14,7 @@ const AttendanceBot = () => {
   const [sabhaHeld, setSabhaHeld] = useState("");
   const [p2Guju, setP2Guju] = useState("");
   const [prepCycleDone, setPrepCycleDone] = useState("");
+  const [captchaSeconds, setCaptchaSeconds] = useState("20");
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState([]);
   const [countdown, setCountdown] = useState(null);
@@ -25,6 +26,7 @@ const AttendanceBot = () => {
       sabhaHeld,
       p2Guju,
       prepCycleDone,
+      captchaSeconds,
       setLogs,
       setCountdown,
       setLoading,
@@ -44,6 +46,8 @@ const AttendanceBot = () => {
         setP2Guju={setP2Guju}
         prepCycleDone={prepCycleDone}
         setPrepCycleDone={setPrepCycleDone}
+        captchaSeconds={captchaSeconds}
+        setCaptchaSeconds={setCaptchaSeconds}
         loading={loading}
         runBot={runBot}
         logs={logs}

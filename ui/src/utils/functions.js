@@ -1,6 +1,36 @@
 import { CONSTANTS } from "./CONSTANTS";
 
 /**
+ * Get API base URL based on current environment
+ */
+export function getApiUrl() {
+  // If environment variable is explicitly set, use it
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+
+  // Auto-detect based on hostname
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+
+  // Local development
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://127.0.0.1:8000";
+  }
+
+  // Production - assume backend is at same domain
+  return `${protocol}//${hostname}`;
+}
+
+export function getApiHeaders() {
+  const headers = { "Content-Type": "application/json" };
+  if (process.env.REACT_APP_BKMS_TOKEN) {
+    headers["X-Bkms-Token"] = process.env.REACT_APP_BKMS_TOKEN;
+  }
+  return headers;
+}
+
+/**
  * Filters valid Sundays for attendance based on the current date.
  * Valid Sundays are:
  * - The current Sunday
@@ -57,6 +87,7 @@ export async function runAttendanceBot({
   sabhaHeld,
   p2Guju,
   prepCycleDone,
+  captchaSeconds,
   setLogs,
   setCountdown,
   setLoading,
@@ -75,17 +106,28 @@ export async function runAttendanceBot({
 
   const options = { month: CONSTANTS.LONG, day: CONSTANTS.NUMERIC };
   const formattedDate = date.toLocaleDateString("en-US", options);
+  const parsedCaptchaSeconds = Number.parseInt(captchaSeconds, 10);
+  const resolvedCaptchaSeconds = Number.isFinite(parsedCaptchaSeconds)
+    ? Math.max(1, Math.min(300, parsedCaptchaSeconds))
+    : 20;
 
   setLogs([]);
   setCountdown(null);
   setLoading(true);
 
   try {
-    const API_BASE_URL = process.env.REACT_APP_API_URL;
+    const API_BASE_URL = getApiUrl();
     const response = await fetch(`${API_BASE_URL}/run-bot-stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: formattedDate, group, sabhaHeld, p2Guju, prepCycleDone }),
+      headers: getApiHeaders(),
+      body: JSON.stringify({
+        date: formattedDate,
+        group,
+        sabhaHeld,
+        p2Guju,
+        prepCycleDone,
+        captchaSeconds: resolvedCaptchaSeconds,
+      }),
     });
 
     const reader = response.body.getReader();
@@ -151,10 +193,10 @@ export async function runGoshthiBot({
   setLoading(true);
 
   try {
-    const API_BASE_URL = process.env.REACT_APP_API_URL;
+    const API_BASE_URL = getApiUrl();
     const response = await fetch(`${API_BASE_URL}/run-goshthi-stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getApiHeaders(),
       body: JSON.stringify({ month, year, goshthiHeld, hangout, workshop }),
     });
 

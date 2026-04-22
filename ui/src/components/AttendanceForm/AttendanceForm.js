@@ -50,6 +50,7 @@ const AttendanceForm = ({
   sabhaHeld, setSabhaHeld,
   p2Guju, setP2Guju,
   prepCycleDone, setPrepCycleDone,
+  captchaSeconds, setCaptchaSeconds,
   loading, runBot,
   logs, countdown,
 }) => {
@@ -108,6 +109,18 @@ const AttendanceForm = ({
 
           <div className={styles.sectionLabel}>2 Week Prep Cycle Done?</div>
           <YesNo value={prepCycleDone} onChange={setPrepCycleDone} />
+
+          <div className={styles.sectionLabel}>CAPTCHA Time (seconds)</div>
+          <input
+            type="number"
+            min="1"
+            max="300"
+            step="1"
+            className={styles.numberInput}
+            value={captchaSeconds}
+            onChange={(e) => setCaptchaSeconds(e.target.value)}
+            disabled={loading}
+          />
         </>
       )}
 

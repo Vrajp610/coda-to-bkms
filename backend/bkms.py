@@ -7,13 +7,15 @@ from backend.utils.constants import (
     BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_MENTIONS,
     BKMS_XPATH_CONFIG, XPATHS
 )
-from backend.utils.sendNotifications import send_notifications
+from backend.utils.sendNotifications import send_notifications, TELEGRAM_ENABLED
 
-def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str, log_callback=None):
+def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, date_string: str, prep_cycle_done: str, captcha_seconds: int = 20, log_callback=None):
    def log(msg):
       print(msg)
       if log_callback:
          log_callback(msg)
+
+   captcha_seconds = max(1, min(int(captcha_seconds), 300))
 
    # If sabha was held but Coda attendance is empty, notify and abort BEFORE opening Chromium
    if sabha_held.lower() == "yes" and (not attended_kishores or len(attended_kishores) <= 5):
@@ -23,11 +25,18 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
       
       # Send notifications to both groups
-      send_notifications(telegram_message, day)
-      log(f"Telegram notification sent: {telegram_message}")
+      notification_result = send_notifications(telegram_message, day)
+      telegram_status = (
+         "Telegram notification sent"
+         if notification_result["all_sent"]
+         else "Telegram notification failed"
+      ) if TELEGRAM_ENABLED else "[TELEGRAM DISABLED - Simulated]"
+      log(f"{telegram_status}: {telegram_message}")
       return {
          "marked_present": 0,
          "not_marked": 0,
+         "marked_present_ids": [],
+         "not_marked_ids": [],
          "not_found_in_bkms": [],
          "sabha_held": True
       }
@@ -38,35 +47,32 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    # --- Perform Login ---
    log("Logging into BKMS...")
-   time.sleep(1)
    driver.find_element(By.ID, "user_id").send_keys(BKMS_ID)
-   time.sleep(0.5)
    driver.find_element(By.ID, "email").send_keys(BKMS_EMAIL)
-   time.sleep(0.5)
    driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
-   log("Please solve the CAPTCHA. You have 60 seconds. DO NOT click Sign In after solving!")
-   for remaining in range(60, 0, -1):
+   log(f"Please solve the CAPTCHA. You have {captcha_seconds} seconds. DO NOT click Sign In after solving!")
+   for remaining in range(captcha_seconds, 0, -1):
       log(f"__COUNTDOWN__{remaining}")
       time.sleep(1)
    driver.find_element(By.CLASS_NAME, "btn-primary").click()
-   time.sleep(2)
+   time.sleep(0.5)
    log("Logged in. Resuming automation.")
 
    # --- Go to Report Attendance Page ---
    driver.get(BKMS_REPORT_ATTENDANCE_URL)
-   time.sleep(2)
+   time.sleep(0.5)
 
    # --- Select Sabha Wing ---
    log("Selecting Sabha Wing and Center")
    driver.find_element(By.XPATH, XPATHS["sabha_wing"]).click()  # Kishore
-   time.sleep(1)
+   time.sleep(0.3)
 
    # --- Select Sabha Center based on group ---
    if day.lower().startswith("saturday"):
       driver.find_element(By.XPATH, XPATHS["sabha_center_saturday"]).click()
    else:
       driver.find_element(By.XPATH, XPATHS["sabha_center_sunday"]).click()
-   time.sleep(1)
+   time.sleep(0.3)
 
    # --- Dynamically select the year based on the chosen date ---
    try:
@@ -93,13 +99,13 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # If the exact year option was not found, pick the last option as a safe fallback
    if not selected and year_options:
       year_options[-1].click()
-   time.sleep(1)
+   time.sleep(0.3)
 
    # --- Select Week based on Entered Date ---
    week_number = calculate_week_number(date_string)
    log(f"Selecting Week {week_number - 1} for {date_string}")
    driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{week_number}]').click()
-   time.sleep(2)
+   time.sleep(0.5)
 
    # --- Select Specific Sabha Group (K1 = row 1, K2 = row 2) ---
    sabha_row_map = {
@@ -116,51 +122,33 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       log("Error: Invalid Sabha group entered!")
       return
 
-   time.sleep(3)
+   time.sleep(1)
 
    # --- Sabha WAS NOT held ---
    if sabha_held.lower() == "no":
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins').click()
       log("Marked: Sabha Not Held")
-      time.sleep(2)
+      time.sleep(0.5)
 
       # --- Save Changes Immediately ---
       driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]').click()
       log("Saved attendance successfully!")
-      time.sleep(5)
+      time.sleep(2)
 
       # --- Logout of BKMS ---
       driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
-      time.sleep(1)
+      time.sleep(0.5)
       driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/ul/li[2]/div[2]/a').click()
       log("Logged out of BKMS")
 
       # --- Close Chrome ---
-      time.sleep(1)
       driver.quit()
       log("Closed Chrome")
-
-      # --- Send Telegram Success Notification ---
-      sunday_date = get_this_week_sunday(date_string)
-      base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅ as Sabha not held!"
-      mentions = TELEGRAM_GROUP_MENTIONS.get(day.lower(), "")
-      telegram_message = f"{base_msg}\n\n{mentions}" if mentions else base_msg
-
-      # Send notifications to both groups
-      send_notifications(telegram_message, day)
-      log(f"Telegram notification sent: {telegram_message}")
-
-      return {
-         "marked_present": 0,
-         "not_marked": 0,
-         "not_found_in_bkms": [],
-         "sabha_held": False
-      }
 
    # --- Sabha WAS held, continue with full checklist ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins').click()
    log("Marked: Sabha Held")
-   time.sleep(1)
+   time.sleep(0.3)
 
    # --- Sabha Setup Checklist (Done / Not Done) ---
    log("Filling Meeting And Preparations Section in BKMS")
@@ -209,7 +197,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    # --- Mark all Kishores Absent initially ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a').click()
    log("All Kishores initially marked Absent")
-   time.sleep(2)
+   time.sleep(0.5)
 
    # --- Update Attendance: Mark Present Kishores ---
    all_kishores = driver.find_elements(By.XPATH, '//tr[@role="row"]')
@@ -228,7 +216,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
             radio_button = element.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{index}]/td[10]/label/input')
             radio_button.click()
             updated_kishores.append(bkid)
-            time.sleep(0.5)
+            time.sleep(0.1)
          except Exception as e:
             pass
    
@@ -259,7 +247,6 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    log("Logged out of BKMS")
 
    # --- Close Chrome ---
-   time.sleep(1)
    driver.quit()
    log("Closed Chrome")
 
@@ -269,13 +256,16 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    telegram_message = base_msg
 
    # Send notifications to both groups
-   send_notifications(telegram_message, day)
-   log(f"Telegram notification sent: {telegram_message}")
+   notification_result = send_notifications(telegram_message, day)
+   telegram_status = "Telegram notification sent" if notification_result["all_sent"] else "Telegram notification failed"
+   log(f"{telegram_status}: {telegram_message}")
 
    # --- Return attendance marking results ---
    return {
       "marked_present": len(updated_kishores),
       "not_marked": len(attended_kishores) - len(updated_kishores),
+      "marked_present_ids": updated_kishores,
+      "not_marked_ids": not_marked,
       "not_found_in_bkms": not_found_in_bkms,
       "sabha_held": True
    }

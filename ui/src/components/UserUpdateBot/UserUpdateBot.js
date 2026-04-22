@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Button from "../Button/Button";
 import styles from "./UserUpdateBot.module.css";
-
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+import { getApiHeaders, getApiUrl } from "../../utils/functions";
 
 const UserUpdateBot = () => {
   const [rawInput, setRawInput] = useState("");
@@ -16,6 +15,7 @@ const UserUpdateBot = () => {
   }, [logs]);
 
   const runBot = () => {
+    const API_BASE_URL = getApiUrl();
     const userIds = rawInput
       .split("\n")
       .map((id) => id.trim())
@@ -39,7 +39,7 @@ const UserUpdateBot = () => {
 
     fetch(`${API_BASE_URL}/run-user-update-stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getApiHeaders(),
       body: JSON.stringify({ user_ids: userIds }),
     }).then(async (response) => {
       const reader = response.body.getReader();
