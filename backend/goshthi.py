@@ -9,7 +9,7 @@ from backend.utils.constants import (
     BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD,
     BKMS_GOSHTHI_URL,
 )
-from backend.utils.sendNotifications import send_notifications
+from backend.utils.sendNotifications import send_notifications, TELEGRAM_ENABLED
 
 
 def update_goshthi(
@@ -32,8 +32,13 @@ def update_goshthi(
             f"Goshthi attendance ({month} {year}) is not marked in Coda. "
             f"Please update Coda so BKMS can be updated. ❌"
         )
-        send_notifications(msg)
-        log(f"Telegram notification sent: {msg}")
+        notification_result = send_notifications(msg)
+        telegram_status = (
+            "Telegram notification sent"
+            if notification_result["all_sent"]
+            else "Telegram notification failed"
+        ) if TELEGRAM_ENABLED else "[TELEGRAM DISABLED - Simulated]"
+        log(f"{telegram_status}: {msg}")
         return {
             "marked_present": 0,
             "not_marked": 0,
@@ -45,53 +50,50 @@ def update_goshthi(
     driver.get(BKMS_LOGIN_URL)
 
     log("Logging into BKMS...")
-    time.sleep(1)
     driver.find_element(By.ID, "user_id").send_keys(BKMS_ID)
-    time.sleep(0.5)
     driver.find_element(By.ID, "email").send_keys(BKMS_EMAIL)
-    time.sleep(0.5)
     driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
-    log("Please solve the CAPTCHA. You have 60 seconds. DO NOT click Sign In after solving!")
-    for remaining in range(60, 0, -1):
+    log("Please solve the CAPTCHA. You have 10 seconds. DO NOT click Sign In after solving!")
+    for remaining in range(10, 0, -1):
         log(f"__COUNTDOWN__{remaining}")
         time.sleep(1)
     driver.find_element(By.CLASS_NAME, "btn-primary").click()
-    time.sleep(2)
+    time.sleep(0.5)
     log("Logged in. Resuming automation.")
 
     # Navigate to Goshthi report page
     driver.get(BKMS_GOSHTHI_URL)
-    time.sleep(2)
+    time.sleep(0.5)
 
     # Select Year
     Select(
         driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div/div[1]/div[1]/select')
     ).select_by_value(year)
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     # Select Month
     Select(
         driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div/div[1]/div[2]/select')
     ).select_by_value(month)
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     # Select Center: Edison (option[13])
     driver.find_element(
         By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div/div[1]/div[4]/select/option[13]'
     ).click()
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     # Click Search
     driver.find_element(
         By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div/div[2]/div/input'
     ).click()
-    time.sleep(2)
+    time.sleep(1)
 
     # Click Action on the result row
     driver.find_element(
         By.XPATH, '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr/td[15]/div/span/a'
     ).click()
-    time.sleep(2)
+    time.sleep(1)
 
     # ── Goshthi NOT held ──────────────────────────────────────────────────────
     if goshthi_held.lower() == "no":
@@ -107,8 +109,13 @@ def update_goshthi(
         time.sleep(3)
         _logout(driver, log)
         msg = f"BKMS Goshthi updated for {month} {year} ✅ (Goshthi not held)"
-        send_notifications(msg)
-        log(f"Telegram notification sent: {msg}")
+        notification_result = send_notifications(msg)
+        telegram_status = (
+            "Telegram notification sent"
+            if notification_result["all_sent"]
+            else "Telegram notification failed"
+        ) if TELEGRAM_ENABLED else "[TELEGRAM DISABLED - Simulated]"
+        log(f"{telegram_status}: {msg}")
         return {
             "marked_present": 0,
             "not_marked": 0,
@@ -121,7 +128,7 @@ def update_goshthi(
         By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins'
     ).click()
     log("Marked: Goshthi Held")
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     # Was this a Hangout?
     if hangout.lower() == "yes":
@@ -134,7 +141,7 @@ def update_goshthi(
             By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[2]/label[2]/div/ins'
         ).click()
         log("Marked: Not a Hangout")
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     # Was a Karyakar Workshop held?
     if workshop.lower() == "yes":
@@ -147,7 +154,7 @@ def update_goshthi(
             By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[3]/label[2]/div/ins'
         ).click()
         log("Marked: No Workshop")
-    time.sleep(0.5)
+    time.sleep(0.2)
 
     # ── Set Goshthi Date to last day of the selected month ───────────────────
     month_int = _dt.strptime(month, "%B").month
@@ -163,7 +170,7 @@ def update_goshthi(
     date_input.send_keys(date_str)
     # Press Tab to confirm the value and close any datepicker popup
     date_input.send_keys(Keys.TAB)
-    time.sleep(0.3)
+    time.sleep(0.2)
     log(f"Goshthi Date set to {date_str}")
 
     # ── Mark attendance with pagination ───────────────────────────────────────
@@ -213,7 +220,7 @@ def update_goshthi(
                         By.XPATH,
                         f'/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody/tr[{idx}]/td[9]/label/input',
                     ).click()
-                time.sleep(0.2)
+                time.sleep(0.05)
             except Exception as e:
                 log(f"Error on row {idx}: {e}")
                 continue
@@ -235,7 +242,7 @@ def update_goshthi(
                 break
 
             next_a.click()
-            time.sleep(1.5)
+            time.sleep(0.8)
             page += 1
         except Exception:
             log("No next page button found — done.")
@@ -258,15 +265,16 @@ def update_goshthi(
         By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[5]/div[3]/div/input'
     ).click()
     log("Saved Goshthi attendance successfully!")
-    time.sleep(5)
+    time.sleep(1.5)
 
     _logout(driver, log)
 
     msg = f"BKMS Goshthi updated for {month} {year} ✅\n{len(marked_present)} marked present."
     if not_found_in_bkms:
         msg += f"\n\nIn Coda but not found in BKMS:\n{', '.join(not_found_in_bkms)}"
-    send_notifications(msg)
-    log(f"Telegram notification sent: {msg.replace(chr(10), ' | ')}")
+    notification_result = send_notifications(msg)
+    telegram_status = "Telegram notification sent" if notification_result["all_sent"] else "Telegram notification failed"
+    log(f"{telegram_status}: {msg.replace(chr(10), ' | ')}")
 
     return {
         "marked_present": len(marked_present),
@@ -279,13 +287,12 @@ def update_goshthi(
 def _logout(driver, log):
     try:
         driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
-        time.sleep(1)
+        time.sleep(0.3)
         driver.find_element(
             By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/ul/li[2]/div[2]/a'
         ).click()
         log("Logged out of BKMS")
     except Exception:
         pass
-    time.sleep(1)
     driver.quit()
     log("Closed Chrome")

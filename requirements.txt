@@ -5,16 +5,12 @@ pandas
 codaio
 pydantic
 python-dotenv
-setuptools
 pyppeteer
 uvicorn[standard]
 openpyxl
 httpx
 selenium
+webdriver-manager
 pytest-asyncio
 psycopg2-binary
-typing
-dataclasses
 requests
-os
-re

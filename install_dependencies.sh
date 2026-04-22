@@ -104,8 +104,11 @@ install_backend() {
         echo "Python is not installed. Please install Python 3.7+ first."
         exit 1
     fi
-    $PYTHON -m pip install --upgrade pip
-    $PYTHON -m pip install -r requirements.txt
+    if [ ! -d ".venv" ]; then
+        $PYTHON -m venv .venv
+    fi
+    ./.venv/bin/python -m pip install --upgrade pip
+    ./.venv/bin/python -m pip install -r requirements.txt
 }
 
 # UI dependencies

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.bkmsbot.ngrok</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__NGROK__</string>
+    <string>http</string>
+    <string>--url=__STATIC_DOMAIN__</string>
+    <string>__PORT__</string>
+    <string>--log=stdout</string>
+  </array>
+
+  <!-- Start automatically when the user logs in -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Restart if it crashes -->
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>__LOGDIR__/bkmsbot-ngrok.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__LOGDIR__/bkmsbot-ngrok.log</string>
+</dict>
+</plist>

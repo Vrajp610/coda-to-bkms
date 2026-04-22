@@ -1,10 +1,20 @@
 from datetime import datetime, timedelta
 
+def _parse_input_date(date_string: str) -> datetime:
+    for fmt in ("%Y-%m-%d", "%B %d"):
+        try:
+            parsed = datetime.strptime(date_string, fmt)
+            if fmt == "%B %d":
+                parsed = parsed.replace(year=datetime.now().year)
+            return parsed
+        except ValueError:
+            continue
+    raise ValueError(f"Unsupported date format: {date_string}")
+
 def calculate_week_number(date_string: str):
     """Calculate the BKMS week number from a given date string."""
-    current_year = datetime.now().year
-    full_date_str = f"{current_year} {date_string}"
-    full_date = datetime.strptime(full_date_str, "%Y %B %d")
+    full_date = _parse_input_date(date_string)
+    current_year = full_date.year
 
     # Find first Sunday of the year
     first_jan = datetime(current_year, 1, 1)
@@ -21,7 +31,5 @@ def calculate_week_number(date_string: str):
 
 def get_this_week_sunday(date_string: str):
     """Format the given date string to MM/DD/YYYY."""
-    current_year = datetime.now().year
-    full_date_str = f"{date_string}, {current_year}"
-    full_date = datetime.strptime(full_date_str, "%B %d, %Y")
+    full_date = _parse_input_date(date_string)
     return full_date.strftime("%-m/%-d/%Y")

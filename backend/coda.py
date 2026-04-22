@@ -151,10 +151,14 @@ def format_goshthi_data(month: str, year: str, log_callback=None):
     return unique_ids, count
 
 def convert_date(date_str):
-    """Convert a 'Month day' string into a Coda timestamp string selecting the
-    year that results in a date closest to today (handles cross-year cases).
-    """
+    """Convert either 'YYYY-MM-DD' or 'Month day' into the expected Coda timestamp."""
     today = datetime.now().date()
+
+    try:
+        iso_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        return iso_date.strftime("%Y-%m-%dT%H:%M:%S.000-08:00")
+    except ValueError:
+        pass
 
     # Try current year, previous year and next year and pick closest to today
     candidate_years = [today.year, today.year - 1, today.year + 1]

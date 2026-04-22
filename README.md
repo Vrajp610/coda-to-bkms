@@ -61,6 +61,128 @@ Open **`http://localhost:3000`** in your browser.
 
 ---
 
+## Free Coda Button Setup
+
+If you want a Coda button to trigger the bot and open Chrome for CAPTCHA on a user's own Mac, that Mac must run the backend locally. Coda does not open Chrome directly. The flow is:
+
+1. Coda Pack sends a request to the user's public ngrok URL.
+2. ngrok forwards the request to the local FastAPI backend on that Mac.
+3. The backend starts Selenium.
+4. Chrome opens on that same Mac.
+
+### First-Time Setup
+
+Do these steps once on each Mac that should run the bot.
+
+1. Clone this repo.
+2. Fill in `backend/.env` with the BKMS, Coda, and Telegram values.
+3. Reserve a free ngrok domain at:
+
+```text
+https://dashboard.ngrok.com/domains
+```
+
+4. Run:
+
+```sh
+chmod +x setup_and_run_mac.sh
+./setup_and_run_mac.sh
+```
+
+During setup you may be prompted for:
+
+- your ngrok authtoken
+- your reserved ngrok domain
+- a `BOT_TRIGGER_TOKEN` for Coda
+
+When setup finishes, you will have:
+
+- a public URL such as `https://your-domain.ngrok-free.dev`
+- a trigger token saved in `backend/.env`
+- a running local backend
+- a running ngrok tunnel
+
+### Daily Use
+
+After first-time setup, use these commands:
+
+1. Start everything:
+
+```sh
+bash local_bot.sh
+```
+
+2. Check local backend health:
+
+```sh
+bash local_bot.sh health-local
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+3. Check public ngrok health:
+
+```sh
+bash local_bot.sh health
+```
+
+4. Trigger a real test run:
+
+```sh
+bash local_bot.sh test-run "2026-04-12" "Sunday K1" "Yes" "No" "Yes"
+```
+
+5. Stop everything:
+
+```sh
+bash local_bot.sh stop
+```
+
+### Connect The Coda Pack
+
+In the Pack connection screen, use:
+
+- Endpoint URL: `https://YOUR_DOMAIN`
+- Token: `YOUR_BOT_TRIGGER_TOKEN`
+
+The Pack will call:
+
+```text
+POST https://YOUR_DOMAIN/run-bot
+```
+
+with a request body like:
+
+```json
+{
+  "date": "2026-04-12",
+  "group": "Sunday K1",
+  "sabhaHeld": "Yes",
+  "p2Guju": "No",
+  "prepCycleDone": "Yes"
+}
+```
+
+Other supported endpoints:
+
+- `/run-bot-stream`
+- `/run-goshthi`
+- `/run-goshthi-stream`
+- `/run-user-update`
+- `/run-user-update-stream`
+
+### Important Limitations
+
+- The Mac must be powered on and logged in.
+- Chrome opens on the Mac running the backend, not on the device that clicked the Coda button.
+- This is free, but it is not a true cloud-hosted browser automation flow.
+
+---
+
 ## Using the App
 
 ### Attendance Bot tab

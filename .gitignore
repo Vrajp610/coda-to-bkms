@@ -2,4 +2,7 @@
 .DS_Store
 .coverage
 /logs
+/.run
 /coda-pack
+__pycache__/
+*.pyc

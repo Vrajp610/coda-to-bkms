@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
+import backend.index as index_module
 from backend.index import app
 
 client = TestClient(app)
@@ -15,33 +16,57 @@ def bot_input():
         "prepCycleDone": "Yes"
     }
 
-def test_run_bot_success(bot_input):
+
+@pytest.fixture(autouse=True)
+def clear_trigger_token(monkeypatch):
+    monkeypatch.delenv("BOT_TRIGGER_TOKEN", raising=False)
+
+def test_run_bot_starts_background_job(bot_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
     attendance = [{"name": "A"}, {"name": "B"}]
     count = 2
     update_result = {
-        "marked_present": ["A"],
-        "not_marked": ["B"],
+        "marked_present": 1,
+        "not_marked": 1,
+        "marked_present_ids": ["A"],
+        "not_marked_ids": ["B"],
         "not_found_in_bkms": [],
-        "sabha_held": "Yes"
+        "sabha_held": "Yes",
     }
     with patch("backend.index.format_data", return_value=(attendance, count)), \
          patch("backend.index.update_sheet", return_value=update_result):
         response = client.post("/run-bot", json=bot_input)
         assert response.status_code == 200
         data = response.json()
-        assert data["message"] == "2 Kishores found in Coda"
-        assert data["marked_present"] == ["A"]
-        assert data["not_marked"] == ["B"]
-        assert data["not_found_in_bkms"] == []
+        assert data["status"] == "running"
+        assert data["message"] == "2 Kishores found in Coda. BKMS update starting in background..."
+        assert data["attendance_count"] == 2
+        assert data["job_id"]
 
-def test_run_bot_format_data_returns_str(bot_input):
-    with patch("backend.index.format_data", return_value=("No data found", 0)):
+        status_response = client.get(f"/attendance-job/{data['job_id']}")
+        assert status_response.status_code == 200
+        status_data = status_response.json()
+        assert status_data["status"] == "completed"
+        assert status_data["marked_present"] == 1
+        assert status_data["not_marked"] == 1
+        assert status_data["marked_present_ids"] == ["A"]
+        assert status_data["not_marked_ids"] == ["B"]
+        assert status_data["not_found_in_bkms"] == []
+
+def test_run_bot_format_data_returns_str(bot_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
+    with patch("backend.index.format_data", return_value="No data found"):
         response = client.post("/run-bot", json=bot_input)
         assert response.status_code == 200
         data = response.json()
+        assert data["status"] == "failed"
         assert data["message"] == "No data found"
+        status_response = client.get(f"/attendance-job/{data['job_id']}")
+        assert status_response.status_code == 200
+        assert status_response.json()["status"] == "failed"
 
-def test_run_bot_update_sheet_raises(bot_input):
+def test_run_bot_update_sheet_raises(bot_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
     attendance = [{"name": "A"}]
     count = 1
     with patch("backend.index.format_data", return_value=(attendance, count)), \
@@ -49,8 +74,12 @@ def test_run_bot_update_sheet_raises(bot_input):
         response = client.post("/run-bot", json=bot_input)
         assert response.status_code == 200
         data = response.json()
-        assert "error" in data
-        assert "Update failed" in data["error"]
+        assert data["status"] == "running"
+        status_response = client.get(f"/attendance-job/{data['job_id']}")
+        assert status_response.status_code == 200
+        status_data = status_response.json()
+        assert status_data["status"] == "failed"
+        assert "Update failed" in status_data["error"]
 
 def test_run_bot_invalid_input():
     invalid_input = {
@@ -64,13 +93,52 @@ def test_run_bot_invalid_input():
     data = response.json()
     assert "detail" in data
 
-def test_run_bot_format_data_raises(bot_input):
+
+def test_root():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "BKMS backend is running"}
+
+
+def test_health():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_run_bot_requires_token_when_configured(bot_input, monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "secret123")
+    response = client.post("/run-bot", json=bot_input)
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing trigger token"
+
+
+def test_run_bot_accepts_query_token_when_configured(bot_input, monkeypatch, tmp_path):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "secret123")
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
+    attendance = [{"name": "A"}]
+    count = 1
+    with patch("backend.index.format_data", return_value=(attendance, count)), \
+         patch("backend.index.update_sheet", return_value={"marked_present": 1, "not_marked": 0, "not_found_in_bkms": [], "sabha_held": "Yes"}):
+        response = client.post("/run-bot?token=secret123", json=bot_input)
+        assert response.status_code == 200
+        assert response.json()["status"] == "running"
+
+def test_run_bot_format_data_raises(bot_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
     with patch("backend.index.format_data", side_effect=Exception("Format error")):
         response = client.post("/run-bot", json=bot_input)
         assert response.status_code == 200
         data = response.json()
         assert "error" in data
         assert "Format error" in data["error"]
+
+
+def test_get_attendance_job_not_found(tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
+    response = client.get("/attendance-job/missing-job")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Attendance job not found"
 
 def test_run_bot_stream_success(bot_input):
     attendance = [{"name": "A"}, {"name": "B"}]
@@ -95,7 +163,7 @@ def test_run_bot_stream_success(bot_input):
 
 
 def test_run_bot_stream_format_data_returns_str(bot_input):
-    with patch("backend.index.format_data", return_value=("No data found", 0)), \
+    with patch("backend.index.format_data", return_value="No data found"), \
          patch("backend.index.write_run_log"):
         response = client.post("/run-bot-stream", json=bot_input)
         assert response.status_code == 200
