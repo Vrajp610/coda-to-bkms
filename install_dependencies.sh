@@ -116,7 +116,7 @@ install_ui() {
     echo "Installing UI (React) dependencies..."
     cd ui
     if command -v npm &>/dev/null; then
-        npm install
+        npm install --legacy-peer-deps
     else
         echo "npm is not installed. Please install Node.js and npm first."
         exit 1
