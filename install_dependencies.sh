@@ -130,7 +130,7 @@ create_env_files() {
         echo "Creating backend/.env template..."
         cat > backend/.env <<'EOF'
 MAIN_GROUP_TELEGRAM_TOKEN=
-MAIN_GROUP_TELEGRAM_CHAT_ID=
+MAIN_GROUP_TELEGRAM_CHAT_ID=-
 SAT_K1_TELEGRAM_TOKEN=
 SAT_K1_TELEGRAM_CHAT_ID=
 SAT_K2_TELEGRAM_TOKEN=
@@ -140,7 +140,7 @@ SUN_K1_TELEGRAM_CHAT_ID=
 SUN_K2_TELEGRAM_TOKEN=
 SUN_K2_TELEGRAM_CHAT_ID=
 CODA_API_KEY=
-BKMS_ID=
+BKMS_ID=3001
 BKMS_EMAIL=
 BKMS_PASSWORD=
 BKMS_ACCESS_TYPE=
@@ -154,6 +154,7 @@ GOSHTHI_11_12_TABLE_ID=
 GOSHTHI_COLLEGE_1_2_TABLE_ID=
 GOSHTHI_COLLEGE_3_4_TABLE_ID=
 BOT_TRIGGER_TOKEN=
+
 PUBLIC_BASE_URL=
 EOF
         echo "  → backend/.env created. Fill in your values before running the app."
@@ -167,7 +168,7 @@ EOF
 # API URL - leave unset to auto-detect local 127.0.0.1:8000
 # REACT_APP_API_URL=http://127.0.0.1:8000
 REACT_APP_BKMS_TOKEN=
-REACT_APP_SHOW_USER_UPDATE_BOT=
+REACT_APP_SHOW_USER_UPDATE_BOT=true
 EOF
         echo "  → ui/.env created. Fill in your values before running the app."
     else
