@@ -13,10 +13,10 @@ IF %ERRORLEVEL% EQU 0 (
             git status --porcelain > "%TEMP%\bkms_git_status.txt"
             FOR %%A IN ("%TEMP%\bkms_git_status.txt") DO SET GIT_STATUS_SIZE=%%~zA
             IF "%GIT_STATUS_SIZE%"=="0" (
-                echo Syncing latest code from origin/master...
-                git pull --ff-only origin master || echo git pull failed. Continuing with existing local code.
+                echo Syncing latest code from origin/main...
+                git pull --ff-only origin main || echo git pull failed. Continuing with existing local code.
             ) ELSE (
-                echo Local git changes detected. Skipping git pull from origin/master.
+                echo Local git changes detected. Skipping git pull from origin/main.
             )
             del "%TEMP%\bkms_git_status.txt" >nul 2>nul
         )

@@ -67,12 +67,12 @@ sync_repo_from_master() {
   fi
 
   if [[ -n "$(git -C "$SCRIPT_DIR" status --porcelain)" ]]; then
-    echo "Local git changes detected; skipping git pull from origin/master"
+    echo "Local git changes detected; skipping git pull from origin/main"
     return
   fi
 
-  echo "Syncing latest code from origin/master..."
-  if git -C "$SCRIPT_DIR" pull --ff-only origin master; then
+  echo "Syncing latest code from origin/main..."
+  if git -C "$SCRIPT_DIR" pull --ff-only origin main; then
     echo "Git sync complete"
   else
     echo "git pull failed; continuing with existing local code"
