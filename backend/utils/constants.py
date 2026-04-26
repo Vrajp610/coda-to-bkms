@@ -43,18 +43,40 @@ SABHA_ROW_MAP = {
     "sunday k1": 1,
     "sunday k2": 2,
 }
-XPATHS = {
-    "sabha_wing": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]',
-    "sabha_center_saturday": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[13]',
-    "sabha_center_sunday": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[14]',
-    "year": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]',
-    "week": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{}]',
-    "sabha_group": '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span[2]/a',
-    "sabha_held_yes": '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins',
-    "sabha_held_no": '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins',
-    "mark_absent": '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a',
-    "save_changes": '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]',
-}
+
+def get_xpaths():
+    """Return XPATHs based on access type (RegionalAdmin or LocalAdmin)"""
+    access_type = BKMS_ACCESS_TYPE.lower().strip() if BKMS_ACCESS_TYPE else ""
+    is_local = "local" in access_type
+    
+    common_xpaths = {
+        "sabha_wing": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[4]',
+        "year": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]',
+        "week": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{}]',
+        "sabha_held_yes": '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins',
+        "sabha_held_no": '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins',
+        "mark_absent": '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a',
+        "save_changes": '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]',
+    }
+    
+    if is_local:
+        # LocalAdmin XPATHs for Edison centers
+        common_xpaths.update({
+            "sabha_center_saturday": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[2]',
+            "sabha_center_sunday": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[3]',
+            "sabha_group": '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span/a',
+        })
+    else:
+        # RegionalAdmin XPATHs (default)
+        common_xpaths.update({
+            "sabha_center_saturday": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[13]',
+            "sabha_center_sunday": '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[14]',
+            "sabha_group": '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span[2]/a',
+        })
+    
+    return common_xpaths
+
+XPATHS = get_xpaths()
 TELEGRAM_GROUP_CONFIG = {
     "saturday k1": {
         "token": os.getenv("SAT_K1_TELEGRAM_TOKEN"),

@@ -5,7 +5,7 @@ from backend.utils.chromeUtils import get_chrome_driver
 from backend.utils.constants import (
     BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD,
     BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_MENTIONS,
-    BKMS_XPATH_CONFIG, XPATHS
+    XPATHS
 )
 from backend.utils.sendNotifications import send_notifications, TELEGRAM_ENABLED
 
@@ -116,7 +116,7 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    }
    row_number = sabha_row_map.get(day.lower())
    if row_number:
-      driver.find_element(By.XPATH, BKMS_XPATH_CONFIG["PATHS"]["REGIONAL_XPATH"](row_number)).click()
+      driver.find_element(By.XPATH, XPATHS["sabha_group"].format(row_number)).click()
       log(f"Selected {day.title()}")
    else:
       log("Error: Invalid Sabha group entered!")
