@@ -8,6 +8,16 @@ from backend.utils.constants import (
     GOSHTHI_11_12_TABLE_ID,
     GOSHTHI_COLLEGE_1_2_TABLE_ID,
     GOSHTHI_COLLEGE_3_4_TABLE_ID,
+    SATURDAY_BAL_GROUP_0_TABLE_ID,
+    SATURDAY_BAL_GROUP_1_TABLE_ID,
+    SATURDAY_BAL_GROUP_2A_TABLE_ID,
+    SATURDAY_BAL_GROUP_2B_TABLE_ID,
+    SATURDAY_BAL_GROUP_3_TABLE_ID,
+    SUNDAY_BAL_GROUP_0_TABLE_ID,
+    SUNDAY_BAL_GROUP_1_TABLE_ID,
+    SUNDAY_BAL_GROUP_2A_TABLE_ID,
+    SUNDAY_BAL_GROUP_2B_TABLE_ID,
+    SUNDAY_BAL_GROUP_3_TABLE_ID,
 )
 
 load_dotenv()
@@ -20,8 +30,11 @@ if not api_key:
 # Initialize Coda client
 coda = Coda(api_key=api_key)
 
-#Coda Doc ID
+# Coda Doc IDs
+# Kishore attendance uses the primary document.
 doc_id = os.getenv('CODA_DOC_ID')
+# Bal Mandal attendance uses a separate document if configured.
+bal_doc_id = os.getenv('BAL_CODA_DOC_ID', doc_id)
 
 attendance = []
 
@@ -30,6 +43,18 @@ saturday_k1 = os.getenv("SATURDAY_K1_TABLE_ID")
 saturday_k2 = os.getenv("SATURDAY_K2_TABLE_ID")
 sunday_k1 = os.getenv("SUNDAY_K1_TABLE_ID")
 sunday_k2 = os.getenv("SUNDAY_K2_TABLE_ID")
+
+# Bal Table IDs
+saturday_bal_group_0 = SATURDAY_BAL_GROUP_0_TABLE_ID
+saturday_bal_group_1 = SATURDAY_BAL_GROUP_1_TABLE_ID
+saturday_bal_group_2a = SATURDAY_BAL_GROUP_2A_TABLE_ID
+saturday_bal_group_2b = SATURDAY_BAL_GROUP_2B_TABLE_ID
+saturday_bal_group_3 = SATURDAY_BAL_GROUP_3_TABLE_ID
+sunday_bal_group_0 = SUNDAY_BAL_GROUP_0_TABLE_ID
+sunday_bal_group_1 = SUNDAY_BAL_GROUP_1_TABLE_ID
+sunday_bal_group_2a = SUNDAY_BAL_GROUP_2A_TABLE_ID
+sunday_bal_group_2b = SUNDAY_BAL_GROUP_2B_TABLE_ID
+sunday_bal_group_3 = SUNDAY_BAL_GROUP_3_TABLE_ID
 
 # Goshthi Table IDs (defined in constants.py, sourced from .env)
 goshthi_9_10        = GOSHTHI_9_10_TABLE_ID
@@ -179,7 +204,7 @@ def convert_date(date_str):
     formatted_date = chosen.strftime("%Y-%m-%dT%H:%M:%S.000-08:00")
     return formatted_date
 
-def get_attendance(table: str, date: str):
+def get_attendance(table: str, date: str, doc_id: str = doc_id):
     table_data = coda.list_rows(doc_id, table, use_column_names=True)
 
     rows = table_data.get('items', [])
@@ -216,13 +241,113 @@ def format_data(sabha_group, date):
             get_attendance(sunday_k1, date)
         elif sabha_group.lower() == "sunday k2":
             get_attendance(sunday_k2, date)
+        elif sabha_group.lower() == "saturday bal group 0":
+            get_attendance(saturday_bal_group_0, date)
+        elif sabha_group.lower() == "saturday bal group 1":
+            get_attendance(saturday_bal_group_1, date)
+        elif sabha_group.lower() == "saturday bal group 2a":
+            get_attendance(saturday_bal_group_2a, date)
+        elif sabha_group.lower() == "saturday bal group 2b":
+            get_attendance(saturday_bal_group_2b, date)
+        elif sabha_group.lower() == "saturday bal group 3":
+            get_attendance(saturday_bal_group_3, date)
+        elif sabha_group.lower() == "sunday bal group 0":
+            get_attendance(sunday_bal_group_0, date)
+        elif sabha_group.lower() == "sunday bal group 1":
+            get_attendance(sunday_bal_group_1, date)
+        elif sabha_group.lower() == "sunday bal group 2a":
+            get_attendance(sunday_bal_group_2a, date)
+        elif sabha_group.lower() == "sunday bal group 2b":
+            get_attendance(sunday_bal_group_2b, date)
+        elif sabha_group.lower() == "sunday bal group 3":
+            get_attendance(sunday_bal_group_3, date)
     except Exception:
         print(Exception)
         return "The attendance system is broken. Rerun to see if it might be fixed"
     
     attendance_count = len(attendance)
     print(f"Attendence: {attendance_count}\nMoving on to updating BKMS\n")
-    print("⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
-    print(attendance)
-    print("⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
     return attendance, attendance_count
+
+def _fetch_bal_table(label: str, table: str, date_prefix: str, log) -> list[str]:
+    """Fetch attended BKMS IDs from a single Bal table for a given date, filtered server-side."""
+    import requests
+    if not table:
+        return []
+    log(f"Querying {label}...")
+    try:
+        headers = {"Authorization": f"Bearer {api_key}"}
+        url = f"https://coda.io/apis/v1/docs/{bal_doc_id}/tables/{table}/rows"
+        params = {
+            "useColumnNames": True,
+            "valueFormat": "simple",
+            "query": f'Weekend:"{date_prefix}"',
+        }
+        all_rows = []
+        while url:
+            resp = requests.get(url, headers=headers, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+            all_rows.extend(data.get("items", []))
+            url = data.get("nextPageLink")
+            params = {}
+        ids = []
+        for row in all_rows:
+            values = row.get("values", {})
+            if values.get("Attended") is True:
+                bkms_id = values.get("BKMS ID")
+                if bkms_id is not None:
+                    ids.append(str(int(bkms_id)))
+        return ids
+    except Exception as e:
+        log(f"Error fetching {label}: {e}")
+        return []
+
+
+def get_bal_attendance_data(date: str, day: str, log_callback=None):
+    """Fetch attendance for all 5 Bal groups in parallel for a given date and day."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    log = log_callback if log_callback else print
+
+    try:
+        converted = convert_date(date)
+        log("Date Converted for Bal attendance")
+    except Exception as e:
+        log(f"Date conversion error: {e}")
+        return "Invalid date format. Please check and rerun."
+
+    date_prefix = converted.split('T')[0]
+    is_saturday = "sat" in day.lower()
+
+    bal_tables = (
+        [
+            ("Saturday Bal Group 0",  saturday_bal_group_0),
+            ("Saturday Bal Group 1",  saturday_bal_group_1),
+            ("Saturday Bal Group 2A", saturday_bal_group_2a),
+            ("Saturday Bal Group 2B", saturday_bal_group_2b),
+            ("Saturday Bal Group 3",  saturday_bal_group_3),
+        ]
+        if is_saturday
+        else [
+            ("Sunday Bal Group 0",  sunday_bal_group_0),
+            ("Sunday Bal Group 1",  sunday_bal_group_1),
+            ("Sunday Bal Group 2A", sunday_bal_group_2a),
+            ("Sunday Bal Group 2B", sunday_bal_group_2b),
+            ("Sunday Bal Group 3",  sunday_bal_group_3),
+        ]
+    )
+
+    all_ids: list[str] = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(_fetch_bal_table, label, table, date_prefix, log): label
+            for label, table in bal_tables
+        }
+        for future in as_completed(futures):
+            all_ids.extend(future.result())
+
+    unique_ids = sorted(set(all_ids))
+    count = len(unique_ids)
+    log(f"Total unique Bal attendees: {count}")
+    log(str(unique_ids))
+    return unique_ids, count

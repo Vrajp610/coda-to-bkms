@@ -13,6 +13,7 @@ from backend.coda import format_data, format_goshthi_data
 from backend.bkms import update_sheet
 from backend.bkms_user_update import update_users
 from backend.goshthi import update_goshthi
+from backend.bal_mandal import update_bal_sheet
 from backend.utils.log_writer import write_run_log
 
 app = FastAPI()
@@ -284,6 +285,18 @@ class GoshthiInput(BaseModel):
     hangout: str
     workshop: str
 
+
+class BalMandalInput(BaseModel):
+    date: str
+    day: str
+    sabhaHeld: str
+    combinedGroups: str
+    smrutiTime: str
+    mukhpath: str
+    prepCycleDone: str
+    individualGroups: dict = {}
+    captchaSeconds: int = 20
+
 @app.post("/run-goshthi")
 def run_goshthi(
     input_data: GoshthiInput,
@@ -351,6 +364,169 @@ def run_goshthi_stream(
             if msg is None:
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 write_run_log(lines, "goshthi", f"{input_data.month}_{input_data.year}_{timestamp}.log")
+                yield "data: __DONE__\n\n"
+                break
+            if not msg.startswith("__COUNTDOWN__") and not msg.startswith("__NOT_MARKED__") and not msg.startswith("__NOT_FOUND__"):
+                lines.append(msg)
+            yield f"data: {msg}\n\n"
+
+@app.post("/run-bal-mandal")
+def run_bal_mandal(
+    input_data: BalMandalInput,
+    x_bkms_token: str | None = Header(default=None),
+    token: str | None = Query(default=None),
+):
+    _verify_trigger_token(x_bkms_token, token)
+    job_id = uuid4().hex
+    created_at = _utc_now_iso()
+    _write_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "job_type": "bal_mandal",
+            "status": "starting",
+            "created_at": created_at,
+            "updated_at": created_at,
+            "date": input_data.date,
+            "sabhaHeld": input_data.sabhaHeld,
+            "combinedGroups": input_data.combinedGroups,
+            "smrutiTime": input_data.smrutiTime,
+            "mukhpath": input_data.mukhpath,
+            "prepCycleDone": input_data.prepCycleDone,
+            "individualGroups": input_data.individualGroups,
+            "captchaSeconds": input_data.captchaSeconds,
+            "message": "Starting Bal Mandal attendance job.",
+            "marked_present": None,
+            "not_marked": None,
+            "marked_present_ids": [],
+            "not_marked_ids": [],
+            "not_found_in_bkms": [],
+            "error": None,
+        },
+    )
+    try:
+        # Get attendance data from Coda for all Bal groups
+        from backend.coda import get_bal_attendance_data
+        result = get_bal_attendance_data(input_data.date, input_data.day)
+        if isinstance(result, str):
+            _update_job(job_id, status="failed", message=result)
+            return {
+                "job_id": job_id,
+                "status": "failed",
+                "message": result,
+            }
+        attended_bals, count = result
+        _update_job(
+            job_id,
+            status="running",
+            attendance_count=count,
+            message=f"{count} Bals found in Coda. BKMS update starting in background...",
+        )
+
+        def run_in_background():
+            try:
+                outcome = update_bal_sheet(
+                    attended_bals,
+                    input_data.day,
+                    input_data.date,
+                    input_data.sabhaHeld,
+                    input_data.combinedGroups,
+                    input_data.smrutiTime,
+                    input_data.mukhpath,
+                    input_data.prepCycleDone,
+                    input_data.individualGroups,
+                    input_data.captchaSeconds,
+                )
+                outcome = outcome or {}
+                _update_job(
+                    job_id,
+                    status="completed",
+                    message=outcome.get("message", f"{count} Bals found in Coda"),
+                    marked_present=outcome.get("marked_present", 0),
+                    not_marked=outcome.get("not_marked", 0),
+                    marked_present_ids=outcome.get("marked_present_ids", []),
+                    not_marked_ids=outcome.get("not_marked_ids", []),
+                    not_found_in_bkms=outcome.get("not_found_in_bkms", []),
+                    sabha_held=outcome.get("sabha_held", True),
+                    completed_at=_utc_now_iso(),
+                )
+            except Exception as e:
+                _update_job(
+                    job_id,
+                    status="failed",
+                    error=str(e),
+                    message=f"Bal Mandal BKMS update failed: {e}",
+                )
+
+        thread = threading.Thread(target=run_in_background, daemon=True)
+        thread.start()
+
+        return {
+            "job_id": job_id,
+            "status": "running",
+            "message": f"{count} Bals found in Coda. BKMS update starting in background...",
+            "attendance_count": count,
+        }
+    except Exception as e:
+        _update_job(
+            job_id,
+            status="failed",
+            error=str(e),
+            message=f"Failed to start Bal Mandal BKMS update: {e}",
+        )
+        return {"error": str(e), "job_id": job_id}
+
+
+@app.post("/run-bal-mandal-stream")
+def run_bal_mandal_stream(
+    input_data: BalMandalInput,
+    x_bkms_token: str | None = Header(default=None),
+    token: str | None = Query(default=None),
+):
+    _verify_trigger_token(x_bkms_token, token)
+    log_queue = queue.Queue()
+
+    def log(msg):
+        log_queue.put(msg)
+
+    def run():
+        try:
+            # Get attendance data from Coda for the selected day's Bal groups
+            from backend.coda import get_bal_attendance_data
+            result = get_bal_attendance_data(input_data.date, input_data.day, log_callback=log)
+            if isinstance(result, str):
+                log(result)
+            else:
+                attended_bals, count = result
+                log(f"{count} Bals found in Coda")
+                update_bal_sheet(
+                    attended_bals,
+                    input_data.day,
+                    input_data.date,
+                    input_data.sabhaHeld,
+                    input_data.combinedGroups,
+                    input_data.smrutiTime,
+                    input_data.mukhpath,
+                    input_data.prepCycleDone,
+                    input_data.individualGroups,
+                    input_data.captchaSeconds,
+                    log_callback=log,
+                )
+        except Exception as e:
+            log(f"ERROR: {e}")
+        finally:
+            log_queue.put(None)
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+
+    def event_stream():
+        lines = []
+        while True:
+            msg = log_queue.get()
+            if msg is None:
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                write_run_log(lines, "bal_mandal", f"{input_data.date}_{timestamp}.log")
                 yield "data: __DONE__\n\n"
                 break
             if not msg.startswith("__COUNTDOWN__") and not msg.startswith("__NOT_MARKED__") and not msg.startswith("__NOT_FOUND__"):
