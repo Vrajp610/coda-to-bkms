@@ -3,6 +3,6 @@
 .coverage
 /logs
 /.run
-/coda-pack
 __pycache__/
 *.pyc
+node_modules/

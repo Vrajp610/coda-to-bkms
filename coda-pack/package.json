@@ -1,0 +1,17 @@
+{
+  "name": "bkms-bot-pack",
+  "version": "1.0.0",
+  "description": "Coda Pack to trigger the BKMS attendance bot",
+  "main": "pack.ts",
+  "scripts": {
+    "build": "npx coda build pack.ts",
+    "upload": "npx coda upload pack.ts"
+  },
+  "dependencies": {
+    "@codahq/packs-sdk": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.0.0"
+  }
+}

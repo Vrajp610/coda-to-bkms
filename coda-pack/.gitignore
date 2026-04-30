@@ -1,0 +1,19 @@
+# Sensitive — contains Coda API key, never commit
+.coda.json
+
+# Generated — large, reinstalled via npm install
+node_modules/
+
+# Build artifacts
+dist/
+*.js.map
+
+# OS
+.DS_Store
+
+# Tracked (allowed in git):
+# pack.ts          — source code
+# package.json     — dependencies
+# package-lock.json — lockfile for reproducible installs
+# tsconfig.json    — TypeScript config
+# .coda-pack.json  — pack ID only (not sensitive)

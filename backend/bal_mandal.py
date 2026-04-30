@@ -143,8 +143,10 @@ def update_bal_sheet(
         _js_click(driver, XPATHS_BAL["sabha_held_no"])
         time.sleep(0.3)
         log("No groups held — saving and exiting.")
-        _js_click(driver, XPATHS_BAL["save_changes"])
+        _js_click(driver, '/html/body/div[2]/div/section[2]/div[1]/div[12]/form/div[3]/div/input[1]')
+        log("Saving...")
         time.sleep(5)
+        log("Saved")
         try:
             driver.find_element(By.XPATH, '/html/body/div[2]/header/nav/div/ul/li/a').click()
             time.sleep(0.3)
@@ -167,46 +169,72 @@ def update_bal_sheet(
     time.sleep(0.2)
     log("Marked: at least one group sabha held")
 
-    # --- Fill in held / activities for each group ---
     any_group_held = False
-    for group_label, group_key in _BAL_GROUPS:
-        log(f"--- Filling {day} Bal {group_label} ---")
-        prefix = _xpath_prefix(group_key)  # e.g. "group_0", "group_2a"
 
-        if combined_groups.lower() == "yes":
-            group_sabha_held = sabha_held
-            group_smruti   = smruti_time
-            group_mukhpath = mukhpath
-            group_prep     = prep_cycle_done
-        else:
+    # --- If combined groups reporting ---
+    if combined_groups.lower() == "yes":
+        log("--- Combined Groups Reporting ---")
+        # Click the combined group checkbox
+        _js_click(driver, '/html/body/div[2]/div/section[2]/div[1]/form/div[2]/label[1]/div/ins')
+        time.sleep(0.2)
+        log("Marked: combined group reporting enabled")
+
+        # Click the 3 activity options based on combined values
+        smruti_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[4]/div[2]/div[1]/label[2]/div/ins' if smruti_time.lower() == "yes" else '/html/body/div[2]/div/section[2]/div[1]/form/div[4]/div[2]/div[1]/label[3]/div/ins'
+        _js_click(driver, smruti_xpath)
+        time.sleep(0.15)
+        log(f"Smruti Time: {smruti_time}")
+
+        mukhpath_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[4]/div[2]/div[2]/label[2]/div/ins' if mukhpath.lower() == "yes" else '/html/body/div[2]/div/section[2]/div[1]/form/div[4]/div[2]/div[2]/label[3]/div/ins'
+        _js_click(driver, mukhpath_xpath)
+        time.sleep(0.15)
+        log(f"Mukhpath: {mukhpath}")
+
+        prep_xpath = '/html/body/div[2]/div/section[2]/div[1]/form/div[4]/div[2]/div[3]/label[2]/div/ins' if prep_cycle_done.lower() == "yes" else '/html/body/div[2]/div/section[2]/div[1]/form/div[4]/div[2]/div[3]/label[3]/div/ins'
+        _js_click(driver, prep_xpath)
+        time.sleep(0.15)
+        log(f"Prep Cycle: {prep_cycle_done}")
+
+        any_group_held = True
+    else:
+        # --- Individual group reporting: select No for combined reporting first ---
+        _js_click(driver, '/html/body/div[2]/div/section[2]/div[1]/form/div[2]/label[2]/div/ins')
+        time.sleep(0.2)
+        log("Marked: combined group reporting disabled")
+
+        # --- Fill in held / activities for each group (individual reporting) ---
+        for group_label, group_key in _BAL_GROUPS:
+            log(f"--- Filling {day} Bal {group_label} ---")
+            prefix = _xpath_prefix(group_key)  # e.g. "group_0", "group_2a"
+
             gdata = individual_groups.get(group_key, {})
             group_sabha_held = gdata.get("held", "No")
             group_smruti   = gdata.get("smruti_time", "No")
             group_mukhpath = gdata.get("mukhpath", "No")
             group_prep     = gdata.get("prep_cycle", "No")
 
-        if group_sabha_held.lower() != "yes":
-            _js_click(driver, XPATHS_BAL[f"{prefix}_held_no"])
-            time.sleep(0.15)
-            log(f"{group_label}: Sabha not held")
-        else:
-            any_group_held = True
-            _js_click(driver, XPATHS_BAL[f"{prefix}_held_yes"])
-            time.sleep(0.2)
+            if group_sabha_held.lower() != "yes":
+                _js_click(driver, XPATHS_BAL[f"{prefix}_held_no"])
+                time.sleep(0.15)
+                log(f"{group_label}: Sabha not held")
+            else:
+                any_group_held = True
+                _js_click(driver, XPATHS_BAL[f"{prefix}_held_yes"])
+                time.sleep(0.2)
 
-            smruti_key = f"{prefix}_smruti_time_yes" if group_smruti.lower() == "yes" else f"{prefix}_smruti_time_no"
-            _js_click(driver, XPATHS_BAL[smruti_key])
-            time.sleep(0.15)
+                smruti_key = f"{prefix}_smruti_time_yes" if group_smruti.lower() == "yes" else f"{prefix}_smruti_time_no"
+                _js_click(driver, XPATHS_BAL[smruti_key])
+                time.sleep(0.15)
 
-            mukhpath_key = f"{prefix}_mukhpath_yes" if group_mukhpath.lower() == "yes" else f"{prefix}_mukhpath_no"
-            _js_click(driver, XPATHS_BAL[mukhpath_key])
-            time.sleep(0.15)
+                mukhpath_key = f"{prefix}_mukhpath_yes" if group_mukhpath.lower() == "yes" else f"{prefix}_mukhpath_no"
+                _js_click(driver, XPATHS_BAL[mukhpath_key])
+                time.sleep(0.15)
 
-            prep_key = f"{prefix}_prep_cycle_yes" if group_prep.lower() == "yes" else f"{prefix}_prep_cycle_no"
-            _js_click(driver, XPATHS_BAL[prep_key])
-            time.sleep(0.15)
+                prep_key = f"{prefix}_prep_cycle_yes" if group_prep.lower() == "yes" else f"{prefix}_prep_cycle_no"
+                _js_click(driver, XPATHS_BAL[prep_key])
+                time.sleep(0.15)
 
-            log(f"{group_label}: Sabha held, activities filled")
+                log(f"{group_label}: Sabha held, activities filled")
 
     # --- Mark attendance (only if at least one group was held) ---
     all_found_bkids = set()
@@ -219,8 +247,11 @@ def update_bal_sheet(
         time.sleep(0.3)
 
         # Mark present for attended bals
-        all_bals = driver.find_elements(By.XPATH, '//tr[@role="row"]')
+        table_body = '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody'
+        all_bals = driver.find_elements(By.XPATH, f'{table_body}/tr[@role="row"]')
+        index = -1
         for element in all_bals:
+            index += 1
             name_parts = element.text.split()
             if not name_parts:
                 continue
@@ -228,11 +259,11 @@ def update_bal_sheet(
             all_found_bkids.add(bkid)
             if bkid in attended_bals:
                 try:
-                    radio = element.find_element(By.XPATH, './/td[10]/label/input')
-                    driver.execute_script("arguments[0].click();", radio)
+                    radio = element.find_element(By.XPATH, f'{table_body}/tr[{index}]/td[10]/label/input')
+                    radio.click()
                     all_marked.append(bkid)
                     time.sleep(0.1)
-                except Exception:
+                except Exception as e:
                     pass
 
         log(f"Marked {len(all_marked)} Bals present")
@@ -267,11 +298,13 @@ def update_bal_sheet(
 
     log(f"Total Bals marked present: {len(all_marked)}")
 
+    not_marked_ids = [b for b in attended_bals if b not in all_marked and b not in not_found_in_bkms]
+
     return {
         "marked_present": len(all_marked),
         "not_marked": len(attended_bals) - len(all_marked),
         "marked_present_ids": all_marked,
-        "not_marked_ids": [],
+        "not_marked_ids": not_marked_ids,
         "not_found_in_bkms": not_found_in_bkms,
         "sabha_held": sabha_held.lower() == "yes",
     }

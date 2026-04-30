@@ -384,7 +384,7 @@ def run_bal_mandal(
         {
             "job_id": job_id,
             "job_type": "bal_mandal",
-            "status": "starting",
+            "status": "queued",
             "created_at": created_at,
             "updated_at": created_at,
             "date": input_data.date,
@@ -395,7 +395,7 @@ def run_bal_mandal(
             "prepCycleDone": input_data.prepCycleDone,
             "individualGroups": input_data.individualGroups,
             "captchaSeconds": input_data.captchaSeconds,
-            "message": "Starting Bal Mandal attendance job.",
+            "message": "Bal Mandal job queued. Fetching attendance data from Coda...",
             "marked_present": None,
             "not_marked": None,
             "marked_present_ids": [],
@@ -404,77 +404,67 @@ def run_bal_mandal(
             "error": None,
         },
     )
-    try:
-        # Get attendance data from Coda for all Bal groups
-        from backend.coda import get_bal_attendance_data
-        result = get_bal_attendance_data(input_data.date, input_data.day)
-        if isinstance(result, str):
-            _update_job(job_id, status="failed", message=result)
-            return {
-                "job_id": job_id,
-                "status": "failed",
-                "message": result,
-            }
-        attended_bals, count = result
-        _update_job(
-            job_id,
-            status="running",
-            attendance_count=count,
-            message=f"{count} Bals found in Coda. BKMS update starting in background...",
-        )
 
-        def run_in_background():
-            try:
-                outcome = update_bal_sheet(
-                    attended_bals,
-                    input_data.day,
-                    input_data.date,
-                    input_data.sabhaHeld,
-                    input_data.combinedGroups,
-                    input_data.smrutiTime,
-                    input_data.mukhpath,
-                    input_data.prepCycleDone,
-                    input_data.individualGroups,
-                    input_data.captchaSeconds,
-                )
-                outcome = outcome or {}
-                _update_job(
-                    job_id,
-                    status="completed",
-                    message=outcome.get("message", f"{count} Bals found in Coda"),
-                    marked_present=outcome.get("marked_present", 0),
-                    not_marked=outcome.get("not_marked", 0),
-                    marked_present_ids=outcome.get("marked_present_ids", []),
-                    not_marked_ids=outcome.get("not_marked_ids", []),
-                    not_found_in_bkms=outcome.get("not_found_in_bkms", []),
-                    sabha_held=outcome.get("sabha_held", True),
-                    completed_at=_utc_now_iso(),
-                )
-            except Exception as e:
-                _update_job(
-                    job_id,
-                    status="failed",
-                    error=str(e),
-                    message=f"Bal Mandal BKMS update failed: {e}",
-                )
+    def run_in_background():
+        """Fetch Coda data and update BKMS in background (non-blocking)."""
+        try:
+            # Fetch attendance data from Coda for all Bal groups
+            from backend.coda import get_bal_attendance_data
+            result = get_bal_attendance_data(input_data.date, input_data.day)
+            if isinstance(result, str):
+                _update_job(job_id, status="failed", message=result)
+                return
 
-        thread = threading.Thread(target=run_in_background, daemon=True)
-        thread.start()
+            attended_bals, count = result
+            _update_job(
+                job_id,
+                status="running",
+                attendance_count=count,
+                message=f"{count} Bals found in Coda. Starting BKMS update...",
+            )
 
-        return {
-            "job_id": job_id,
-            "status": "running",
-            "message": f"{count} Bals found in Coda. BKMS update starting in background...",
-            "attendance_count": count,
-        }
-    except Exception as e:
-        _update_job(
-            job_id,
-            status="failed",
-            error=str(e),
-            message=f"Failed to start Bal Mandal BKMS update: {e}",
-        )
-        return {"error": str(e), "job_id": job_id}
+            # Update BKMS
+            outcome = update_bal_sheet(
+                attended_bals,
+                input_data.day,
+                input_data.date,
+                input_data.sabhaHeld,
+                input_data.combinedGroups,
+                input_data.smrutiTime,
+                input_data.mukhpath,
+                input_data.prepCycleDone,
+                input_data.individualGroups,
+                input_data.captchaSeconds,
+            )
+            outcome = outcome or {}
+            _update_job(
+                job_id,
+                status="completed",
+                message=f"Bal Mandal attendance updated for {input_data.date}",
+                marked_present=outcome.get("marked_present", 0),
+                not_marked=outcome.get("not_marked", 0),
+                marked_present_ids=outcome.get("marked_present_ids", []),
+                not_marked_ids=outcome.get("not_marked_ids", []),
+                not_found_in_bkms=outcome.get("not_found_in_bkms", []),
+                sabha_held=outcome.get("sabha_held", True),
+                completed_at=_utc_now_iso(),
+            )
+        except Exception as e:
+            _update_job(
+                job_id,
+                status="failed",
+                error=str(e),
+                message=f"Bal Mandal BKMS update failed: {e}",
+            )
+
+    thread = threading.Thread(target=run_in_background, daemon=True)
+    thread.start()
+
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "message": "Bal Mandal job queued. Use GetBalMandalJob to check status.",
+    }
 
 
 @app.post("/run-bal-mandal-stream")
@@ -496,10 +486,11 @@ def run_bal_mandal_stream(
             result = get_bal_attendance_data(input_data.date, input_data.day, log_callback=log)
             if isinstance(result, str):
                 log(result)
+                outcome = {"marked_present": 0, "not_marked": 0, "marked_present_ids": [], "not_marked_ids": [], "not_found_in_bkms": [], "sabha_held": False}
             else:
                 attended_bals, count = result
                 log(f"{count} Bals found in Coda")
-                update_bal_sheet(
+                outcome = update_bal_sheet(
                     attended_bals,
                     input_data.day,
                     input_data.date,
@@ -512,8 +503,27 @@ def run_bal_mandal_stream(
                     input_data.captchaSeconds,
                     log_callback=log,
                 )
+                # Update job with results
+                _update_job(
+                    job_id,
+                    status="completed",
+                    message=f"Bal Mandal attendance updated for {input_data.date}",
+                    marked_present=outcome["marked_present"],
+                    not_marked=outcome["not_marked"],
+                    marked_present_ids=outcome["marked_present_ids"],
+                    not_marked_ids=outcome["not_marked_ids"],
+                    not_found_in_bkms=outcome["not_found_in_bkms"],
+                    sabha_held=outcome["sabha_held"],
+                    completed_at=_utc_now_iso(),
+                )
         except Exception as e:
             log(f"ERROR: {e}")
+            _update_job(
+                job_id,
+                status="failed",
+                error=str(e),
+                message=f"Bal Mandal BKMS update failed: {e}",
+            )
         finally:
             log_queue.put(None)
 
