@@ -270,18 +270,23 @@ def format_data(sabha_group, date):
     return attendance, attendance_count
 
 def _fetch_bal_table(label: str, table: str, date_prefix: str, log) -> list[str]:
-    """Fetch attended BKMS IDs from a single Bal table for a given date, filtered server-side."""
+    """Fetch attended BKMS IDs from a single Bal table for a given date, filtered server-side.
+    date_prefix is YYYY-MM-DD; Coda displays dates as M/D/YYYY so we convert before querying."""
     import requests
+    from datetime import datetime as dt
     if not table:
         return []
     log(f"Querying {label}...")
     try:
+        d = dt.strptime(date_prefix, "%Y-%m-%d")
+        coda_date = f"{d.month}/{d.day}/{d.year}"  # e.g. "4/26/2026"
+
         headers = {"Authorization": f"Bearer {api_key}"}
         url = f"https://coda.io/apis/v1/docs/{bal_doc_id}/tables/{table}/rows"
         params = {
             "useColumnNames": True,
             "valueFormat": "simple",
-            "query": f'Weekend:"{date_prefix}"',
+            "query": f'Weekend:"{coda_date}"',
         }
         all_rows = []
         while url:
@@ -291,6 +296,7 @@ def _fetch_bal_table(label: str, table: str, date_prefix: str, log) -> list[str]
             all_rows.extend(data.get("items", []))
             url = data.get("nextPageLink")
             params = {}
+        log(f"  {label}: {len(all_rows)} rows for {coda_date}")
         ids = []
         for row in all_rows:
             values = row.get("values", {})
