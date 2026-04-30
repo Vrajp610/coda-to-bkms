@@ -270,40 +270,18 @@ def format_data(sabha_group, date):
     return attendance, attendance_count
 
 def _fetch_bal_table(label: str, table: str, date_prefix: str, log) -> list[str]:
-    """Fetch attended BKMS IDs from a single Bal table for a given date, filtered server-side.
-    date_prefix is YYYY-MM-DD; Coda displays dates as M/D/YYYY so we convert before querying."""
-    import requests
-    from datetime import datetime as dt
+    """Fetch attended BKMS IDs from a single Bal table for a given date using codaio."""
     if not table:
         return []
     log(f"Querying {label}...")
     try:
-        d = dt.strptime(date_prefix, "%Y-%m-%d")
-        coda_date = f"{d.month}/{d.day}/{d.year}"  # e.g. "4/26/2026"
-
-        headers = {"Authorization": f"Bearer {api_key}"}
-        url = f"https://coda.io/apis/v1/docs/{bal_doc_id}/tables/{table}/rows"
-        params = {
-            "useColumnNames": True,
-            "valueFormat": "simple",
-            "query": f'Weekend:"{coda_date}"',
-        }
-        all_rows = []
-        while url:
-            resp = requests.get(url, headers=headers, params=params)
-            resp.raise_for_status()
-            data = resp.json()
-            all_rows.extend(data.get("items", []))
-            url = data.get("nextPageLink")
-            params = {}
-        log(f"  {label}: {len(all_rows)} rows for {coda_date}")
-        ids = []
-        for row in all_rows:
-            values = row.get("values", {})
-            if values.get("Attended") is True:
-                bkms_id = values.get("BKMS ID")
-                if bkms_id is not None:
-                    ids.append(str(int(bkms_id)))
+        table_data = coda.list_rows(bal_doc_id, table, use_column_names=True)
+        rows = table_data.get('items', [])
+        df = pd.DataFrame([row['values'] for row in rows])
+        df = df[(df['Attended'] == True) & (df['Weekend'].astype(str).str.contains(date_prefix, na=False))]
+        ids = df['BKMS ID'].dropna().tolist()
+        ids = sorted(set(str(int(x)) for x in ids))
+        log(f"  {label}: {len(ids)} attended on {date_prefix}")
         return ids
     except Exception as e:
         log(f"Error fetching {label}: {e}")

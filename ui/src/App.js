@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tabs, Tab, Box, CssBaseline } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import AttendanceBot from "./components/AttendanceBot/AttendanceBot";
+import BalMandalBot from "./components/BalMandalBot/BalMandalBot";
 import GoshthiBot from "./components/GoshthiBot/GoshthiBot";
 import UserUpdateBot from "./components/UserUpdateBot/UserUpdateBot";
 
@@ -126,14 +127,16 @@ function App() {
             "& .MuiTabs-indicator": { backgroundColor: "#c2622a", height: "3px", borderRadius: "2px" },
           }}
         >
-          <Tab label="Attendance Bot" />
+          <Tab label="KM Attendance Bot" />
+          <Tab label="BM Attendance Bot" />
           <Tab label="Goshthi Bot" />
           <Tab label="User Update Bot" />
         </Tabs>
       </Box>
       {tab === 0 && <AttendanceBot />}
-      {tab === 1 && <GoshthiBot />}
-      {tab === 2 && <UserUpdateBot />}
+      {tab === 1 && <BalMandalBot />}
+      {tab === 2 && <GoshthiBot />}
+      {tab === 3 && <UserUpdateBot />}
     </Box>
     </ThemeProvider>
   );

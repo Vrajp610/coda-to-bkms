@@ -168,6 +168,92 @@ export async function runAttendanceBot({
   setCountdown(null);
 }
 
+export async function runBalMandalBot({
+  date,
+  day,
+  sabhaHeld,
+  combinedGroups,
+  smrutiTime,
+  mukhpath,
+  prepCycleDone,
+  individualGroups,
+  captchaSeconds,
+  setLogs,
+  setCountdown,
+  setLoading,
+}) {
+  if (!date || !day || !sabhaHeld) {
+    window.alert(CONSTANTS.REQUIRED_FIELDS);
+    return;
+  }
+
+  const options = { month: CONSTANTS.LONG, day: CONSTANTS.NUMERIC };
+  const formattedDate = date.toLocaleDateString("en-US", options);
+  const parsedCaptchaSeconds = Number.parseInt(captchaSeconds, 10);
+  const resolvedCaptchaSeconds = Number.isFinite(parsedCaptchaSeconds)
+    ? Math.max(1, Math.min(300, parsedCaptchaSeconds))
+    : 20;
+
+  setLogs([]);
+  setCountdown(null);
+  setLoading(true);
+
+  try {
+    const API_BASE_URL = getApiUrl();
+    const response = await fetch(`${API_BASE_URL}/run-bal-mandal-stream`, {
+      method: "POST",
+      headers: getApiHeaders(),
+      body: JSON.stringify({
+        date: formattedDate,
+        day,
+        sabhaHeld,
+        combinedGroups,
+        smrutiTime,
+        mukhpath,
+        prepCycleDone,
+        individualGroups,
+        captchaSeconds: resolvedCaptchaSeconds,
+      }),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const msg = line.slice(6);
+
+        if (msg === "__DONE__") {
+          setLoading(false);
+          setCountdown(null);
+          return;
+        }
+
+        if (msg.startsWith("__COUNTDOWN__")) {
+          setCountdown(parseInt(msg.replace("__COUNTDOWN__", ""), 10));
+        } else {
+          setCountdown(null);
+          setLogs((prev) => [...prev, msg]);
+        }
+      }
+    }
+  } catch (err) {
+    setLogs((prev) => [...prev, `Connection error: ${err.message}`]);
+  }
+
+  setLoading(false);
+  setCountdown(null);
+}
+
 export async function runGoshthiBot({
   selectedMonth,
   goshthiHeld,

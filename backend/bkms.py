@@ -5,7 +5,7 @@ from backend.utils.chromeUtils import get_chrome_driver
 from backend.utils.constants import (
     BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD,
     BKMS_REPORT_ATTENDANCE_URL, TELEGRAM_GROUP_MENTIONS,
-    XPATHS
+    XPATHS, XPATHS_BAL, SABHA_ROW_MAP
 )
 from backend.utils.sendNotifications import send_notifications, TELEGRAM_ENABLED
 
@@ -14,6 +14,10 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       print(msg)
       if log_callback:
          log_callback(msg)
+
+   # Determine if this is a Bal or Kishore group and select appropriate XPaths
+   is_bal = "bal" in day.lower()
+   xpaths_config = XPATHS_BAL if is_bal else XPATHS
 
    captcha_seconds = max(1, min(int(captcha_seconds), 300))
 
@@ -64,14 +68,14 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
 
    # --- Select Sabha Wing ---
    log("Selecting Sabha Wing and Center")
-   driver.find_element(By.XPATH, XPATHS["sabha_wing"]).click()  # Kishore
+   driver.find_element(By.XPATH, xpaths_config["sabha_wing"]).click()
    time.sleep(0.3)
 
    # --- Select Sabha Center based on group ---
    if day.lower().startswith("saturday"):
-      driver.find_element(By.XPATH, XPATHS["sabha_center_saturday"]).click()
+      driver.find_element(By.XPATH, xpaths_config["sabha_center_saturday"]).click()
    else:
-      driver.find_element(By.XPATH, XPATHS["sabha_center_sunday"]).click()
+      driver.find_element(By.XPATH, xpaths_config["sabha_center_sunday"]).click()
    time.sleep(0.3)
 
    # --- Dynamically select the year based on the chosen date ---
@@ -107,16 +111,10 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
    driver.find_element(By.XPATH, f'/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{week_number}]').click()
    time.sleep(0.5)
 
-   # --- Select Specific Sabha Group (K1 = row 1, K2 = row 2) ---
-   sabha_row_map = {
-      "saturday k1": 1,
-      "saturday k2": 2,
-      "sunday k1": 1,
-      "sunday k2": 2,
-   }
-   row_number = sabha_row_map.get(day.lower())
+   # --- Select Specific Sabha Group (K1 = row 1, K2 = row 2, or Bal groups) ---
+   row_number = SABHA_ROW_MAP.get(day.lower())
    if row_number:
-      driver.find_element(By.XPATH, XPATHS["sabha_group"].format(row_number)).click()
+      driver.find_element(By.XPATH, xpaths_config["sabha_group"].format(row_number)).click()
       log(f"Selected {day.title()}")
    else:
       log("Error: Invalid Sabha group entered!")
