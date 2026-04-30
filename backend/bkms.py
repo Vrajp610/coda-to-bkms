@@ -143,6 +143,22 @@ def update_sheet(attended_kishores, day: str, sabha_held: str, p2_guju: str, dat
       driver.quit()
       log("Closed Chrome")
 
+      # --- Send Telegram Notification ---
+      sunday_date = get_this_week_sunday(date_string)
+      base_msg = f"BKMS Attendance updated for {day.title()} - {sunday_date} ✅"
+      notification_result = send_notifications(base_msg, day)
+      telegram_status = "Telegram notification sent" if notification_result["all_sent"] else "Telegram notification failed"
+      log(f"{telegram_status}: {base_msg}")
+
+      return {
+         "marked_present": 0,
+         "not_marked": 0,
+         "marked_present_ids": [],
+         "not_marked_ids": [],
+         "not_found_in_bkms": [],
+         "sabha_held": False
+      }
+
    # --- Sabha WAS held, continue with full checklist ---
    driver.find_element(By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins').click()
    log("Marked: Sabha Held")

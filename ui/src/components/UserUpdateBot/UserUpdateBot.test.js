@@ -49,6 +49,7 @@ beforeEach(() => {
   window.alert = jest.fn();
   process.env.REACT_APP_API_URL = "http://test";
   process.env.REACT_APP_SHOW_USER_UPDATE_BOT = "true";
+  delete process.env.REACT_APP_BKMS_TOKEN;
 });
 
 afterEach(() => {

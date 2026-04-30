@@ -280,7 +280,8 @@ def _fetch_bal_table(label: str, table: str, date_prefix: str, log) -> list[str]
         df = pd.DataFrame([row['values'] for row in rows])
         df = df[(df['Attended'] == True) & (df['Weekend'].astype(str).str.contains(date_prefix, na=False))]
         ids = df['BKMS ID'].dropna().tolist()
-        ids = sorted(set(str(int(x)) for x in ids))
+        numeric_ids = sorted(set(int(x) for x in ids))
+        ids = [str(x) for x in numeric_ids]
         log(f"  {label}: {len(ids)} attended on {date_prefix}")
         return ids
     except Exception as e:

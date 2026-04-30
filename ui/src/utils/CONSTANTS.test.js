@@ -22,7 +22,7 @@ describe('CONSTANTS', () => {
     expect(CONSTANTS.LONG).toBe("long");
     expect(CONSTANTS.NUMERIC).toBe("numeric");
     expect(CONSTANTS.SOMETHING_WENT_WRONG).toBe("Something went wrong!");
-    expect(CONSTANTS.ATTENDANCE_BOT).toBe("BKMS Attendance Bot");
+    expect(CONSTANTS.ATTENDANCE_BOT).toBe("BKMS KM Attendance Bot");
     expect(CONSTANTS.VALID_EMAIL).toBe(process.env.REACT_APP_VALID_EMAIL);
     expect(CONSTANTS.VALID_PASSWORD).toBe(process.env.REACT_APP_VALID_PASSWORD);
     expect(CONSTANTS.CANCEL).toBe("Cancel");
@@ -35,6 +35,17 @@ describe('CONSTANTS', () => {
     expect(CONSTANTS.WAS_GOSHTHI_HELD).toBe("Was Goshthi Held?");
     expect(CONSTANTS.WAS_HANGOUT).toBe("Was this a Hangout?");
     expect(CONSTANTS.WAS_WORKSHOP).toBe("Was a Karyakar Workshop Held?");
+    expect(CONSTANTS.BAL_MANDAL_BOT).toBe("BKMS BM Attendance Bot");
+    expect(CONSTANTS.SATURDAY_BAL_GROUP_0).toBe("Saturday Bal Group 0");
+    expect(CONSTANTS.SATURDAY_BAL_GROUP_1).toBe("Saturday Bal Group 1");
+    expect(CONSTANTS.SATURDAY_BAL_GROUP_2A).toBe("Saturday Bal Group 2A");
+    expect(CONSTANTS.SATURDAY_BAL_GROUP_2B).toBe("Saturday Bal Group 2B");
+    expect(CONSTANTS.SATURDAY_BAL_GROUP_3).toBe("Saturday Bal Group 3");
+    expect(CONSTANTS.SUNDAY_BAL_GROUP_0).toBe("Sunday Bal Group 0");
+    expect(CONSTANTS.SUNDAY_BAL_GROUP_1).toBe("Sunday Bal Group 1");
+    expect(CONSTANTS.SUNDAY_BAL_GROUP_2A).toBe("Sunday Bal Group 2A");
+    expect(CONSTANTS.SUNDAY_BAL_GROUP_2B).toBe("Sunday Bal Group 2B");
+    expect(CONSTANTS.SUNDAY_BAL_GROUP_3).toBe("Sunday Bal Group 3");
   });
 
   it('should not have unexpected keys', () => {
@@ -43,8 +54,14 @@ describe('CONSTANTS', () => {
       "SATURDAY_K1", "SATURDAY_K2", "SUNDAY_K1", "SUNDAY_K2", "SELECT_GROUP",
       "YES", "NO", "WAS_SABHA_HELD", "WAS_P2_IN_GUJU", "PREP_CYCLE_DONE", "RUNNING", "RUN_BOT",
       "REQUIRED_FIELDS", "LONG", "NUMERIC", "SOMETHING_WENT_WRONG", "ATTENDANCE_BOT",
-      "VALID_EMAIL", "VALID_PASSWORD", "CANCEL", "SIGN_IN", "PASSWORD", "EMAIL", "CODA_ATTENDANCE_MISSING", "SABHA_NOT_HELD",
-      "GOSHTHI_BOT", "WAS_GOSHTHI_HELD", "WAS_HANGOUT", "WAS_WORKSHOP"
+      "VALID_EMAIL", "VALID_PASSWORD", "CANCEL", "SIGN_IN", "PASSWORD", "EMAIL",
+      "CODA_ATTENDANCE_MISSING", "SABHA_NOT_HELD",
+      "GOSHTHI_BOT", "WAS_GOSHTHI_HELD", "WAS_HANGOUT", "WAS_WORKSHOP",
+      "BAL_MANDAL_BOT",
+      "SATURDAY_BAL_GROUP_0", "SATURDAY_BAL_GROUP_1", "SATURDAY_BAL_GROUP_2A",
+      "SATURDAY_BAL_GROUP_2B", "SATURDAY_BAL_GROUP_3",
+      "SUNDAY_BAL_GROUP_0", "SUNDAY_BAL_GROUP_1", "SUNDAY_BAL_GROUP_2A",
+      "SUNDAY_BAL_GROUP_2B", "SUNDAY_BAL_GROUP_3",
     ];
     expect(Object.keys(CONSTANTS).sort()).toEqual(expectedKeys.sort());
   });

@@ -4,6 +4,9 @@ import App from "./App";
 jest.mock("./components/AttendanceBot/AttendanceBot", () => () => (
   <div data-testid="attendance-bot" />
 ));
+jest.mock("./components/BalMandalBot/BalMandalBot", () => () => (
+  <div data-testid="bal-mandal-bot" />
+));
 jest.mock("./components/GoshthiBot/GoshthiBot", () => () => (
   <div data-testid="goshthi-bot" />
 ));
@@ -12,9 +15,9 @@ jest.mock("./components/UserUpdateBot/UserUpdateBot", () => () => (
 ));
 
 describe("App", () => {
-  it("renders the Attendance Bot tab and content by default", () => {
+  it("renders the KM Attendance Bot tab and content by default", () => {
     render(<App />);
-    expect(screen.getByText("Attendance Bot")).toBeInTheDocument();
+    expect(screen.getByText("KM Attendance Bot")).toBeInTheDocument();
     expect(screen.getByTestId("attendance-bot")).toBeInTheDocument();
   });
 
@@ -23,6 +26,18 @@ describe("App", () => {
     const tab = screen.getByRole("tab", { name: "User Update Bot" });
     expect(tab).toBeInTheDocument();
     expect(tab).not.toBeDisabled();
+  });
+
+  it("shows the BM Attendance Bot tab", () => {
+    render(<App />);
+    expect(screen.getByRole("tab", { name: "BM Attendance Bot" })).toBeInTheDocument();
+  });
+
+  it("switches to BalMandalBot when BM Attendance Bot tab is clicked", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("tab", { name: "BM Attendance Bot" }));
+    expect(screen.queryByTestId("attendance-bot")).not.toBeInTheDocument();
+    expect(screen.getByTestId("bal-mandal-bot")).toBeInTheDocument();
   });
 
   it("switches to GoshthiBot when the Goshthi Bot tab is clicked", () => {
@@ -39,10 +54,10 @@ describe("App", () => {
     expect(screen.getByTestId("user-update-bot")).toBeInTheDocument();
   });
 
-  it("switches back to AttendanceBot when Attendance Bot tab is clicked", () => {
+  it("switches back to AttendanceBot when KM Attendance Bot tab is clicked", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("tab", { name: "User Update Bot" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Attendance Bot" }));
+    fireEvent.click(screen.getByRole("tab", { name: "KM Attendance Bot" }));
     expect(screen.getByTestId("attendance-bot")).toBeInTheDocument();
     expect(screen.queryByTestId("user-update-bot")).not.toBeInTheDocument();
   });

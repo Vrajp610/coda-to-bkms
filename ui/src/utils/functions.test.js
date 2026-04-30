@@ -1,4 +1,4 @@
-import { filterValidSundays, runAttendanceBot, runGoshthiBot, handleRunBotHelper, handleSignInSuccessHelper } from "./functions";
+import { filterValidSundays, runAttendanceBot, runBalMandalBot, runGoshthiBot, handleRunBotHelper, handleSignInSuccessHelper, getApiUrl, getApiHeaders } from "./functions";
 import { CONSTANTS } from "./CONSTANTS";
 
 const encoder = new TextEncoder();
@@ -87,6 +87,7 @@ describe("runAttendanceBot", () => {
         global.fetch = jest.fn();
         window.alert = jest.fn();
         process.env.REACT_APP_API_URL = "http://test";
+        delete process.env.REACT_APP_BKMS_TOKEN;
     });
 
     const baseParams = {
@@ -190,6 +191,20 @@ describe("runAttendanceBot", () => {
             expect.any(Object)
         );
     });
+
+    it("clamps captchaSeconds to valid range", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runAttendanceBot({ ...baseParams, captchaSeconds: 9999 });
+        const body = JSON.parse(fetch.mock.calls[0][1].body);
+        expect(body.captchaSeconds).toBe(300);
+    });
+
+    it("uses default captchaSeconds=20 when non-numeric", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runAttendanceBot({ ...baseParams, captchaSeconds: "abc" });
+        const body = JSON.parse(fetch.mock.calls[0][1].body);
+        expect(body.captchaSeconds).toBe(20);
+    });
 });
 
 describe("runGoshthiBot", () => {
@@ -202,6 +217,7 @@ describe("runGoshthiBot", () => {
     global.fetch = jest.fn();
     window.alert = jest.fn();
     process.env.REACT_APP_API_URL = "http://test";
+    delete process.env.REACT_APP_BKMS_TOKEN;
   });
 
   const baseParams = {
@@ -354,5 +370,317 @@ describe("handleSignInSuccessHelper", () => {
         expect(setSignedIn).toHaveBeenCalledWith(true);
         expect(setSignInOpen).toHaveBeenCalledWith(false);
         expect(runBot).toHaveBeenCalled();
+    });
+});
+
+describe("getApiUrl", () => {
+    const originalEnv = process.env.REACT_APP_API_URL;
+
+    afterEach(() => {
+        process.env.REACT_APP_API_URL = originalEnv;
+        delete window.location;
+        window.location = { hostname: "localhost", protocol: "http:" };
+    });
+
+    it("returns REACT_APP_API_URL when set", () => {
+        process.env.REACT_APP_API_URL = "http://custom-api.com";
+        expect(getApiUrl()).toBe("http://custom-api.com");
+    });
+
+    it("returns localhost URL when hostname is localhost and env not set", () => {
+        delete process.env.REACT_APP_API_URL;
+        Object.defineProperty(window, "location", {
+            value: { hostname: "localhost", protocol: "http:" },
+            writable: true,
+        });
+        expect(getApiUrl()).toBe("http://127.0.0.1:8000");
+    });
+
+    it("returns localhost URL when hostname is 127.0.0.1 and env not set", () => {
+        delete process.env.REACT_APP_API_URL;
+        Object.defineProperty(window, "location", {
+            value: { hostname: "127.0.0.1", protocol: "http:" },
+            writable: true,
+        });
+        expect(getApiUrl()).toBe("http://127.0.0.1:8000");
+    });
+
+    it("returns protocol+hostname for production when env not set", () => {
+        delete process.env.REACT_APP_API_URL;
+        Object.defineProperty(window, "location", {
+            value: { hostname: "myapp.fly.dev", protocol: "https:" },
+            writable: true,
+        });
+        expect(getApiUrl()).toBe("https://myapp.fly.dev");
+    });
+});
+
+describe("getApiHeaders", () => {
+    afterEach(() => {
+        delete process.env.REACT_APP_BKMS_TOKEN;
+    });
+
+    it("returns only Content-Type when BKMS_TOKEN is not set", () => {
+        delete process.env.REACT_APP_BKMS_TOKEN;
+        expect(getApiHeaders()).toEqual({ "Content-Type": "application/json" });
+    });
+
+    it("includes X-Bkms-Token when BKMS_TOKEN is set", () => {
+        process.env.REACT_APP_BKMS_TOKEN = "mock-token-123";
+        expect(getApiHeaders()).toEqual({
+            "Content-Type": "application/json",
+            "X-Bkms-Token": "mock-token-123",
+        });
+    });
+});
+
+describe("runBalMandalBot", () => {
+    const mockSetLogs = jest.fn();
+    const mockSetCountdown = jest.fn();
+    const mockSetLoading = jest.fn();
+
+    const encoder = new TextEncoder();
+    const makeStream = (...chunks) => {
+        let idx = 0;
+        return {
+            body: {
+                getReader: () => ({
+                    read: jest.fn().mockImplementation(() => {
+                        if (idx < chunks.length) {
+                            return Promise.resolve({ done: false, value: encoder.encode(chunks[idx++]) });
+                        }
+                        return Promise.resolve({ done: true });
+                    }),
+                }),
+            },
+        };
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        global.fetch = jest.fn();
+        window.alert = jest.fn();
+        process.env.REACT_APP_API_URL = "http://test";
+        delete process.env.REACT_APP_BKMS_TOKEN;
+    });
+
+    const baseParams = {
+        date: new Date("2024-06-15T12:00:00Z"),
+        day: "Saturday",
+        sabhaHeld: "Yes",
+        combinedGroups: "No",
+        smrutiTime: "Yes",
+        mukhpath: "No",
+        prepCycleDone: "Yes",
+        individualGroups: {},
+        captchaSeconds: 20,
+        setLogs: mockSetLogs,
+        setCountdown: mockSetCountdown,
+        setLoading: mockSetLoading,
+    };
+
+    it("alerts if date is missing", async () => {
+        await runBalMandalBot({ ...baseParams, date: null });
+        expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+        expect(mockSetLoading).not.toHaveBeenCalled();
+    });
+
+    it("alerts if day is missing", async () => {
+        await runBalMandalBot({ ...baseParams, day: null });
+        expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+    });
+
+    it("alerts if sabhaHeld is missing", async () => {
+        await runBalMandalBot({ ...baseParams, sabhaHeld: null });
+        expect(window.alert).toHaveBeenCalledWith(CONSTANTS.REQUIRED_FIELDS);
+    });
+
+    it("calls fetch with correct URL, method, and headers", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runBalMandalBot(baseParams);
+        expect(fetch).toHaveBeenCalledWith(
+            "http://test/run-bal-mandal-stream",
+            expect.objectContaining({
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            })
+        );
+    });
+
+    it("sets loading=true then false on success", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runBalMandalBot(baseParams);
+        expect(mockSetLoading).toHaveBeenCalledWith(true);
+        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+    });
+
+    it("streams log messages into setLogs", async () => {
+        fetch.mockResolvedValue(makeStream("data: hello\n", "data: __DONE__\n"));
+        await runBalMandalBot(baseParams);
+        expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it("handles __COUNTDOWN__ messages", async () => {
+        fetch.mockResolvedValue(makeStream("data: __COUNTDOWN__10\n", "data: __DONE__\n"));
+        await runBalMandalBot(baseParams);
+        expect(mockSetCountdown).toHaveBeenCalledWith(10);
+    });
+
+    it("handles connection errors", async () => {
+        const accumulated = [];
+        const execSetLogs = jest.fn().mockImplementation((fn) => {
+            if (typeof fn === "function") accumulated.push(...fn([]));
+        });
+        fetch.mockRejectedValue(new Error("Network Error"));
+        await runBalMandalBot({ ...baseParams, setLogs: execSetLogs });
+        expect(accumulated.some((l) => l.includes("Connection error"))).toBe(true);
+    });
+
+    it("sets loading=false when stream ends without __DONE__", async () => {
+        fetch.mockResolvedValue(makeStream("data: partial\n"));
+        await runBalMandalBot(baseParams);
+        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
+    });
+
+    it("clamps captchaSeconds to valid range", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runBalMandalBot({ ...baseParams, captchaSeconds: 9999 });
+        const body = JSON.parse(fetch.mock.calls[0][1].body);
+        expect(body.captchaSeconds).toBe(300);
+    });
+
+    it("uses default captchaSeconds=20 when non-numeric", async () => {
+        fetch.mockResolvedValue(makeStream("data: __DONE__\n"));
+        await runBalMandalBot({ ...baseParams, captchaSeconds: "abc" });
+        const body = JSON.parse(fetch.mock.calls[0][1].body);
+        expect(body.captchaSeconds).toBe(20);
+    });
+
+    it("skips lines that do not start with 'data: '", async () => {
+        fetch.mockResolvedValue(makeStream(": keep-alive\nignore this\ndata: hello\ndata: __DONE__\n"));
+        await runBalMandalBot(baseParams);
+        expect(mockSetLogs).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it("setLogs callback appends message to previous logs", async () => {
+        const accumulated = [];
+        const execSetLogs = jest.fn().mockImplementation((fn) => {
+            if (typeof fn === "function") accumulated.push(...fn([]));
+        });
+        fetch.mockResolvedValue(makeStream("data: bal msg\n", "data: __DONE__\n"));
+        await runBalMandalBot({ ...baseParams, setLogs: execSetLogs });
+        expect(accumulated).toContain("bal msg");
+    });
+});
+
+describe("functions.js edge cases", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        global.fetch = jest.fn();
+        window.alert = jest.fn();
+    });
+
+    afterEach(() => {
+        delete process.env.REACT_APP_API_URL;
+        delete process.env.REACT_APP_BKMS_TOKEN;
+    });
+
+    it("runAttendanceBot with sabhaHeld=No does not require p2Guju or prepCycleDone", async () => {
+        const mockSetLogs = jest.fn();
+        const mockSetCountdown = jest.fn();
+        const mockSetLoading = jest.fn();
+        process.env.REACT_APP_API_URL = "http://test";
+        fetch.mockResolvedValue({
+            body: {
+                getReader: () => ({
+                    read: jest.fn()
+                        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode("data: __DONE__\n") })
+                        .mockResolvedValueOnce({ done: true }),
+                }),
+            },
+        });
+
+        await runAttendanceBot({
+            date: new Date(),
+            group: "GroupA",
+            sabhaHeld: "No",
+            p2Guju: null,
+            prepCycleDone: null,
+            captchaSeconds: 20,
+            setLogs: mockSetLogs,
+            setCountdown: mockSetCountdown,
+            setLoading: mockSetLoading,
+        });
+
+        expect(window.alert).not.toHaveBeenCalled();
+        expect(mockSetLoading).toHaveBeenCalledWith(true);
+    });
+
+    it("runBalMandalBot sends all parameters including individualGroups in body", async () => {
+        const mockSetLogs = jest.fn();
+        const mockSetCountdown = jest.fn();
+        const mockSetLoading = jest.fn();
+        process.env.REACT_APP_API_URL = "http://test";
+        fetch.mockResolvedValue({
+            body: {
+                getReader: () => ({
+                    read: jest.fn()
+                        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode("data: __DONE__\n") })
+                        .mockResolvedValueOnce({ done: true }),
+                }),
+            },
+        });
+
+        const individualGroups = { "group 0": { held: "Yes", smruti_time: "No" } };
+        await runBalMandalBot({
+            date: new Date("2026-03-15"),
+            day: "Saturday",
+            sabhaHeld: "Yes",
+            combinedGroups: "No",
+            smrutiTime: "No",
+            mukhpath: "No",
+            prepCycleDone: "Yes",
+            individualGroups,
+            captchaSeconds: 30,
+            setLogs: mockSetLogs,
+            setCountdown: mockSetCountdown,
+            setLoading: mockSetLoading,
+        });
+
+        const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+        expect(callBody.day).toBe("Saturday");
+        expect(callBody.combinedGroups).toBe("No");
+        expect(callBody.individualGroups).toEqual(individualGroups);
+        expect(callBody.captchaSeconds).toBe(30);
+    });
+
+    it("runGoshthiBot properly formats month and year in body", async () => {
+        const mockSetLogs = jest.fn();
+        const mockSetCountdown = jest.fn();
+        const mockSetLoading = jest.fn();
+        process.env.REACT_APP_API_URL = "http://test";
+        fetch.mockResolvedValue({
+            body: {
+                getReader: () => ({
+                    read: jest.fn()
+                        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode("data: __DONE__\n") })
+                        .mockResolvedValueOnce({ done: true }),
+                }),
+            },
+        });
+
+        await runGoshthiBot({
+            selectedMonth: new Date("2026-03-15"),
+            goshthiHeld: "Yes",
+            hangout: "Yes",
+            workshop: "No",
+            setLogs: mockSetLogs,
+            setCountdown: mockSetCountdown,
+            setLoading: mockSetLoading,
+        });
+
+        const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+        expect(callBody.month).toBe("March");
+        expect(callBody.year).toBe("2026");
     });
 });

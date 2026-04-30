@@ -17,6 +17,7 @@ jest.mock("./AttendanceForm.module.css", () => ({
   toggle: "toggle",
   toggleBtn: "toggleBtn",
   toggleBtnActive: "toggleBtnActive",
+  numberInput: "numberInput",
   countdown: "countdown",
   logBox: "logBox",
   logLine: "logLine",
@@ -54,6 +55,8 @@ const defaultProps = {
   setP2Guju: jest.fn(),
   prepCycleDone: "",
   setPrepCycleDone: jest.fn(),
+  captchaSeconds: "20",
+  setCaptchaSeconds: jest.fn(),
   loading: false,
   runBot: jest.fn(),
   logs: [],
@@ -169,6 +172,26 @@ describe("AttendanceForm", () => {
     render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" setPrepCycleDone={setPrepCycleDone} />);
     fireEvent.click(screen.getAllByText("Yes")[2]);
     expect(setPrepCycleDone).toHaveBeenCalledWith("Yes");
+  });
+
+  it("calls setCaptchaSeconds when captcha input changes", () => {
+    const setCaptchaSeconds = jest.fn();
+    render(
+      <AttendanceForm
+        {...defaultProps}
+        sabhaHeld="Yes"
+        setCaptchaSeconds={setCaptchaSeconds}
+      />
+    );
+    fireEvent.change(screen.getByRole("spinbutton"), {
+      target: { value: "60" },
+    });
+    expect(setCaptchaSeconds).toHaveBeenCalledWith("60");
+  });
+
+  it("captcha input is disabled when loading", () => {
+    render(<AttendanceForm {...defaultProps} sabhaHeld="Yes" loading={true} />);
+    expect(screen.getByRole("spinbutton")).toBeDisabled();
   });
 
   it("disables Run Bot when no fields filled", () => {

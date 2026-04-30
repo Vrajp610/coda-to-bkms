@@ -357,3 +357,239 @@ def test_cors_headers(bot_input):
         assert "access-control-allow-origin" in response.headers
         assert response.headers["access-control-allow-origin"] in [
             "http://localhost:3000"]
+
+
+# ── helper function coverage ──────────────────────────────────────────────────
+
+def test_split_origins_empty():
+    from backend.index import _split_origins
+    assert _split_origins(None) == []
+    assert _split_origins("") == []
+
+
+def test_split_origins_single():
+    from backend.index import _split_origins
+    assert _split_origins("http://example.com") == ["http://example.com"]
+
+
+def test_split_origins_multiple():
+    from backend.index import _split_origins
+    result = _split_origins("http://a.com, http://b.com/")
+    assert "http://a.com" in result
+    assert "http://b.com" in result
+
+
+def test_build_allowed_origins_includes_fly_app(monkeypatch):
+    from backend import index as idx
+    monkeypatch.setenv("FLY_APP_NAME", "my-test-app")
+    origins = idx._build_allowed_origins()
+    assert "https://my-test-app.fly.dev" in origins
+
+
+def test_build_allowed_origins_includes_allowed_origins_env(monkeypatch):
+    from backend import index as idx
+    monkeypatch.setenv("ALLOWED_ORIGINS", "https://custom.com")
+    origins = idx._build_allowed_origins()
+    assert "https://custom.com" in origins
+
+
+# ── /run-bal-mandal ───────────────────────────────────────────────────────────
+
+@pytest.fixture
+def bal_input():
+    return {
+        "date": "June 15",
+        "day": "Saturday",
+        "sabhaHeld": "Yes",
+        "combinedGroups": "No",
+        "smrutiTime": "Yes",
+        "mukhpath": "No",
+        "prepCycleDone": "Yes",
+        "individualGroups": {},
+    }
+
+
+def test_run_bal_mandal_queues_job(bal_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
+    with patch("backend.coda.get_bal_attendance_data", return_value=(["101"], 1)), \
+         patch("backend.index.update_bal_sheet", return_value={
+             "marked_present": 1, "not_marked": 0,
+             "marked_present_ids": ["101"], "not_marked_ids": [],
+             "not_found_in_bkms": [], "sabha_held": True,
+         }):
+        response = client.post("/run-bal-mandal", json=bal_input)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "queued"
+    assert "job_id" in data
+
+
+def test_run_bal_mandal_format_data_str(bal_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
+    with patch("backend.coda.get_bal_attendance_data", return_value="No Bal data found"):
+        response = client.post("/run-bal-mandal", json=bal_input)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "queued"
+
+
+def test_run_bal_mandal_update_raises(bal_input, tmp_path, monkeypatch):
+    monkeypatch.setattr(index_module, "JOB_DIR", tmp_path)
+    with patch("backend.coda.get_bal_attendance_data", return_value=(["101"], 1)), \
+         patch("backend.index.update_bal_sheet", side_effect=Exception("bal crash")):
+        response = client.post("/run-bal-mandal", json=bal_input)
+    assert response.status_code == 200
+
+
+# ── /run-bal-mandal-stream ────────────────────────────────────────────────────
+
+def test_run_bal_mandal_stream_success(bal_input):
+    with patch("backend.coda.get_bal_attendance_data", return_value=(["101"], 1)), \
+         patch("backend.index.update_bal_sheet") as mock_update, \
+         patch("backend.index.write_run_log"):
+        def fake_update(*args, log_callback=None, **kwargs):
+            log_callback("Marked 101 present")
+            return {"marked_present": 1, "not_marked": 0,
+                    "marked_present_ids": ["101"], "not_marked_ids": [],
+                    "not_found_in_bkms": [], "sabha_held": True}
+        mock_update.side_effect = fake_update
+
+        response = client.post("/run-bal-mandal-stream", json=bal_input)
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+        body = response.text
+        assert "data: 1 Bals found in Coda" in body
+        assert "data: Marked 101 present" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_bal_mandal_stream_format_data_str(bal_input):
+    with patch("backend.coda.get_bal_attendance_data", return_value="No Bal attendance"), \
+         patch("backend.index.write_run_log"):
+        response = client.post("/run-bal-mandal-stream", json=bal_input)
+        assert response.status_code == 200
+        body = response.text
+        assert "data: No Bal attendance" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_bal_mandal_stream_update_raises(bal_input):
+    with patch("backend.coda.get_bal_attendance_data", return_value=(["101"], 1)), \
+         patch("backend.index.update_bal_sheet", side_effect=Exception("bal stream crash")), \
+         patch("backend.index.write_run_log"):
+        response = client.post("/run-bal-mandal-stream", json=bal_input)
+        assert response.status_code == 200
+        body = response.text
+        assert "ERROR: bal stream crash" in body
+        assert "data: __DONE__" in body
+
+
+def test_run_bal_mandal_stream_invalid_input():
+    response = client.post("/run-bal-mandal-stream", json={"date": "June 15"})
+    assert response.status_code == 422
+
+
+# ── /run-goshthi (non-stream) ─────────────────────────────────────────────────
+
+@pytest.fixture
+def goshthi_sync_input():
+    return {"month": "March", "year": "2026", "goshthiHeld": "Yes", "hangout": "No", "workshop": "No"}
+
+
+def test_run_goshthi_success(goshthi_sync_input):
+    with patch("backend.index.format_goshthi_data", return_value=(["100"], 1)), \
+         patch("backend.index.update_goshthi", return_value={
+             "marked_present": 1, "not_marked": 0,
+             "not_found_in_bkms": [], "goshthi_held": True,
+         }):
+        response = client.post("/run-goshthi", json=goshthi_sync_input)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["marked_present"] == 1
+
+
+def test_run_goshthi_format_data_str(goshthi_sync_input):
+    with patch("backend.index.format_goshthi_data", return_value="Invalid month"):
+        response = client.post("/run-goshthi", json=goshthi_sync_input)
+    assert response.status_code == 200
+    assert response.json()["message"] == "Invalid month"
+
+
+def test_run_goshthi_raises(goshthi_sync_input):
+    with patch("backend.index.format_goshthi_data", side_effect=Exception("goshthi err")):
+        response = client.post("/run-goshthi", json=goshthi_sync_input)
+    assert response.status_code == 200
+    assert "error" in response.json()
+
+
+# ── /run-user-update ──────────────────────────────────────────────────────────
+
+def test_run_user_update_success():
+    with patch("backend.index.update_users"):
+        response = client.post("/run-user-update", json={"user_ids": ["123"]})
+    assert response.status_code == 200
+    assert "Processed 1" in response.json()["message"]
+
+
+def test_run_user_update_raises():
+    with patch("backend.index.update_users", side_effect=Exception("upd err")):
+        response = client.post("/run-user-update", json={"user_ids": ["123"]})
+    assert response.status_code == 200
+    assert "error" in response.json()
+
+
+def test_run_user_update_invalid_input():
+    response = client.post("/run-user-update", json={"wrong": []})
+    assert response.status_code == 422
+
+
+# ── token auth on various endpoints ──────────────────────────────────────────
+
+def test_run_bot_stream_requires_token_when_configured(bot_input, monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    response = client.post("/run-bot-stream", json=bot_input)
+    assert response.status_code == 401
+
+
+def test_run_goshthi_stream_requires_token_when_configured(monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    goshthi = {"month": "Jan", "year": "2026", "goshthiHeld": "No", "hangout": "No", "workshop": "No"}
+    response = client.post("/run-goshthi-stream", json=goshthi)
+    assert response.status_code == 401
+
+
+def test_run_bal_mandal_stream_requires_token_when_configured(bal_input, monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    response = client.post("/run-bal-mandal-stream", json=bal_input)
+    assert response.status_code == 401
+
+
+def test_run_user_update_stream_requires_token_when_configured(monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    response = client.post("/run-user-update-stream", json={"user_ids": ["1"]})
+    assert response.status_code == 401
+
+
+def test_run_goshthi_requires_token_when_configured(monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    goshthi = {"month": "Jan", "year": "2026", "goshthiHeld": "No", "hangout": "No", "workshop": "No"}
+    response = client.post("/run-goshthi", json=goshthi)
+    assert response.status_code == 401
+
+
+def test_run_user_update_requires_token_when_configured(monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    response = client.post("/run-user-update", json={"user_ids": ["1"]})
+    assert response.status_code == 401
+
+
+def test_get_attendance_job_requires_token_when_configured(monkeypatch, tmp_path):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    response = client.get("/attendance-job/some-job")
+    assert response.status_code == 401
+
+
+def test_run_bal_mandal_requires_token_when_configured(bal_input, monkeypatch):
+    monkeypatch.setenv("BOT_TRIGGER_TOKEN", "mock-secret")
+    response = client.post("/run-bal-mandal", json=bal_input)
+    assert response.status_code == 401

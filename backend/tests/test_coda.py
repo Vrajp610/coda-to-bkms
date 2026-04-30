@@ -163,6 +163,35 @@ def test_format_data_all_groups(mock_coda, mock_getenv, patch_external_modules, 
 
 @patch("os.getenv")
 @patch("codaio.Coda")
+def test_format_data_bal_groups(mock_coda, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    with patch.object(coda_mod, "convert_date", return_value="2024-03-15T00:00:00.000-08:00"), \
+         patch.object(coda_mod, "get_attendance") as mock_get_attendance:
+        groups = [
+            "saturday bal group 0",
+            "saturday bal group 1",
+            "saturday bal group 2a",
+            "saturday bal group 2b",
+            "saturday bal group 3",
+            "sunday bal group 0",
+            "sunday bal group 1",
+            "sunday bal group 2a",
+            "sunday bal group 2b",
+            "sunday bal group 3",
+        ]
+        for group in groups:
+            result, count = coda_mod.format_data(group, "March 15")
+            assert result == []
+            assert count == 0
+
+    assert mock_get_attendance.call_count == len(groups)
+
+@patch("os.getenv")
+@patch("codaio.Coda")
 def test_format_data_group_case_insensitive(mock_coda, mock_getenv, patch_external_modules, monkeypatch):
     mock_getenv.return_value = "dummy"
     import importlib
@@ -477,3 +506,89 @@ def test_format_goshthi_data_uses_log_callback(mock_coda_cls, mock_getenv, patch
     logs = []
     coda_mod.format_goshthi_data("May", "2026", log_callback=lambda msg: logs.append(msg))
     assert any("May" in m for m in logs)
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test__fetch_bal_table_returns_sorted_unique_ids(mock_coda_cls, mock_getenv, patch_external_modules):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.return_value = {
+        "items": [
+            {"values": {"Attended": True, "Weekend": "2026-01-15", "BKMS ID": 10}},
+            {"values": {"Attended": True, "Weekend": "2026-01-15", "BKMS ID": 5}},
+            {"values": {"Attended": True, "Weekend": "2026-01-15", "BKMS ID": 10}},
+            {"values": {"Attended": False, "Weekend": "2026-01-15", "BKMS ID": 20}},
+        ]
+    }
+
+    logs = []
+    result = coda_mod._fetch_bal_table("Saturday Bal Group 0", "table-id", "2026-01-15", log=lambda message: logs.append(message))
+    assert result == ["5", "10"]
+    assert any("Saturday Bal Group 0" in entry for entry in logs)
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test__fetch_bal_table_returns_empty_when_table_missing(mock_coda_cls, mock_getenv, patch_external_modules):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    logs = []
+    result = coda_mod._fetch_bal_table("label", None, "2026-01-15", log=lambda message: logs.append(message))
+    assert result == []
+    assert logs == []
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test__fetch_bal_table_logs_and_returns_empty_on_error(mock_coda_cls, mock_getenv, patch_external_modules):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    mock_instance = mock_coda_cls.return_value
+    mock_instance.list_rows.side_effect = Exception("table fetch failed")
+
+    logs = []
+    result = coda_mod._fetch_bal_table("Saturday Bal Group 1", "table-id", "2026-01-15", log=lambda message: logs.append(message))
+    assert result == []
+    assert any("Error fetching Saturday Bal Group 1" in entry for entry in logs)
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_bal_attendance_data_returns_unique_sorted_ids(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "convert_date", lambda _: "2026-01-15T00:00:00.000-08:00")
+    monkeypatch.setattr(coda_mod, "_fetch_bal_table", lambda *args, **kwargs: ["3", "1", "3"])
+
+    result, count = coda_mod.get_bal_attendance_data("January 15", "Saturday")
+    assert result == ["1", "3"]
+    assert count == 2
+
+
+@patch("os.getenv")
+@patch("codaio.Coda")
+def test_get_bal_attendance_data_invalid_date_returns_error(mock_coda_cls, mock_getenv, patch_external_modules, monkeypatch):
+    mock_getenv.return_value = "dummy"
+    import importlib
+    import backend.coda as coda_mod
+    importlib.reload(coda_mod)
+
+    monkeypatch.setattr(coda_mod, "convert_date", lambda _: (_ for _ in ()).throw(ValueError("bad date")))
+    logs = []
+    result = coda_mod.get_bal_attendance_data("bad date", "Saturday", log_callback=lambda message: logs.append(message))
+    assert "Invalid date format" in result
+    assert any("Date conversion error" in entry for entry in logs)

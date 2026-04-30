@@ -767,3 +767,40 @@ def test_update_sheet_handles_option_text_exception(
     opt3.click.assert_called_once()
     opt2.click()
 
+
+@patch("backend.bkms.send_notifications")
+@patch("backend.bkms.get_this_week_sunday")
+@patch("backend.bkms.calculate_week_number")
+@patch("backend.bkms.get_chrome_driver")
+def test_update_sheet_year_parse_failure_uses_current_year_and_last_option(
+    mock_get_driver, mock_week_number, mock_get_sunday, mock_send_notifications,
+    monkeypatch
+):
+    mock_driver = MagicMock()
+    mock_get_driver.return_value = mock_driver
+    mock_week_number.return_value = 2
+    mock_get_sunday.return_value = "2024-06-09"
+
+    opt1 = MagicMock()
+    opt1.text = "2020"
+    opt1.click = MagicMock()
+    opt2 = MagicMock()
+    opt2.text = "2021"
+    opt2.click = MagicMock()
+    mock_driver.find_elements.return_value = [opt1, opt2]
+    mock_driver.find_element.return_value = MagicMock()
+
+    monkeypatch.setattr("backend.coda.convert_date", lambda *_: (_ for _ in ()).throw(Exception("parse fail")))
+
+    result = update_sheet(
+        attended_kishores=["1001", "1002", "1003", "1004", "1005", "1006"],
+        day="Saturday K1",
+        sabha_held="no",
+        p2_guju="no",
+        date_string="March 15",
+        prep_cycle_done="yes"
+    )
+
+    assert result["sabha_held"] is False
+    assert opt2.click.call_count == 1
+

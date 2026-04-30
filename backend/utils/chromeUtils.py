@@ -6,11 +6,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 
 def get_chrome_driver():
-    """Set up and return a Chrome WebDriver instance.
-
-    Uses webdriver-manager to automatically handle chromedriver,
-    working consistently across all environments (local and Docker).
-    """
+    """Set up and return a Chrome WebDriver instance."""
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")

@@ -165,3 +165,53 @@ def test_empty_message_still_sends(monkeypatch):
         {"message": "", "token": "SPEC_T", "chat_id": "SPEC_C"},
         {"message": "", "token": "MT", "chat_id": "MC"},
     ]
+
+
+def test_specific_group_failure_still_sends_main(monkeypatch, capsys):
+    calls = []
+
+    async def fake_send(message, token=None, chat_id=None):
+        calls.append({"message": message, "token": token, "chat_id": chat_id})
+        return token != "SPEC_T"
+
+    monkeypatch.setattr(under_test, "TELEGRAM_GROUP_CONFIG", {"fri": {"token": "SPEC_T", "chat_id": "SPEC_C"}})
+    monkeypatch.setattr(under_test, "MAIN_GROUP_TOKEN", "MT")
+    monkeypatch.setattr(under_test, "MAIN_GROUP_CHAT_ID", "MC")
+    monkeypatch.setattr(under_test, "send_telegram_message", fake_send)
+    monkeypatch.setattr(under_test.asyncio, "run", _fake_asyncio_run)
+
+    result = under_test.send_notifications("m9", day="Fri")
+    assert calls == [
+        {"message": "m9", "token": "SPEC_T", "chat_id": "SPEC_C"},
+        {"message": "m9", "token": "MT", "chat_id": "MC"},
+    ]
+    assert result["specific_group_sent"] is False
+    assert result["main_group_sent"] is True
+    assert result["all_sent"] is False
+    captured = capsys.readouterr()
+    assert "Specific group notification failed" in captured.out
+
+
+def test_main_group_failure_reports_failure(monkeypatch, capsys):
+    calls = []
+
+    async def fake_send(message, token=None, chat_id=None):
+        calls.append({"message": message, "token": token, "chat_id": chat_id})
+        return token != "MAIN_T"
+
+    monkeypatch.setattr(under_test, "TELEGRAM_GROUP_CONFIG", {"sat": {"token": "SPEC_T", "chat_id": "SPEC_C"}})
+    monkeypatch.setattr(under_test, "MAIN_GROUP_TOKEN", "MAIN_T")
+    monkeypatch.setattr(under_test, "MAIN_GROUP_CHAT_ID", "MAIN_C")
+    monkeypatch.setattr(under_test, "send_telegram_message", fake_send)
+    monkeypatch.setattr(under_test.asyncio, "run", _fake_asyncio_run)
+
+    result = under_test.send_notifications("m10", day="sat")
+    assert calls == [
+        {"message": "m10", "token": "SPEC_T", "chat_id": "SPEC_C"},
+        {"message": "m10", "token": "MAIN_T", "chat_id": "MAIN_C"},
+    ]
+    assert result["specific_group_sent"] is True
+    assert result["main_group_sent"] is False
+    assert result["all_sent"] is False
+    captured = capsys.readouterr()
+    assert "Main group notification failed" in captured.out

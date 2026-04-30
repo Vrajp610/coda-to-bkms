@@ -3,9 +3,12 @@ from datetime import datetime, timedelta
 def _parse_input_date(date_string: str) -> datetime:
     for fmt in ("%Y-%m-%d", "%B %d"):
         try:
-            parsed = datetime.strptime(date_string, fmt)
             if fmt == "%B %d":
-                parsed = parsed.replace(year=datetime.now().year)
+                parsed = datetime.strptime(
+                    f"{date_string} {datetime.now().year}", "%B %d %Y"
+                )
+            else:
+                parsed = datetime.strptime(date_string, fmt)
             return parsed
         except ValueError:
             continue

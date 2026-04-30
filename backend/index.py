@@ -370,6 +370,8 @@ def run_goshthi_stream(
                 lines.append(msg)
             yield f"data: {msg}\n\n"
 
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
 @app.post("/run-bal-mandal")
 def run_bal_mandal(
     input_data: BalMandalInput,
@@ -503,27 +505,8 @@ def run_bal_mandal_stream(
                     input_data.captchaSeconds,
                     log_callback=log,
                 )
-                # Update job with results
-                _update_job(
-                    job_id,
-                    status="completed",
-                    message=f"Bal Mandal attendance updated for {input_data.date}",
-                    marked_present=outcome["marked_present"],
-                    not_marked=outcome["not_marked"],
-                    marked_present_ids=outcome["marked_present_ids"],
-                    not_marked_ids=outcome["not_marked_ids"],
-                    not_found_in_bkms=outcome["not_found_in_bkms"],
-                    sabha_held=outcome["sabha_held"],
-                    completed_at=_utc_now_iso(),
-                )
         except Exception as e:
             log(f"ERROR: {e}")
-            _update_job(
-                job_id,
-                status="failed",
-                error=str(e),
-                message=f"Bal Mandal BKMS update failed: {e}",
-            )
         finally:
             log_queue.put(None)
 

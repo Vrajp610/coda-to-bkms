@@ -25,6 +25,16 @@ def test_sabha_row_map_keys_and_values():
         "saturday k2": 2,
         "sunday k1": 1,
         "sunday k2": 2,
+        "saturday bal group 0": 1,
+        "saturday bal group 1": 2,
+        "saturday bal group 2a": 3,
+        "saturday bal group 2b": 4,
+        "saturday bal group 3": 5,
+        "sunday bal group 0": 1,
+        "sunday bal group 1": 2,
+        "sunday bal group 2a": 3,
+        "sunday bal group 2b": 4,
+        "sunday bal group 3": 5,
     }
     assert constants.SABHA_ROW_MAP == expected
 
@@ -58,10 +68,10 @@ def test_xpaths_values():
     assert constants.XPATHS["year"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[4]/select/option[9]'
     assert constants.XPATHS["week"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[5]/select/option[{}]'
     assert constants.XPATHS["sabha_group"] == '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/table/tbody/tr[{}]/td[9]/div/span[2]/a'
-    assert constants.XPATHS["sabha_held_yes"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[1]/div/ins'
-    assert constants.XPATHS["sabha_held_no"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label[2]/div/ins'
+    assert constants.XPATHS["sabha_held_yes"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/div/ins'
+    assert constants.XPATHS["sabha_held_no"] == '/html/body/div[2]/div/section[2]/div[1]/form/div[1]/label/div/ins'
     assert constants.XPATHS["mark_absent"] == '/html/body/div[2]/div/section[2]/div[2]/div[1]/span/a'
-    assert constants.XPATHS["save_changes"] == '/html/body/div[2]/div/section[2]/div[1]/div[4]/form/div[3]/div/input[1]'
+    assert constants.XPATHS["save_changes"] == '/html/body/div[2]/div/section[2]/div[1]/div[12]/form/div[3]/div/input[1]'
 
 def test_xpath_week_format():
     week_xpath = constants.XPATHS["week"]
@@ -284,3 +294,69 @@ def test_all_new_xpath_constants_are_strings():
     ]
     for attr in xpath_attrs:
         assert isinstance(getattr(constants, attr), str), f"{attr} should be a string"
+
+
+def test_get_xpaths_local_admin_returns_local_center_xpaths():
+    with patch.dict("os.environ", {"BKMS_ACCESS_TYPE": "LocalAdmin"}), \
+         patch("backend.utils.constants.BKMS_ACCESS_TYPE", "LocalAdmin"):
+        xpaths = constants.get_xpaths("kishore")
+    assert xpaths["sabha_center_saturday"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[2]'
+    assert xpaths["sabha_center_sunday"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[2]/select/option[3]'
+    assert "span/a" in xpaths["sabha_group"]
+
+
+def test_get_xpaths_bal_returns_bal_wing_xpath():
+    xpaths = constants.get_xpaths("bal")
+    assert xpaths["sabha_wing"] == '/html/body/div[2]/div/section[2]/div[1]/div[2]/form/div[1]/div[3]/select/option[2]'
+    assert "combined_groups_yes" in xpaths
+    assert "bkms_id_xpath" in xpaths
+    assert "present_checkbox_xpath" in xpaths
+
+
+def test_xpaths_bal_has_all_bal_group_keys():
+    for group in ["group_0", "group_1", "group_2a", "group_2b", "group_3"]:
+        assert f"{group}_held_yes" in constants.XPATHS_BAL
+        assert f"{group}_held_no" in constants.XPATHS_BAL
+        assert f"{group}_smruti_time_yes" in constants.XPATHS_BAL
+        assert f"{group}_mukhpath_yes" in constants.XPATHS_BAL
+        assert f"{group}_prep_cycle_yes" in constants.XPATHS_BAL
+
+
+def test_get_bal_coda_table_id_saturday():
+    with patch.dict("os.environ", {"SATURDAY_BAL_GROUP_0_TABLE_ID": "mock-sat-g0"}):
+        importlib.reload(constants)
+    result = constants.get_bal_coda_table_id("Saturday", "group 0")
+    assert result == constants.SATURDAY_BAL_GROUP_0_TABLE_ID
+    importlib.reload(constants)
+
+
+def test_get_bal_coda_table_id_sunday():
+    result = constants.get_bal_coda_table_id("Sunday", "group 2a")
+    assert result == constants.SUNDAY_BAL_GROUP_2A_TABLE_ID
+
+
+def test_get_bal_coda_table_id_invalid_day_returns_none():
+    result = constants.get_bal_coda_table_id("Monday", "group 0")
+    assert result is None
+
+
+def test_get_bal_coda_table_id_invalid_group_returns_none():
+    result = constants.get_bal_coda_table_id("Saturday", "group 99")
+    assert result is None
+
+
+def test_sabha_row_map_contains_bal_mandal_keys():
+    for key in [
+        "saturday bal group 0", "saturday bal group 1",
+        "saturday bal group 2a", "saturday bal group 2b", "saturday bal group 3",
+        "sunday bal group 0", "sunday bal group 1",
+        "sunday bal group 2a", "sunday bal group 2b", "sunday bal group 3",
+    ]:
+        assert key in constants.SABHA_ROW_MAP
+
+
+def test_get_xpaths_none_access_type():
+    with patch.dict("os.environ", {}, clear=True):
+        with patch.object(constants, 'BKMS_ACCESS_TYPE', None):
+            xpaths = constants.get_xpaths("kishore")
+    assert "sabha_wing" in xpaths
