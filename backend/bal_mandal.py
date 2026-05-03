@@ -246,27 +246,30 @@ def update_bal_sheet(
         log("All Bals initially marked Absent")
         time.sleep(0.3)
 
-        # Mark present for attended bals
+        # Mark present for attended bals - use specific table path to avoid selecting extra rows
         table_body = '/html/body/div[2]/div/section[2]/div[2]/div[2]/div/div[2]/div/table/tbody'
         all_bals = driver.find_elements(By.XPATH, f'{table_body}/tr[@role="row"]')
-        index = -1
+        log(f"Total rows in Bal attendance table: {len(all_bals)}")
+        log(f"BKIDs to mark present (from Coda): {attended_bals}")
+        
         for element in all_bals:
-            index += 1
             name_parts = element.text.split()
             if not name_parts:
                 continue
             bkid = name_parts[0]
             all_found_bkids.add(bkid)
+            # Only click if this BKID is in the attended list from Coda
             if bkid in attended_bals:
                 try:
-                    radio = element.find_element(By.XPATH, f'{table_body}/tr[{index}]/td[10]/label/input')
+                    # Use relative XPath from the row element - finds td[10] (present radio)
+                    radio = element.find_element(By.XPATH, './td[10]/label/input')
                     radio.click()
                     all_marked.append(bkid)
                     time.sleep(0.1)
                 except Exception as e:
-                    pass
+                    log(f"Error marking present for BKID {bkid}: {str(e)}")
 
-        log(f"Marked {len(all_marked)} Bals present")
+        log(f"Marked {len(all_marked)} Bals present (only those in attended list)")
 
     # --- Save (single save covers all groups) ---
     _js_click(driver, XPATHS_BAL["save_changes"])
