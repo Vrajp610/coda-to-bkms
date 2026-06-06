@@ -543,29 +543,104 @@ pack.addFormula({
       name: "workshop",
       description: "'yes' or 'no' — was a Karyakar workshop held?",
     }),
+    coda.makeParameter({
+      type: coda.ParameterType.Number,
+      name: "captchaSeconds",
+      description: "How many seconds the user wants to solve the CAPTCHA.",
+      optional: true,
+    }),
   ],
   resultType: coda.ValueType.String,
-  execute: async function ([month, year, goshthiHeld, hangout, workshop], context) {
+  execute: async function ([month, year, goshthiHeld, hangout, workshop, captchaSeconds], context) {
     const base = context.endpoint!.replace(/\/$/, "");
+    const resolvedCaptchaSeconds =
+      typeof captchaSeconds === "number" && Number.isFinite(captchaSeconds)
+        ? Math.max(1, Math.min(300, Math.trunc(captchaSeconds)))
+        : 10;
     const response = await context.fetcher.fetch({
       method: "POST",
       url: `${base}/run-goshthi`,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ month, year, goshthiHeld, hangout, workshop }),
+      body: JSON.stringify({ month, year, goshthiHeld, hangout, workshop, captchaSeconds: resolvedCaptchaSeconds }),
     });
     const data = response.body as Record<string, unknown>;
     if (data.error) throw new coda.UserVisibleError(String(data.error));
-    const notFound = Array.isArray(data.not_found_in_bkms)
-      ? (data.not_found_in_bkms as string[]).join(", ")
-      : "";
-    return [
-      String(data.message ?? "Done"),
-      `Marked present: ${data.marked_present ?? "?"}`,
-      `Not marked: ${data.not_marked ?? "?"}`,
-      notFound ? `Not found in BKMS: ${notFound}` : "",
-    ]
-      .filter(Boolean)
-      .join(" | ");
+    if (!data.job_id) throw new coda.UserVisibleError("No job ID returned from bot.");
+    return String(data.job_id);
+  },
+});
+
+pack.addFormula({
+  name: "GetGoshthiJob",
+  description: "Fetch the status and result of a previously started Goshthi attendance job.",
+  parameters: [
+    coda.makeParameter({
+      type: coda.ParameterType.String,
+      name: "jobId",
+      description: "The job ID returned by RunGoshthiBot.",
+    }),
+  ],
+  resultType: coda.ValueType.String,
+  execute: async function ([jobId], context) {
+    const base = context.endpoint!.replace(/\/$/, "");
+    const response = await context.fetcher.fetch({
+      method: "GET",
+      url: `${base}/attendance-job/${encodeURIComponent(jobId)}`,
+      cacheTtlSecs: 0,
+    });
+    return formatAttendanceJobResult(response.body as Record<string, unknown>);
+  },
+});
+
+pack.addFormula({
+  name: "FetchGoshthiResult",
+  description: "Button action: fetch the completed Goshthi result for a job ID and store it in a column.",
+  isAction: true,
+  parameters: [
+    coda.makeParameter({
+      type: coda.ParameterType.String,
+      name: "jobId",
+      description: "The job ID stored in the Job ID column.",
+    }),
+  ],
+  resultType: coda.ValueType.String,
+  execute: async function ([jobId], context) {
+    if (!jobId) throw new coda.UserVisibleError("No Job ID found. Run the bot first.");
+    const base = context.endpoint!.replace(/\/$/, "");
+    const response = await context.fetcher.fetch({
+      method: "GET",
+      url: `${base}/attendance-job/${encodeURIComponent(jobId)}`,
+      cacheTtlSecs: 0,
+    });
+    return formatAttendanceJobResult(response.body as Record<string, unknown>);
+  },
+});
+
+pack.addColumnFormat({
+  name: "GoshthiResult",
+  formulaName: "FetchGoshthiResult",
+});
+
+pack.addFormula({
+  name: "GetGoshthiJobStructured",
+  description: "Fetch a structured Goshthi attendance job result using the job ID.",
+  parameters: [
+    coda.makeParameter({
+      type: coda.ParameterType.String,
+      name: "jobId",
+      description: "The job ID returned by RunGoshthiBot.",
+    }),
+  ],
+  resultType: coda.ValueType.Object,
+  schema: AttendanceJobSchema,
+  execute: async function ([jobId], context) {
+    const base = context.endpoint!.replace(/\/$/, "");
+    const response = await context.fetcher.fetch({
+      method: "GET",
+      url: `${base}/attendance-job/${encodeURIComponent(jobId)}`,
+      cacheTtlSecs: 0,
+    });
+    return normalizeAttendanceJob(response.body as Record<string, unknown>);
   },
 });
 

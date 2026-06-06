@@ -1,16 +1,14 @@
 fastapi
 uvicorn
+uvicorn[standard]
 python-telegram-bot
 pandas
 codaio
 pydantic
 python-dotenv
-pyppeteer
-uvicorn[standard]
 openpyxl
 httpx
 selenium
 webdriver-manager
 pytest-asyncio
-psycopg2-binary
 requests

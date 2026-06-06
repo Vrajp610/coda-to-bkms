@@ -4,7 +4,8 @@ import queue
 import threading
 from pathlib import Path
 from uuid import uuid4
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -284,6 +285,7 @@ class GoshthiInput(BaseModel):
     goshthiHeld: str
     hangout: str
     workshop: str
+    captchaSeconds: int = 10
 
 
 class BalMandalInput(BaseModel):
@@ -304,24 +306,81 @@ def run_goshthi(
     token: str | None = Query(default=None),
 ):
     _verify_trigger_token(x_bkms_token, token)
-    try:
-        result = format_goshthi_data(input_data.month, input_data.year)
-        if isinstance(result, str):
-            return {"message": result}
-        attendance, count = result
-        outcome = update_goshthi(
-            attendance, input_data.month, input_data.year,
-            input_data.goshthiHeld, input_data.hangout, input_data.workshop,
-        )
-        return {
-            "message": f"{count} members found in Coda for {input_data.month} {input_data.year}",
-            "marked_present": outcome["marked_present"],
-            "not_marked": outcome["not_marked"],
-            "not_found_in_bkms": outcome["not_found_in_bkms"],
-            "goshthi_held": outcome["goshthi_held"],
-        }
-    except Exception as e:
-        return {"error": str(e)}
+    job_id = uuid4().hex
+    created_at = _utc_now_iso()
+    _write_job(
+        job_id,
+        {
+            "job_id": job_id,
+            "job_type": "goshthi",
+            "status": "queued",
+            "created_at": created_at,
+            "updated_at": created_at,
+            "month": input_data.month,
+            "year": input_data.year,
+            "goshthiHeld": input_data.goshthiHeld,
+            "hangout": input_data.hangout,
+            "workshop": input_data.workshop,
+            "captchaSeconds": input_data.captchaSeconds,
+            "message": "Goshthi job queued. Fetching attendance data from Coda...",
+            "marked_present": None,
+            "not_marked": None,
+            "marked_present_ids": [],
+            "not_marked_ids": [],
+            "not_found_in_bkms": [],
+            "error": None,
+        },
+    )
+
+    def run_in_background():
+        try:
+            result = format_goshthi_data(input_data.month, input_data.year)
+            if isinstance(result, str):
+                _update_job(job_id, status="failed", message=result)
+                return
+
+            attendance, count = result
+            _update_job(
+                job_id,
+                status="running",
+                attendance_count=count,
+                message=f"{count} members found in Coda. Starting BKMS update...",
+            )
+
+            outcome = update_goshthi(
+                attendance, input_data.month, input_data.year,
+                input_data.goshthiHeld, input_data.hangout, input_data.workshop,
+                input_data.captchaSeconds,
+            )
+            outcome = outcome or {}
+            _update_job(
+                job_id,
+                status="completed",
+                message=f"Goshthi attendance updated for {input_data.month} {input_data.year}",
+                marked_present=outcome.get("marked_present", 0),
+                not_marked=outcome.get("not_marked", 0),
+                marked_present_ids=outcome.get("marked_present_ids", []),
+                not_marked_ids=outcome.get("not_marked_ids", []),
+                not_found_in_bkms=outcome.get("not_found_in_bkms", []),
+                sabha_held=outcome.get("goshthi_held", True),
+                completed_at=_utc_now_iso(),
+            )
+        except Exception as e:
+            _update_job(
+                job_id,
+                status="failed",
+                error=str(e),
+                message=f"Goshthi BKMS update failed: {e}",
+            )
+
+    thread = threading.Thread(target=run_in_background, daemon=True)
+    thread.start()
+
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "message": "Goshthi job queued. Use GetGoshthiJob to check status.",
+    }
 
 
 @app.post("/run-goshthi-stream")
@@ -347,6 +406,7 @@ def run_goshthi_stream(
                 update_goshthi(
                     attendance, input_data.month, input_data.year,
                     input_data.goshthiHeld, input_data.hangout, input_data.workshop,
+                    input_data.captchaSeconds,
                     log_callback=log,
                 )
         except Exception as e:

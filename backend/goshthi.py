@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import Select
 from backend.utils.chromeUtils import get_chrome_driver
 from backend.utils.constants import (
     BKMS_LOGIN_URL, BKMS_ID, BKMS_EMAIL, BKMS_PASSWORD,
-    BKMS_GOSHTHI_URL,
+    BKMS_GOSHTHI_URL, BKMS_ACCESS_TYPE,
 )
 from backend.utils.sendNotifications import send_notifications, TELEGRAM_ENABLED
 
@@ -19,6 +19,7 @@ def update_goshthi(
     goshthi_held: str,
     hangout: str,
     workshop: str,
+    captcha_seconds: int = 10,
     log_callback=None,
 ):
     def log(msg):
@@ -42,6 +43,8 @@ def update_goshthi(
         return {
             "marked_present": 0,
             "not_marked": 0,
+            "marked_present_ids": [],
+            "not_marked_ids": [],
             "not_found_in_bkms": [],
             "goshthi_held": True,
         }
@@ -53,8 +56,9 @@ def update_goshthi(
     driver.find_element(By.ID, "user_id").send_keys(BKMS_ID)
     driver.find_element(By.ID, "email").send_keys(BKMS_EMAIL)
     driver.find_element(By.ID, "password").send_keys(BKMS_PASSWORD)
-    log("Please solve the CAPTCHA. You have 10 seconds. DO NOT click Sign In after solving!")
-    for remaining in range(10, 0, -1):
+    captcha_wait = max(1, int(captcha_seconds))
+    log(f"Please solve the CAPTCHA. You have {captcha_wait} seconds. DO NOT click Sign In after solving!")
+    for remaining in range(captcha_wait, 0, -1):
         log(f"__COUNTDOWN__{remaining}")
         time.sleep(1)
     driver.find_element(By.CLASS_NAME, "btn-primary").click()
@@ -77,10 +81,14 @@ def update_goshthi(
     ).select_by_value(month)
     time.sleep(0.2)
 
-    # Select Center: Edison (option[13])
-    driver.find_element(
-        By.XPATH, '/html/body/div[2]/div/section[2]/div[1]/form/div/div[1]/div[4]/select/option[13]'
-    ).click()
+    # Select Center: Edison (dropdown position differs by access type)
+    is_local = "local" in (BKMS_ACCESS_TYPE.lower().strip() if BKMS_ACCESS_TYPE else "")
+    center_xpath = (
+        '/html/body/div[2]/div/section[2]/div[1]/form/div/div[1]/div[4]/select/option[2]'
+        if is_local
+        else '/html/body/div[2]/div/section[2]/div[1]/form/div/div[1]/div[3]/select/option[2]'
+    )
+    driver.find_element(By.XPATH, center_xpath).click()
     time.sleep(0.2)
 
     # Click Search
@@ -119,6 +127,8 @@ def update_goshthi(
         return {
             "marked_present": 0,
             "not_marked": 0,
+            "marked_present_ids": [],
+            "not_marked_ids": [],
             "not_found_in_bkms": [],
             "goshthi_held": False,
         }
@@ -249,7 +259,7 @@ def update_goshthi(
             break
 
     not_found_in_bkms = [kid for kid in attended_ids if kid not in all_bkms_ids]
-    not_marked = [kid for kid in attended_ids if kid in all_bkms_ids and kid not in marked_present]
+    not_marked = [kid for kid in attended_ids if kid not in marked_present]
 
     if not_found_in_bkms:
         log(f"Not found in BKMS Goshthi: {', '.join(not_found_in_bkms)}")
@@ -279,6 +289,8 @@ def update_goshthi(
     return {
         "marked_present": len(marked_present),
         "not_marked": len(not_marked),
+        "marked_present_ids": marked_present,
+        "not_marked_ids": not_marked,
         "not_found_in_bkms": not_found_in_bkms,
         "goshthi_held": True,
     }
